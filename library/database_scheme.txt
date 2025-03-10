@@ -1,0 +1,81 @@
+//Смотреть на сайте https://dbdiagram.io/d
+// Users table
+Table users {
+  id int [pk, increment]
+  username varchar [unique, not null]
+  email varchar [unique, not null]
+  password varchar [not null]
+  registration_date timestamp [not null]
+  last_login_date timestamp
+}
+
+// Roles table
+Table roles {
+  id int [pk, increment]
+  name varchar [unique, not null]
+}
+
+// UserRole table (many-to-many)
+Table user_roles {
+  user_id int [ref: > users.id]
+  role_id int [ref: > roles.id]
+  
+  indexes {
+    (user_id, role_id) [pk]
+  }
+}
+
+// Categories table
+Table categories {
+  id int [pk, increment]
+  name varchar [not null]
+  parent_category_id int [ref: > categories.id, null]
+}
+
+// Books table
+Table books {
+  id int [pk, increment]
+  title varchar [not null]
+  author varchar [not null]
+  description text
+  isbn varchar
+  publication_year int
+  publisher varchar
+  language varchar
+  page_count int
+  file_url varchar [not null]
+  cover_image_url varchar
+  upload_date timestamp [not null]
+}
+
+// BookCategory table (many-to-many)
+Table book_categories {
+  book_id int [ref: > books.id]
+  category_id int [ref: > categories.id]
+  
+  indexes {
+    (book_id, category_id) [pk]
+  }
+}
+
+// Favorites table (many-to-many)
+Table favorites {
+  user_id int [ref: > users.id]
+  book_id int [ref: > books.id]
+  
+  indexes {
+    (user_id, book_id) [pk]
+  }
+}
+
+// ReadingHistory table
+Table reading_history {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  book_id int [ref: > books.id]
+  last_read_page int [not null]
+  last_read_date timestamp [not null]
+  is_completed boolean [not null, default: false]
+}
+
+Ref: "reading_history"."last_read_page" < "reading_history"."last_read_date"
