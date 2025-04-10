@@ -34,3 +34,8 @@ build/
 
 ### Logs ###
 *.log
+
+.windsurfrules
+
+### Application Properties ###
+**/application.properties
