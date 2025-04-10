@@ -1,0 +1,81 @@
+#root {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Стили для logo */
+.logo {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Общие настройки разметки */
+.ant-layout {
+  min-height: 100vh;
+}
+
+/* Фиксированное меню */
+.ant-layout-header {
+  z-index: 1000;
+  transition: all 0.3s;
+}
+
+/* Стили для карточек и контейнеров */
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.home-container {
+  padding: 0;
+  margin: 0;
+}
+
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* Адаптивные стили для разных размеров экрана */
+@media (max-width: 768px) {
+  .ant-layout-header {
+    height: auto;
+    padding: 10px 0;
+  }
+  
+  .ant-layout-content {
+    margin-top: 120px;
+  }
+}
+
+/* Тени и эффекты */
+.shadow-1 {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-2 {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Цветовые классы */
+.primary-bg {
+  background-color: #4096ff;
+}
+
+.primary-text {
+  color: #4096ff;
+}
+
+.light-bg {
+  background-color: #f8f9fa;
+}
+
+.dark-bg {
+  background-color: #001529;
+}

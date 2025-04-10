@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.task_ai.md
+.task.md
