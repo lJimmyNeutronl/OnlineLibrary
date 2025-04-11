@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../hooks/reduxHooks';
 import { logout } from '../../store/slices/authSlice';
 import { AiOutlineHome, AiOutlineBook, AiOutlineUser, AiOutlineLogin, AiOutlineLogout } from 'react-icons/ai';
+import logoImg from '../../assets/images/image.png';
 
 const AppHeader = () => {
   const navigate = useNavigate();
@@ -34,9 +35,21 @@ const AppHeader = () => {
       right: 0,
       margin: 0
     }}>
-      <div className="logo" style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>
-        <Link to="/" style={{ color: 'white' }}>Онлайн-библиотека</Link>
+      <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
+        <Link to="/" style={{ color: 'white', display: 'flex', alignItems: 'center' }}>
+          <img 
+            src={logoImg} 
+            alt="LitCloud Logo" 
+            style={{ 
+              height: '48px', 
+              marginRight: '10px',
+              filter: 'brightness(0) invert(1)'
+            }} 
+          />
+          <span style={{ fontWeight: 'bold', fontSize: '20px' }}>LitCloud</span>
+        </Link>
       </div>
+      
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <nav className="main-nav" style={{ display: 'flex', marginRight: '20px' }}>
           <Link 

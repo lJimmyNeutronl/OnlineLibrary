@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -8,6 +8,10 @@ import { Row, Col } from '../components/common/Grid';
 import Icon from '../components/common/Icon';
 import { AiOutlineSearch } from 'react-icons/ai';
 import { BsArrowRight } from 'react-icons/bs';
+import { FaBook, FaBookOpen, FaBookReader, FaPencilAlt, FaGraduationCap, FaFeatherAlt } from 'react-icons/fa';
+import { MdClear } from 'react-icons/md';
+
+const { Title, Paragraph, Text } = Typography;
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -29,9 +33,51 @@ const staggerContainer = {
   }
 };
 
+// Стили для анимаций фоновых элементов
+const floatAnimation = {
+  initial: { y: 0, rotate: 0 },
+  animate: {
+    y: [0, -15, 0],
+    rotate: [0, 5, 0],
+    transition: {
+      duration: 6,
+      repeat: Infinity,
+      repeatType: "reverse" as const,
+      ease: "easeInOut"
+    }
+  }
+};
+
+const rotateAnimation = {
+  initial: { rotate: 0 },
+  animate: {
+    rotate: 360,
+    transition: {
+      duration: 60,
+      repeat: Infinity,
+      ease: "linear"
+    }
+  }
+};
+
+const pulseAnimation = {
+  initial: { scale: 1, opacity: 0.05 },
+  animate: {
+    scale: [1, 1.05, 1],
+    opacity: [0.05, 0.08, 0.05],
+    transition: {
+      duration: 4,
+      repeat: Infinity,
+      repeatType: "reverse" as const,
+      ease: "easeInOut"
+    }
+  }
+};
+
 const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [inputFocused, setInputFocused] = useState<boolean>(false);
 
   const onSearch = (value: string) => {
     setSearchQuery(value);
@@ -58,41 +104,95 @@ const HomePage = () => {
       position: 'relative',
       marginTop: 0
     }}>
-      {/* Декоративные элементы */}
-      <div style={{
-        position: 'absolute',
-        width: '400px',
-        height: '400px',
-        background: 'rgba(55, 105, 245, 0.08)',
-        top: '-150px',
-        right: '-100px',
-        zIndex: 0,
-        transform: 'rotate(45deg)',
-        clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 25% 50%)',
-        animation: 'float 6s ease-in-out infinite'
-      }} />
-      <div style={{
-        position: 'absolute',
-        width: '300px',
-        height: '300px',
-        background: 'rgba(55, 105, 245, 0.06)',
-        bottom: '-100px',
-        left: '-100px',
-        zIndex: 0,
-        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-        animation: 'float 8s ease-in-out infinite'
-      }} />
-      <div style={{
-        position: 'absolute',
-        width: '200px',
-        height: '200px',
-        background: 'rgba(55, 105, 245, 0.04)',
-        top: '30%',
-        right: '10%',
-        zIndex: 0,
-        clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-        animation: 'float 7s ease-in-out infinite'
-      }} />
+      {/* Декоративные элементы, связанные с книгами */}
+      <motion.div 
+        initial="initial"
+        animate="animate"
+        variants={floatAnimation}
+        style={{
+          position: 'absolute',
+          width: '400px',
+          height: '400px',
+          top: '-150px',
+          right: '-100px',
+          zIndex: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: 0.08,
+          transform: 'rotate(15deg)',
+        }}
+      >
+        <FaBookOpen size={300} color="#3769f5" />
+      </motion.div>
+      
+      <motion.div 
+        initial="initial"
+        animate="animate"
+        variants={rotateAnimation}
+        style={{
+          position: 'absolute',
+          width: '300px',
+          height: '300px',
+          bottom: '-100px',
+          left: '-100px',
+          zIndex: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: 0.06,
+        }}
+      >
+        <FaGraduationCap size={250} color="#3769f5" />
+      </motion.div>
+      
+      <motion.div 
+        initial="initial"
+        animate="animate"
+        variants={pulseAnimation}
+        style={{
+          position: 'absolute',
+          width: '200px',
+          height: '200px',
+          top: '30%',
+          right: '10%',
+          zIndex: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <FaPencilAlt size={150} color="#3769f5" />
+      </motion.div>
+
+      {/* Новый элемент в левом верхнем углу */}
+      <motion.div 
+        initial={{ rotate: -15, x: 0 }}
+        animate={{
+          rotate: [-15, -10, -15],
+          x: [0, 10, 0],
+          transition: {
+            duration: 5,
+            repeat: Infinity,
+            repeatType: "reverse" as const,
+            ease: "easeInOut"
+          }
+        }}
+        style={{
+          position: 'absolute',
+          width: '250px',
+          height: '250px',
+          top: '10%',
+          left: '5%',
+          zIndex: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          opacity: 0.07,
+        }}
+      >
+        <FaFeatherAlt size={200} color="#3769f5" />
+      </motion.div>
       
       <div className="hero-section" style={{
         width: '100%',
@@ -111,12 +211,32 @@ const HomePage = () => {
           style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '0 16px' }}
         >
           <motion.div variants={slideUp} style={{ textAlign: 'center' }}>
-            <Typography level={1} style={{ marginBottom: '1rem', color: '#3769f5' }}>
-              Добро пожаловать в Онлайн-библиотеку
-            </Typography>
-            <Typography type="paragraph" style={{ fontSize: '18px', maxWidth: '800px', margin: '0 auto 40px' }}>
+            <div style={{ 
+              marginBottom: '1.5rem', 
+              background: 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              padding: '10px 0'
+            }}>
+              <h1 style={{ 
+                fontSize: '3.5rem', 
+                fontWeight: 'bold', 
+                margin: 0,
+                letterSpacing: '-0.03em',
+                textShadow: '0 1px 1px rgba(0,0,0,0.1)'
+              }}>
+                Добро пожаловать в LitCloud
+              </h1>
+            </div>
+            <Paragraph style={{ 
+              fontSize: '1.25rem', 
+              maxWidth: '800px', 
+              margin: '0 auto 40px',
+              lineHeight: '1.6',
+              color: '#333'
+            }}>
               Исследуйте тысячи книг, доступных для чтения онлайн. Находите новые истории, учитесь и развлекайтесь с нашей коллекцией электронных книг.
-            </Typography>
+            </Paragraph>
           </motion.div>
 
           {/* Центральный поиск */}
@@ -127,33 +247,107 @@ const HomePage = () => {
             display: 'flex',
             justifyContent: 'center'
           }}>
-            <div className="search-container">
-              <div className="search-icon">
-                <AiOutlineSearch size={18} color="#3769f5" />
+            <div 
+              className={`search-container ${inputFocused ? 'focused' : ''}`} 
+              style={{
+                width: '100%',
+                position: 'relative',
+                background: 'white',
+                borderRadius: '50px',
+                padding: '0',
+                boxShadow: inputFocused 
+                  ? '0 10px 25px rgba(55, 105, 245, 0.2)' 
+                  : '0 10px 25px rgba(55, 105, 245, 0.1)',
+                transition: 'all 0.3s ease',
+                height: '60px',
+                overflow: 'hidden'
+              }}
+            >
+              <div className="search-icon" style={{
+                position: 'absolute',
+                left: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2
+              }}>
+                <AiOutlineSearch size={24} color="#3769f5" />
               </div>
               <input
                 type="text"
                 className="search-input"
-                placeholder="Искать книги, авторов или жанры..."
+                placeholder="Поиск по системе. Например: Органическая химия"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && onSearch(searchQuery)}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '16px',
+                  padding: '0 100px 0 55px', // Отступы с обеих сторон для иконок
+                  background: 'transparent',
+                }}
               />
               {searchQuery && (
-                <button
+                <div 
                   className="clear-button"
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Очистить"
-                  type="button"
+                  style={{
+                    position: 'absolute',
+                    right: '70px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2,
+                    cursor: 'pointer',
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    transition: 'color 0.2s ease',
+                  }}
                 >
-                  ×
-                </button>
+                  <MdClear 
+                    size={22} 
+                    color="#999" 
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      transition: 'color 0.2s ease',
+                    }}
+                    onMouseDown={(e) => e.currentTarget.style.color = '#666'}
+                    onMouseUp={(e) => e.currentTarget.style.color = '#999'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#999'}
+                  />
+                </div>
               )}
               <button 
                 className="submit-button"
                 onClick={() => onSearch(searchQuery)}
                 type="button"
                 aria-label="Искать"
+                style={{
+                  position: 'absolute',
+                  right: '5px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  zIndex: 2,
+                }}
               >
                 <BsArrowRight size={22} color="white" />
               </button>
@@ -163,7 +357,9 @@ const HomePage = () => {
           {/* Новые поступления */}
           <div style={{ marginBottom: '40px' }}>
             <Divider>
-              <Typography level={3} style={{ margin: 0 }}>Новые поступления</Typography>
+              <Title level={3} style={{ margin: 0 }}>
+                Новые поступления
+              </Title>
             </Divider>
 
             <Row gutter={[24, 24]}>
@@ -226,7 +422,9 @@ const HomePage = () => {
           {/* Популярные категории */}
           <div style={{ marginBottom: '40px' }}>
             <Divider>
-              <Typography level={3} style={{ margin: 0 }}>Популярные категории</Typography>
+              <Title level={3} style={{ margin: 0 }}>
+                Популярные категории
+              </Title>
             </Divider>
 
             <div style={{ textAlign: 'center' }}>
