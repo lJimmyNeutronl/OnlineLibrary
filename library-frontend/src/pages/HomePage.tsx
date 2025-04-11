@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Input, Row, Col, Card, Typography, Divider, Button } from 'antd';
-import { SearchOutlined, BookOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-
-const { Title, Paragraph } = Typography;
-const { Search } = Input;
+import Button from '../components/common/Button';
+import Card from '../components/common/Card';
+import Typography from '../components/common/Typography';
+import Divider from '../components/common/Divider';
+import { Row, Col } from '../components/common/Grid';
+import Icon from '../components/common/Icon';
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -57,23 +58,37 @@ const HomePage = () => {
       {/* Декоративные элементы */}
       <div style={{
         position: 'absolute',
+        width: '400px',
+        height: '400px',
+        background: 'rgba(55, 105, 245, 0.08)',
+        top: '-150px',
+        right: '-100px',
+        zIndex: 0,
+        transform: 'rotate(45deg)',
+        clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 25% 50%)',
+        animation: 'float 6s ease-in-out infinite'
+      }} />
+      <div style={{
+        position: 'absolute',
         width: '300px',
         height: '300px',
-        borderRadius: '50%',
-        background: 'rgba(64, 150, 255, 0.1)',
-        top: '-150px',
-        right: '-150px',
+        background: 'rgba(55, 105, 245, 0.06)',
+        bottom: '-100px',
+        left: '-100px',
         zIndex: 0,
+        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+        animation: 'float 8s ease-in-out infinite'
       }} />
       <div style={{
         position: 'absolute',
         width: '200px',
         height: '200px',
-        borderRadius: '50%',
-        background: 'rgba(64, 150, 255, 0.08)',
-        bottom: '-100px',
-        left: '-100px',
+        background: 'rgba(55, 105, 245, 0.04)',
+        top: '30%',
+        right: '10%',
         zIndex: 0,
+        clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+        animation: 'float 7s ease-in-out infinite'
       }} />
       
       <div className="hero-section" style={{
@@ -93,34 +108,59 @@ const HomePage = () => {
           style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '0 16px' }}
         >
           <motion.div variants={slideUp} style={{ textAlign: 'center' }}>
-            <Title level={1} style={{ marginBottom: '1rem', color: '#4096ff' }}>
+            <Typography level={1} style={{ marginBottom: '1rem', color: '#3769f5' }}>
               Добро пожаловать в Онлайн-библиотеку
-            </Title>
-            <Paragraph style={{ fontSize: '18px', maxWidth: '800px', margin: '0 auto 40px' }}>
+            </Typography>
+            <Typography type="paragraph" style={{ fontSize: '18px', maxWidth: '800px', margin: '0 auto 40px' }}>
               Исследуйте тысячи книг, доступных для чтения онлайн. Находите новые истории, учитесь и развлекайтесь с нашей коллекцией электронных книг.
-            </Paragraph>
+            </Typography>
           </motion.div>
 
           {/* Центральный поиск */}
-          <motion.div variants={slideUp} style={{ width: '100%', maxWidth: '700px', margin: '0 auto 60px' }}>
-            <Search
-              placeholder="Поиск книг по названию, автору или жанру..."
-              allowClear
-              enterButton={<><SearchOutlined /> Найти</>}
-              size="large"
-              onSearch={onSearch}
-              style={{ 
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                borderRadius: '8px',
-                width: '100%'
-              }}
-            />
+          <motion.div variants={slideUp} style={{ 
+            width: '100%', 
+            maxWidth: '700px', 
+            margin: '0 auto 60px',
+            display: 'flex',
+            justifyContent: 'center'
+          }}>
+            <div className="search-container">
+              <div className="search-icon">
+                <Icon type="search" style={{ fontSize: '20px', color: '#3769f5' }} />
+              </div>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Искать книги, авторов или жанры..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && onSearch(searchQuery)}
+              />
+              {searchQuery && (
+                <button
+                  className="clear-button"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Очистить"
+                  type="button"
+                >
+                  ×
+                </button>
+              )}
+              <button 
+                className="submit-button"
+                onClick={() => onSearch(searchQuery)}
+                type="button"
+                aria-label="Искать"
+              >
+                <Icon type="arrow-right" style={{ fontSize: '20px', color: 'white' }} />
+              </button>
+            </div>
           </motion.div>
 
           {/* Новые поступления */}
           <div style={{ marginBottom: '40px' }}>
-            <Divider orientation="center">
-              <Title level={3} style={{ margin: 0 }}>Новые поступления</Title>
+            <Divider>
+              <Typography level={3} style={{ margin: 0 }}>Новые поступления</Typography>
             </Divider>
 
             <Row gutter={[24, 24]}>
@@ -133,23 +173,43 @@ const HomePage = () => {
                     <Card
                       hoverable
                       cover={
-                        <div style={{ height: '220px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          height: '220px', 
+                          overflow: 'hidden',
+                          position: 'relative'
+                        }}>
                           <img 
                             alt={book.title} 
                             src={book.cover} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            style={{ 
+                              width: '100%', 
+                              height: '100%', 
+                              objectFit: 'cover',
+                              transition: 'transform 0.3s ease'
+                            }}
                           />
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%)',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease'
+                          }} />
                         </div>
                       }
-                      style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px' }}
+                      title={book.title}
+                      description={book.author}
                     >
-                      <Card.Meta 
-                        title={book.title} 
-                        description={book.author} 
-                      />
                       <Button 
                         type="primary" 
-                        style={{ marginTop: '16px', width: '100%' }}
+                        style={{ 
+                          margin: '0 16px 16px',
+                          width: 'calc(100% - 32px)',
+                          transition: 'all 0.3s ease'
+                        }}
                       >
                         Подробнее
                       </Button>
@@ -162,8 +222,8 @@ const HomePage = () => {
 
           {/* Популярные категории */}
           <div style={{ marginBottom: '40px' }}>
-            <Divider orientation="center">
-              <Title level={3} style={{ margin: 0 }}>Популярные категории</Title>
+            <Divider>
+              <Typography level={3} style={{ margin: 0 }}>Популярные категории</Typography>
             </Divider>
 
             <div style={{ textAlign: 'center' }}>
@@ -176,10 +236,14 @@ const HomePage = () => {
                 >
                   <Button 
                     size="large" 
-                    icon={<BookOutlined />}
+                    icon={<Icon type="book" style={{ fontSize: '16px' }} />}
                     style={{ 
                       borderRadius: '20px',
-                      padding: '0 20px'
+                      padding: '0 20px',
+                      background: 'rgba(55, 105, 245, 0.1)',
+                      border: 'none',
+                      color: '#3769f5',
+                      transition: 'all 0.3s ease'
                     }}
                   >
                     {category}

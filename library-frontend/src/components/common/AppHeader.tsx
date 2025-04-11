@@ -1,31 +1,24 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Menu, Input, Button, Space } from 'antd';
+import { Layout, Menu, Button, Space } from 'antd';
 import { 
   HomeOutlined, 
   BookOutlined, 
   UserOutlined, 
   LoginOutlined, 
-  LogoutOutlined, 
-  SearchOutlined 
+  LogoutOutlined
 } from '@ant-design/icons';
 import { useAppSelector, useAppDispatch } from '../../hooks/reduxHooks';
-import { logout } from '../../store/authSlice';
+import { logout } from '../../store/slices/authSlice';
 
 const { Header } = Layout;
-const { Search } = Input;
 
 const AppHeader = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isAuthenticated, user } = useAppSelector(state => state.auth);
+  const { token, user } = useAppSelector(state => state.auth);
+  const isAuthenticated = !!token;
   const [selectedKey, setSelectedKey] = useState('home');
-
-  const handleSearch = (value: string) => {
-    if (value.trim()) {
-      navigate(`/search?q=${encodeURIComponent(value.trim())}`);
-    }
-  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -62,12 +55,6 @@ const AppHeader = () => {
             <Link to="/categories">Категории</Link>
           </Menu.Item>
         </Menu>
-        
-        <Search
-          placeholder="Поиск книг..."
-          onSearch={handleSearch}
-          style={{ width: 250, margin: '0 16px' }}
-        />
         
         <Space>
           {isAuthenticated ? (

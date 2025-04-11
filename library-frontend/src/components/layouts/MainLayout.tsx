@@ -9,10 +9,8 @@ const MainLayout = () => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <AppHeader />
-      <Content style={{ padding: '24px 50px', marginTop: 64 }}>
-        <div style={{ background: '#fff', padding: 24, minHeight: 380 }}>
-          <Outlet />
-        </div>
+      <Content style={{ marginTop: 64 }}>
+        <Outlet />
       </Content>
       <AppFooter />
     </Layout>

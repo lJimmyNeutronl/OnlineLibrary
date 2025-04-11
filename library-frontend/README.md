@@ -1,54 +1,89 @@
-# React + TypeScript + Vite
+# Онлайн-библиотека (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Фронтенд-часть проекта "Онлайн-библиотека" для поиска, просмотра и чтения книг.
 
-Currently, two official plugins are available:
+## Технологии
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** - библиотека для построения пользовательских интерфейсов
+- **TypeScript** - типизированный JavaScript
+- **Redux Toolkit** - для управления состоянием приложения
+- **React Router** - для маршрутизации
+- **Ant Design** - UI-библиотека компонентов
+- **Framer Motion** - для анимаций
+- **Vite** - для быстрой сборки проекта
 
-## Expanding the ESLint configuration
+## Возможности
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Регистрация и авторизация пользователей
+- Просмотр списка книг с сортировкой и фильтрацией
+- Поиск книг по названию и автору
+- Просмотр категорий и книг в них
+- Просмотр подробной информации о книге
+- Онлайн-чтение книг в формате PDF
+- Добавление книг в избранное
+- Отслеживание прогресса чтения
+- Панель администратора для управления книгами, категориями и пользователями
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Структура проекта
+
+```
+/src
+  /assets        - статические файлы (изображения, иконки)
+  /components    - многоразовые компоненты
+    /common      - общие компоненты (заголовок, футер, и т.д.)
+    /layouts     - компоненты макета
+  /hooks         - кастомные хуки React
+  /pages         - страницы приложения
+    /admin       - страницы административной панели
+  /services      - сервисы для взаимодействия с API
+  /store         - Redux-хранилище
+    /slices      - слайсы Redux Toolkit
+  /types         - TypeScript типы и интерфейсы
+  /utils         - вспомогательные функции
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Установка и запуск
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/lJimmyNeutronl/OnlineLibrary.git
+cd OnlineLibrary/library-frontend
 ```
+
+2. Установите зависимости:
+```bash
+npm install
+```
+
+3. Запустите проект в режиме разработки:
+```bash
+npm run dev
+```
+
+4. Для сборки проекта:
+```bash
+npm run build
+```
+
+## Связь с бэкендом
+
+Фронтенд взаимодействует с бэкендом через REST API. 
+Базовый URL API настраивается в файле `/src/services/api.ts`.
+
+По умолчанию URL: `http://localhost:8080/api`
+
+## Роли пользователей
+
+В приложении существуют следующие роли:
+- **Гость** - может просматривать книги и категории
+- **Пользователь** - может читать книги, добавлять их в избранное, отслеживать прогресс чтения
+- **Администратор** - имеет доступ к панели администратора для управления контентом
+
+## Продакшн
+
+Для продакшн-деплоя:
+```bash
+npm run build
+```
+
+Собранные файлы будут находиться в директории `/dist`
