@@ -1,19 +1,22 @@
 import { Outlet } from 'react-router-dom';
-import { Layout } from 'antd';
 import AppHeader from '../common/AppHeader';
 import AppFooter from '../common/AppFooter';
 
-const { Content } = Layout;
-
 const MainLayout = () => {
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <div className="app-layout" style={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      margin: 0,
+      padding: 0
+    }}>
       <AppHeader />
-      <Content style={{ marginTop: 64 }}>
+      <main className="app-content" style={{ marginTop: '64px', paddingTop: 0 }}>
         <Outlet />
-      </Content>
+      </main>
       <AppFooter />
-    </Layout>
+    </div>
   );
 };
 

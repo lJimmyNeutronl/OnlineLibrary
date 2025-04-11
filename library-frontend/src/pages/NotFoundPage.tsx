@@ -1,6 +1,6 @@
-import { Result, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import Button from '../components/common/Button';
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -32,32 +32,48 @@ const NotFoundPage = () => {
         style={{ width: '100%', maxWidth: '600px', padding: '0 16px' }}
       >
         <motion.div variants={slideUp}>
-          <Result
-            status="404"
-            title={
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                transition={{ 
-                  type: "spring", 
-                  stiffness: 260, 
-                  damping: 20 
-                }}
-              >
+          <div style={{ 
+            background: 'white', 
+            padding: '48px 32px', 
+            borderRadius: '12px',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+          }}>
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 260, 
+                damping: 20 
+              }}
+            >
+              <h1 style={{ 
+                fontSize: '72px', 
+                margin: '0',
+                color: '#3769f5',
+                fontWeight: 'bold'
+              }}>
                 404
-              </motion.div>
-            }
-            subTitle="Извините, страница не найдена"
-            extra={
-              <Button 
-                type="primary" 
-                onClick={() => navigate('/')}
-                size="large"
-              >
-                Вернуться на главную
-              </Button>
-            }
-          />
+              </h1>
+            </motion.div>
+            
+            <p style={{ 
+              fontSize: '18px', 
+              color: 'rgba(0, 0, 0, 0.65)',
+              margin: '16px 0 24px'
+            }}>
+              Извините, страница не найдена
+            </p>
+            
+            <Button 
+              type="primary"
+              onClick={() => navigate('/')}
+              style={{ padding: '0 24px', height: '40px' }}
+            >
+              Вернуться на главную
+            </Button>
+          </div>
         </motion.div>
       </motion.div>
     </div>

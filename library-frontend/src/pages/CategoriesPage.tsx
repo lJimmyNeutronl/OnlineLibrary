@@ -1,31 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { 
-  Typography, 
-  Row, 
-  Col, 
-  Card, 
-  Divider, 
-  Spin, 
-  Empty, 
-  Breadcrumb,
-  Button
-} from 'antd';
-import { BookOutlined, RightOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-
-const { Title, Paragraph } = Typography;
-
-interface Category {
-  id: number;
-  name: string;
-  parentCategoryId: number | null;
-  bookCount: number;
-}
+import Typography from '../components/common/Typography';
+import Button from '../components/common/Button';
+import { AiOutlineBook } from 'react-icons/ai';
+import { useNavigate } from 'react-router-dom';
 
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.5 } }
+  visible: { opacity: 1, transition: { duration: 0.8 } }
+};
+
+const slideUp = {
+  hidden: { y: 50, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { duration: 0.6 } }
 };
 
 const staggerContainer = {
@@ -39,112 +25,129 @@ const staggerContainer = {
 };
 
 const CategoriesPage = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    // Имитация загрузки категорий с сервера
-    setTimeout(() => {
-      // Временные тестовые данные
-      const mockCategories: Category[] = [
-        { id: 1, name: 'Фантастика', parentCategoryId: null, bookCount: 45 },
-        { id: 2, name: 'Детективы', parentCategoryId: null, bookCount: 32 },
-        { id: 3, name: 'Научная литература', parentCategoryId: null, bookCount: 28 },
-        { id: 4, name: 'История', parentCategoryId: null, bookCount: 19 },
-        { id: 5, name: 'Искусство', parentCategoryId: null, bookCount: 24 },
-        { id: 6, name: 'Романы', parentCategoryId: null, bookCount: 38 },
-        { id: 7, name: 'Психология', parentCategoryId: null, bookCount: 22 },
-        { id: 8, name: 'Бизнес', parentCategoryId: null, bookCount: 17 },
-        { id: 9, name: 'Компьютерная литература', parentCategoryId: null, bookCount: 31 },
-        { id: 10, name: 'Хобби и досуг', parentCategoryId: null, bookCount: 14 },
-      ];
-      
-      setCategories(mockCategories);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const getRandomColor = () => {
-    const colors = [
-      'rgba(24, 144, 255, 0.1)',
-      'rgba(250, 140, 22, 0.1)',
-      'rgba(82, 196, 26, 0.1)',
-      'rgba(47, 84, 235, 0.1)',
-      'rgba(245, 34, 45, 0.1)',
-      'rgba(114, 46, 209, 0.1)'
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  };
+  const navigate = useNavigate();
+  
+  const categories = [
+    { id: 1, name: 'Фантастика', count: 42 },
+    { id: 2, name: 'Детективы', count: 35 },
+    { id: 3, name: 'Романы', count: 28 },
+    { id: 4, name: 'Научная литература', count: 56 },
+    { id: 5, name: 'История', count: 31 },
+    { id: 6, name: 'Искусство', count: 24 },
+    { id: 7, name: 'Философия', count: 19 },
+    { id: 8, name: 'Психология', count: 27 },
+  ];
 
   return (
-    <div className="categories-container" style={{ padding: '24px 0' }}>
-      <Breadcrumb style={{ marginBottom: '16px' }}>
-        <Breadcrumb.Item>
-          <Link to="/">Главная</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Категории</Breadcrumb.Item>
-      </Breadcrumb>
-
-      <Title level={2} style={{ marginBottom: '24px' }}>
-        Категории книг
-      </Title>
-      
-      <Paragraph style={{ marginBottom: '32px' }}>
-        Исследуйте нашу коллекцию книг по категориям. Выберите категорию, чтобы увидеть все доступные книги в ней.
-      </Paragraph>
-
-      <Divider />
-
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <Spin size="large" />
-        </div>
-      ) : categories.length === 0 ? (
-        <Empty description="Категории не найдены" />
-      ) : (
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-        >
-          <Row gutter={[24, 24]}>
-            {categories.map((category) => (
-              <Col xs={24} sm={12} md={8} lg={6} key={category.id}>
+    <div style={{ 
+      backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      minHeight: 'calc(100vh - 64px)',
+      width: '100%',
+      padding: '40px 0'
+    }}>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        style={{ 
+          width: '100%', 
+          maxWidth: '1200px', 
+          margin: '0 auto', 
+          padding: '0 16px' 
+        }}
+      >
+        <motion.div variants={slideUp}>
+          <Typography level={1} style={{ textAlign: 'center', marginBottom: '40px' }}>
+            Категории книг
+          </Typography>
+          
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '12px', 
+            padding: '32px', 
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            marginBottom: '40px'
+          }}>
+            <Typography type="paragraph" style={{ marginBottom: '30px' }}>
+              Выберите интересующую вас категорию, чтобы увидеть соответствующие книги.
+            </Typography>
+            
+            <motion.div
+              variants={staggerContainer}
+              style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                gap: '20px'
+              }}
+            >
+              {categories.map((category) => (
                 <motion.div 
-                  variants={fadeIn}
-                  whileHover={{ y: -5 }}
+                  key={category.id}
+                  variants={slideUp}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <Link to={`/categories/${category.id}`}>
-                    <Card
-                      hoverable
-                      style={{ 
-                        borderRadius: '12px',
-                        backgroundColor: getRandomColor(),
-                        height: '100%'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: '50px', marginBottom: '10px', opacity: 0.7 }}>
-                            <BookOutlined />
-                          </div>
-                          <Title level={4} style={{ marginBottom: '8px' }}>
-                            {category.name}
-                          </Title>
-                          <Paragraph>
-                            Книг: {category.bookCount}
-                          </Paragraph>
-                        </div>
-                        <RightOutlined style={{ fontSize: '20px', opacity: 0.6 }} />
+                  <div 
+                    style={{ 
+                      background: 'rgba(55, 105, 245, 0.05)',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      cursor: 'pointer',
+                      border: '1px solid rgba(55, 105, 245, 0.1)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onClick={() => navigate(`/categories/${category.id}`)}
+                  >
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      marginBottom: '10px' 
+                    }}>
+                      <div style={{ 
+                        background: '#3769f5',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px'
+                      }}>
+                        <AiOutlineBook color="white" size={20} />
                       </div>
-                    </Card>
-                  </Link>
+                      <div>
+                        <h3 style={{ 
+                          margin: 0, 
+                          fontSize: '18px', 
+                          fontWeight: 'bold',
+                          color: '#333'
+                        }}>
+                          {category.name}
+                        </h3>
+                        <p style={{ 
+                          margin: '5px 0 0 0', 
+                          fontSize: '14px',
+                          color: '#666'
+                        }}>
+                          {category.count} книг
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="primary"
+                      onClick={() => navigate(`/categories/${category.id}`)}
+                      style={{ width: '100%', marginTop: '10px' }}
+                    >
+                      Просмотреть
+                    </Button>
+                  </div>
                 </motion.div>
-              </Col>
-            ))}
-          </Row>
+              ))}
+            </motion.div>
+          </div>
         </motion.div>
-      )}
+      </motion.div>
     </div>
   );
 };

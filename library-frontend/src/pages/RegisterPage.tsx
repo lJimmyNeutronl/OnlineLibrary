@@ -1,10 +1,11 @@
-import { Form, Input, Button, Card, message } from 'antd';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { register } from '../store/slices/authSlice';
 import { AppDispatch } from '../store';
 import { motion } from 'framer-motion';
-import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
+import Button from '../components/common/Button';
+import { AiOutlineUser, AiOutlineLock, AiOutlineMail, AiOutlineIdcard } from 'react-icons/ai';
 
 interface RegisterFormValues {
   email: string;
@@ -26,14 +27,32 @@ const slideUp = {
 const RegisterPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const onFinish = async (values: RegisterFormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (password !== confirmPassword) {
+      setError('Пароли не совпадают');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+    
     try {
-      await dispatch(register(values)).unwrap();
-      message.success('Регистрация успешна');
+      await dispatch(register({ email, password, firstName, lastName })).unwrap();
       navigate('/login');
     } catch (error) {
-      message.error('Ошибка регистрации. Возможно, такой email уже существует');
+      setError('Ошибка регистрации. Возможно, такой email уже существует');
     }
   };
 
@@ -54,101 +73,218 @@ const RegisterPage = () => {
         style={{ width: '100%', maxWidth: '500px', padding: '0 16px' }}
       >
         <motion.div variants={slideUp}>
-          <Card 
-            title="Регистрация" 
-            bordered={false}
-            className="card-hover"
+          <div
             style={{ 
+              background: 'white',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               borderRadius: '12px',
+              padding: '24px',
             }}
           >
-            <Form
-              name="register"
-              onFinish={onFinish}
-              layout="vertical"
-              size="large"
-            >
-              <Form.Item
-                label="Email"
-                name="email"
-                rules={[
-                  { required: true, message: 'Пожалуйста, введите email' },
-                  { type: 'email', message: 'Введите корректный email' }
-                ]}
-              >
-                <Input prefix={<MailOutlined />} placeholder="Ваш email" />
-              </Form.Item>
+            <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>Регистрация</h2>
+            
+            {error && (
+              <div style={{ 
+                padding: '10px', 
+                backgroundColor: '#fff2f0', 
+                border: '1px solid #ffccc7',
+                color: '#f5222d', 
+                borderRadius: '4px',
+                marginBottom: '16px'
+              }}>
+                {error}
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 500 
+                }}>
+                  Email
+                </label>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '0 11px'
+                }}>
+                  <AiOutlineMail style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  <input 
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="Ваш email"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '12px 11px',
+                      width: '100%',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
 
-              <Form.Item
-                label="Имя"
-                name="firstName"
-                rules={[{ required: true, message: 'Пожалуйста, введите имя' }]}
-              >
-                <Input prefix={<UserOutlined />} placeholder="Ваше имя" />
-              </Form.Item>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 500 
+                }}>
+                  Имя
+                </label>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '0 11px'
+                }}>
+                  <AiOutlineUser style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  <input 
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    placeholder="Ваше имя"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '12px 11px',
+                      width: '100%',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
 
-              <Form.Item
-                label="Фамилия"
-                name="lastName"
-                rules={[{ required: true, message: 'Пожалуйста, введите фамилию' }]}
-              >
-                <Input prefix={<IdcardOutlined />} placeholder="Ваша фамилия" />
-              </Form.Item>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 500 
+                }}>
+                  Фамилия
+                </label>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '0 11px'
+                }}>
+                  <AiOutlineIdcard style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  <input 
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    placeholder="Ваша фамилия"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '12px 11px',
+                      width: '100%',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
 
-              <Form.Item
-                label="Пароль"
-                name="password"
-                rules={[
-                  { required: true, message: 'Пожалуйста, введите пароль' },
-                  { min: 6, message: 'Пароль должен содержать минимум 6 символов' }
-                ]}
-              >
-                <Input.Password prefix={<LockOutlined />} placeholder="Ваш пароль" />
-              </Form.Item>
-
-              <Form.Item
-                label="Подтверждение пароля"
-                name="confirmPassword"
-                dependencies={['password']}
-                rules={[
-                  { required: true, message: 'Пожалуйста, подтвердите пароль' },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (!value || getFieldValue('password') === value) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(new Error('Пароли не совпадают'));
-                    },
-                  }),
-                ]}
-              >
-                <Input.Password prefix={<LockOutlined />} placeholder="Подтвердите пароль" />
-              </Form.Item>
-
-              <Form.Item style={{ marginBottom: '12px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px',
+                  fontWeight: 500
+                }}>
+                  Пароль
+                </label>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '0 11px'
+                }}>
+                  <AiOutlineLock style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  <input 
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Ваш пароль"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '12px 11px',
+                      width: '100%',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px',
+                  fontWeight: 500
+                }}>
+                  Подтверждение пароля
+                </label>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '0 11px'
+                }}>
+                  <AiOutlineLock style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  <input 
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    placeholder="Подтвердите пароль"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '12px 11px',
+                      width: '100%',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
+              
                 <Button 
                   type="primary" 
-                  htmlType="submit" 
-                  block
-                  style={{ height: '45px', borderRadius: '8px' }}
+                style={{ 
+                  width: '100%',
+                  height: '45px', 
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
                 >
                   Зарегистрироваться
                 </Button>
-              </Form.Item>
 
-              <Form.Item>
+              <div style={{ marginTop: '16px', textAlign: 'center' }}>
                 <Button 
                   type="link" 
                   onClick={() => navigate('/login')} 
-                  block
-                  style={{ color: '#4096ff' }}
+                  style={{ color: '#3769f5' }}
                 >
                   Уже есть аккаунт? Войти
                 </Button>
-              </Form.Item>
-            </Form>
-          </Card>
+              </div>
+            </form>
+          </div>
         </motion.div>
       </motion.div>
     </div>

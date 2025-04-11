@@ -1,66 +1,46 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 interface DividerProps {
-  children?: React.ReactNode;
-  orientation?: 'left' | 'right' | 'center';
-  className?: string;
+  children?: ReactNode;
   style?: React.CSSProperties;
+  className?: string;
 }
 
-const Divider: React.FC<DividerProps> = ({
-  children,
-  orientation = 'center',
-  className = '',
-  style
-}) => {
+const Divider: React.FC<DividerProps> = ({ children, style, className = '' }) => {
+  const baseStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    margin: '24px 0',
+    color: 'rgba(0, 0, 0, 0.85)',
+    fontWeight: 500,
+    fontSize: '16px',
+    whiteSpace: 'nowrap',
+    textAlign: 'center',
+    ...style
+  };
+
   if (children) {
     return (
-      <div
-        className={`custom-divider ${className}`}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          margin: '24px 0',
-          ...style
-        }}
-      >
-        <div
-          style={{
-            flex: orientation === 'left' ? '0 0 auto' : '1',
-            height: '1px',
-            background: 'var(--border-color)'
-          }}
-        />
-        <div
-          style={{
-            padding: '0 16px',
-            color: 'var(--text-light)',
-            fontSize: '14px'
-          }}
-        >
+      <div className={`divider-with-text ${className}`} style={baseStyle}>
+        <span style={{ 
+          display: 'inline-block', 
+          padding: '0 24px', 
+          fontSize: '18px',
+          fontWeight: 500 
+        }}>
           {children}
-        </div>
-        <div
-          style={{
-            flex: orientation === 'right' ? '0 0 auto' : '1',
-            height: '1px',
-            background: 'var(--border-color)'
-          }}
-        />
+        </span>
       </div>
     );
   }
 
   return (
-    <div
-      className={`custom-divider ${className}`}
-      style={{
-        height: '1px',
-        background: 'var(--border-color)',
-        margin: '24px 0',
-        ...style
-      }}
-    />
+    <div className={`divider ${className}`} style={{
+      height: '1px',
+      margin: '24px 0',
+      backgroundColor: '#f0f0f0',
+      ...style
+    }}/>
   );
 };
 

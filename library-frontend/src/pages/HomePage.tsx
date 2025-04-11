@@ -6,6 +6,8 @@ import Typography from '../components/common/Typography';
 import Divider from '../components/common/Divider';
 import { Row, Col } from '../components/common/Grid';
 import Icon from '../components/common/Icon';
+import { AiOutlineSearch } from 'react-icons/ai';
+import { BsArrowRight } from 'react-icons/bs';
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -53,7 +55,8 @@ const HomePage = () => {
       minHeight: 'calc(100vh - 64px)',
       width: '100%',
       overflow: 'hidden',
-      position: 'relative'
+      position: 'relative',
+      marginTop: 0
     }}>
       {/* Декоративные элементы */}
       <div style={{
@@ -126,7 +129,7 @@ const HomePage = () => {
           }}>
             <div className="search-container">
               <div className="search-icon">
-                <Icon type="search" style={{ fontSize: '20px', color: '#3769f5' }} />
+                <AiOutlineSearch size={18} color="#3769f5" />
               </div>
               <input
                 type="text"
@@ -152,7 +155,7 @@ const HomePage = () => {
                 type="button"
                 aria-label="Искать"
               >
-                <Icon type="arrow-right" style={{ fontSize: '20px', color: 'white' }} />
+                <BsArrowRight size={22} color="white" />
               </button>
             </div>
           </motion.div>

@@ -1,50 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { 
-  Layout, 
-  Button, 
-  Spin, 
-  Empty, 
-  message, 
-  Drawer, 
-  List, 
-  Slider, 
-  Typography, 
-  Tooltip,
-  Breadcrumb,
-  Space
-} from 'antd';
-import { 
-  MenuOutlined, 
-  BookOutlined, 
-  HeartOutlined, 
-  HeartFilled,
-  FullscreenOutlined, 
-  ZoomInOutlined, 
-  ZoomOutOutlined,
-  ArrowLeftOutlined,
-  InfoCircleOutlined,
-  CloseOutlined
-} from '@ant-design/icons';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Typography from '../components/common/Typography';
+import Button from '../components/common/Button';
+import { AiOutlineArrowLeft, AiOutlineMenu, AiOutlineHeart, AiFillHeart, AiOutlineFullscreen, AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineInfoCircle, AiOutlineClose } from 'react-icons/ai';
 import { useAppSelector } from '../hooks/reduxHooks';
 
-// Настройка worker для react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.8 } }
+};
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
-
-interface BookInfo {
-  id: number;
-  title: string;
-  author: string;
-  coverImageUrl: string;
-  totalPages: number;
-  fileUrl: string;
-}
+const slideUp = {
+  hidden: { y: 50, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { duration: 0.6 } }
+};
 
 const BookReaderPage = () => {
   const { bookId } = useParams<{ bookId: string }>();
@@ -52,266 +22,122 @@ const BookReaderPage = () => {
   const { token } = useAppSelector(state => state.auth);
   const isAuthenticated = !!token;
   
-  const [book, setBook] = useState<BookInfo | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.0);
-  const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
-  const [isFavorite, setIsFavorite] = useState<boolean>(false);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  
   useEffect(() => {
     // Проверка аутентификации
     if (!isAuthenticated) {
-      message.error('Для чтения книги необходимо авторизоваться');
+      // В реальном приложении здесь будет уведомление пользователя
       navigate('/login');
-      return;
     }
-    
-    // Имитация загрузки данных с сервера
-    setLoading(true);
-
-    setTimeout(() => {
-      // Мок данных книги (в реальном приложении это будет API-запрос)
-      const mockBook: BookInfo = {
-        id: parseInt(bookId || '0'),
-        title: `Книга ${bookId}`,
-        author: 'Известный Автор',
-        coverImageUrl: `https://picsum.photos/400/600?random=${bookId}`,
-        totalPages: 10,
-        // Используем тестовый PDF для демонстрации
-        fileUrl: 'https://arxiv.org/pdf/2006.11239.pdf'
-      };
-      
-      setBook(mockBook);
-      setLoading(false);
-      
-      // В реальном приложении здесь следует загрузить последнюю прочитанную страницу пользователя
-      setPageNumber(1);
-    }, 1000);
-  }, [bookId, isAuthenticated, navigate]);
-
-  // Обработка загрузки PDF
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-  };
-
-  // Переход на следующую страницу
-  const goToNextPage = () => {
-    if (numPages && pageNumber < numPages) {
-      setPageNumber(pageNumber + 1);
-      saveReadingProgress(pageNumber + 1);
-    }
-  };
-
-  // Переход на предыдущую страницу
-  const goToPrevPage = () => {
-    if (pageNumber > 1) {
-      setPageNumber(pageNumber - 1);
-      saveReadingProgress(pageNumber - 1);
-    }
-  };
-
-  // Изменение масштаба
-  const zoomIn = () => {
-    setScale(prevScale => Math.min(prevScale + 0.2, 2.0));
-  };
-
-  const zoomOut = () => {
-    setScale(prevScale => Math.max(prevScale - 0.2, 0.5));
-  };
-
-  // Переключение в полноэкранный режим
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-        setIsFullscreen(false);
-      }
-    }
-  };
-
-  // Сохранение прогресса чтения
-  const saveReadingProgress = (page: number) => {
-    // В реальном приложении здесь будет API-запрос для сохранения прогресса
-    console.log(`Сохранен прогресс чтения для книги ${bookId}: страница ${page}`);
-  };
-
-  // Добавление/удаление из избранного
-  const toggleFavorite = () => {
-    // В реальном приложении здесь будет API-запрос
-    setIsFavorite(!isFavorite);
-    message.success(isFavorite ? 'Книга удалена из избранного' : 'Книга добавлена в избранное');
-  };
-
-  // Генерация списка страниц для навигации
-  const renderPageList = () => {
-    if (!numPages) return null;
-    
-    const pages = [];
-    for (let i = 1; i <= numPages; i++) {
-      pages.push(
-        <List.Item 
-          key={i} 
-          onClick={() => { setPageNumber(i); saveReadingProgress(i); }}
-          style={{ 
-            cursor: 'pointer',
-            backgroundColor: pageNumber === i ? '#e6f7ff' : 'transparent',
-            padding: '8px 16px'
-          }}
-        >
-          <Text strong={pageNumber === i}>Страница {i}</Text>
-        </List.Item>
-      );
-    }
-    return pages;
-  };
-
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!book) {
-    return <Empty description="Книга не найдена" />;
-  }
+  }, [isAuthenticated, navigate]);
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+    <div style={{ 
+      backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      minHeight: 'calc(100vh - 64px)',
+      width: '100%',
+      padding: '40px 0'
+    }}>
+      <div style={{ 
+        background: 'white', 
+        padding: '16px 24px', 
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 24px',
-        backgroundColor: '#fff',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        marginBottom: '20px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Button 
-            icon={<ArrowLeftOutlined />} 
+            type="text" 
             onClick={() => navigate(`/books/${bookId}`)}
             style={{ marginRight: '16px' }}
           >
-            Назад
+            <AiOutlineArrowLeft size={18} /> Назад
           </Button>
-          
-          <Button 
-            icon={<MenuOutlined />} 
-            onClick={() => setDrawerVisible(true)}
-            style={{ marginRight: '16px' }}
-          >
-            Оглавление
+          <h2 style={{ margin: 0 }}>Просмотр книги {bookId}</h2>
+        </div>
+        <div>
+          <Button type="text" style={{ marginRight: '8px' }}>
+            <AiOutlineZoomIn size={18} />
           </Button>
-          
-          <div>
-            <Title level={5} style={{ margin: 0 }}>{book.title}</Title>
-            <Text type="secondary">{book.author}</Text>
-          </div>
+          <Button type="text" style={{ marginRight: '8px' }}>
+            <AiOutlineZoomOut size={18} />
+          </Button>
+          <Button type="text" style={{ marginRight: '8px' }}>
+            <AiOutlineFullscreen size={18} />
+          </Button>
+          <Button type="text">
+            <AiOutlineHeart size={18} />
+          </Button>
         </div>
-        
-        <Space>
-          <Button icon={<ZoomOutOutlined />} onClick={zoomOut} />
-          <Button icon={<ZoomInOutlined />} onClick={zoomIn} />
-          <Button icon={<FullscreenOutlined />} onClick={toggleFullscreen} />
-          <Button 
-            icon={isFavorite ? <HeartFilled /> : <HeartOutlined />} 
-            onClick={toggleFavorite}
-          />
-          <Button
-            icon={<InfoCircleOutlined />}
-            onClick={() => navigate(`/books/${bookId}`)}
-          />
-        </Space>
-      </Header>
-      
-      <Content style={{ 
-        backgroundColor: '#f0f2f5',
-        padding: '24px',
-        overflow: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center'
-      }}>
-        <div style={{ 
-          backgroundColor: '#fff', 
-          padding: '24px', 
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          marginBottom: '16px'
-        }}>
-          <Document
-            file={book.fileUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={<Spin />}
-            error={<div>Не удалось загрузить PDF. Пожалуйста, попробуйте позже.</div>}
-          >
-            <Page 
-              pageNumber={pageNumber} 
-              scale={scale}
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-            />
-          </Document>
-        </div>
-        
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+      </div>
+
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        style={{ 
           width: '100%', 
-          maxWidth: '600px', 
-          marginTop: '16px' 
-        }}>
-          <Button 
-            onClick={goToPrevPage}
-            disabled={pageNumber <= 1}
-            size="large"
-          >
-            Предыдущая
-          </Button>
-          
-          <div style={{ textAlign: 'center' }}>
-            <Text>Страница {pageNumber} из {numPages || '?'}</Text>
-            <br />
-            <Slider
-              min={1}
-              max={numPages || 1}
-              value={pageNumber}
-              onChange={(value) => { setPageNumber(value); saveReadingProgress(value); }}
-              style={{ width: '200px', margin: '0 16px' }}
-            />
-          </div>
-          
-          <Button 
-            onClick={goToNextPage}
-            disabled={numPages !== null && pageNumber >= numPages}
-            size="large"
-          >
-            Следующая
-          </Button>
-        </div>
-      </Content>
-      
-      <Drawer
-        title="Оглавление"
-        placement="left"
-        width={300}
-        onClose={() => setDrawerVisible(false)}
-        open={drawerVisible}
-        extra={
-          <Button icon={<CloseOutlined />} onClick={() => setDrawerVisible(false)} />
-        }
+          maxWidth: '1200px', 
+          margin: '0 auto', 
+          padding: '0 16px' 
+        }}
       >
-        <List>
-          {renderPageList()}
-        </List>
-      </Drawer>
-    </Layout>
+        <motion.div variants={slideUp}>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '12px', 
+            padding: '32px', 
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            marginBottom: '40px'
+          }}>
+            <Typography level={2} style={{ marginBottom: '20px', textAlign: 'center' }}>
+              Функционал чтения в разработке
+            </Typography>
+
+            <div style={{ 
+              border: '1px solid #eee', 
+              borderRadius: '8px', 
+              padding: '30px', 
+              minHeight: '500px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              background: '#f9f9f9'
+            }}>
+              <Typography type="paragraph" style={{ marginBottom: '20px', textAlign: 'center' }}>
+                Для просмотра полной версии PDF-документа необходимо авторизоваться и перейти к полной версии страницы.
+              </Typography>
+
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                <Button type="primary" onClick={() => navigate(`/books/${bookId}`)}>
+                  Вернуться к информации о книге
+                </Button>
+              </div>
+            </div>
+
+            <div style={{ 
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '20px',
+              borderTop: '1px solid #eee',
+              paddingTop: '20px'
+            }}>
+              <Button type="default" onClick={() => {}}>
+                Предыдущая страница
+              </Button>
+              <div>
+                Страница 1 из 10
+              </div>
+              <Button type="default" onClick={() => {}}>
+                Следующая страница
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </div>
   );
 };
 

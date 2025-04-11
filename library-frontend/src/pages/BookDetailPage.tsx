@@ -1,36 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { 
-  Typography, 
-  Row, 
-  Col, 
-  Card,
-  Divider, 
-  Spin, 
-  Empty, 
-  Breadcrumb,
-  Button,
-  Tag,
-  Rate,
-  Tabs,
-  Space,
-  message
-} from 'antd';
-import { 
-  ArrowLeftOutlined, 
-  BookOutlined, 
-  HeartOutlined, 
-  HeartFilled,
-  ReadOutlined, 
-  DownloadOutlined, 
-  ShareAltOutlined,
-  UserOutlined
-} from '@ant-design/icons';
+import { Typography, Row, Col, Card, Divider, Spin, Empty, Breadcrumb, Button, Tag, Tabs, TabPane, Rate, Space, message } from '../components/common';
 import { motion } from 'framer-motion';
 import { useAppSelector } from '../hooks/reduxHooks';
+import { FiArrowLeft, FiBook, FiHeart, FiDownload, FiShare2, FiUser } from 'react-icons/fi';
+// Потребуется установить библиотеку react-icons: npm install react-icons
 
-const { Title, Paragraph, Text } = Typography;
-const { TabPane } = Tabs;
+const { Title, Text, Paragraph } = Typography;
 
 interface BookDetail {
   id: number;
@@ -144,7 +120,7 @@ const BookDetailPage = () => {
 
       <div style={{ marginBottom: '16px' }}>
         <Link to="/books">
-          <ArrowLeftOutlined /> Назад к списку книг
+          <FiArrowLeft size={20} /> Назад к списку книг
         </Link>
       </div>
 
@@ -162,7 +138,7 @@ const BookDetailPage = () => {
             <div style={{ marginTop: '24px' }}>
               <Button 
                 type="primary" 
-                icon={<ReadOutlined />} 
+                icon={<FiBook size={20} />} 
                 size="large" 
                 block
                 onClick={startReading}
@@ -172,7 +148,7 @@ const BookDetailPage = () => {
               </Button>
               
               <Button 
-                icon={isFavorite ? <HeartFilled /> : <HeartOutlined />}
+                icon={isFavorite ? <FiHeart size={20} fill="red" /> : <FiHeart size={20} />}
                 size="large"
                 block
                 onClick={toggleFavorite}
@@ -182,7 +158,7 @@ const BookDetailPage = () => {
               </Button>
               
               <Button 
-                icon={<DownloadOutlined />}
+                icon={<FiDownload size={20} />}
                 size="large"
                 block
                 style={{ marginBottom: '12px' }}
@@ -263,8 +239,8 @@ const BookDetailPage = () => {
           <Divider />
           
           <Space>
-            <Button icon={<ShareAltOutlined />}>Поделиться</Button>
-            <Button icon={<UserOutlined />}>Другие книги автора</Button>
+            <Button icon={<FiShare2 size={20} />}>Поделиться</Button>
+            <Button icon={<FiUser size={20} />}>Другие книги автора</Button>
           </Space>
         </Col>
       </Row>

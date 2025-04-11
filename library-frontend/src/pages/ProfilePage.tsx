@@ -1,38 +1,35 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Typography, 
-  Row, 
-  Col, 
-  Card, 
-  Avatar, 
-  Tabs, 
-  List, 
-  Tag, 
-  Divider, 
-  Breadcrumb,
-  Button,
-  Empty,
-  Spin,
-  message,
-  Statistic,
-  Progress
-} from 'antd';
-import { 
-  UserOutlined, 
-  BookOutlined, 
-  HeartOutlined, 
-  HistoryOutlined,
-  SettingOutlined,
-  LogoutOutlined,
-  EditOutlined
-} from '@ant-design/icons';
 import { motion } from 'framer-motion';
+import { FiUser, FiBook, FiHeart, FiClock, FiSettings, FiLogOut, FiEdit } from 'react-icons/fi';
 import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
 import { logout } from '../store/slices/authSlice';
 
+// Импортируем наши пользовательские компоненты
+import Typography from '../components/common/Typography';
+import Row from '../components/common/Row';
+import Col from '../components/common/Col';
+import Card from '../components/common/Card';
+import Avatar from '../components/common/Avatar';
+import Tabs, { TabPane } from '../components/common/Tabs';
+import List from '../components/common/List';
+import Tag from '../components/common/Tag';
+import Divider from '../components/common/Divider';
+import Breadcrumb from '../components/common/Breadcrumb';
+import Button from '../components/common/Button';
+import Empty from '../components/common/Empty';
+import Spin from '../components/common/Spin';
+import message from '../components/common/message';
+import Statistic from '../components/common/Statistic';
+import Progress from '../components/common/Progress';
+
 const { Title, Paragraph, Text } = Typography;
-const { TabPane } = Tabs;
+
+// Интерфейс для категории
+interface Category {
+  id: number;
+  name: string;
+}
 
 interface FavoriteBook {
   id: number;
@@ -40,7 +37,7 @@ interface FavoriteBook {
   author: string;
   coverImageUrl: string;
   addedDate: string;
-  categories: { id: number; name: string }[];
+  categories: Category[];
 }
 
 interface ReadingHistoryItem {
@@ -234,7 +231,7 @@ const ProfilePage = () => {
         <Col xs={24} md={8}>
           <Card style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '24px' }}>
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <Avatar size={100} icon={<UserOutlined />} />
+              <Avatar size={100} icon={<FiUser />} />
               <Title level={3} style={{ marginTop: '16px', marginBottom: '4px' }}>
                 {user.firstName} {user.lastName}
               </Title>
@@ -264,7 +261,7 @@ const ProfilePage = () => {
             <div>
               <Button
                 type="primary"
-                icon={<EditOutlined />}
+                icon={<FiEdit />}
                 style={{ marginBottom: '12px', width: '100%' }}
                 onClick={() => navigate('/profile/edit')}
               >
@@ -273,7 +270,7 @@ const ProfilePage = () => {
               
               <Button
                 danger
-                icon={<LogoutOutlined />}
+                icon={<FiLogOut />}
                 style={{ width: '100%' }}
                 onClick={handleLogout}
               >
@@ -292,21 +289,21 @@ const ProfilePage = () => {
                 <Statistic 
                   title="Книг в избранном" 
                   value={favorites.length} 
-                  prefix={<HeartOutlined />} 
+                  prefix={<FiHeart />} 
                 />
               </Col>
               <Col span={12}>
                 <Statistic 
                   title="Прочитано книг" 
                   value={readingHistory.filter(item => item.isCompleted).length} 
-                  prefix={<BookOutlined />} 
+                  prefix={<FiBook />} 
                 />
               </Col>
               <Col span={24}>
                 <Statistic 
                   title="В процессе чтения" 
                   value={readingHistory.filter(item => !item.isCompleted).length} 
-                  prefix={<HistoryOutlined />} 
+                  prefix={<FiClock />} 
                 />
               </Col>
             </Row>
@@ -316,7 +313,7 @@ const ProfilePage = () => {
                 <Divider />
                 <Button
                   type="primary"
-                  icon={<SettingOutlined />}
+                  icon={<FiSettings />}
                   style={{ width: '100%' }}
                   onClick={() => navigate('/admin')}
                 >
@@ -347,7 +344,7 @@ const ProfilePage = () => {
                         onClick={() => setActiveTab('favorites')}
                       >
                         <Card.Meta
-                          avatar={<Avatar icon={<HeartOutlined />} style={{ backgroundColor: '#ff4d4f' }} />}
+                          avatar={<Avatar icon={<FiHeart />} style={{ backgroundColor: '#ff4d4f' }} />}
                           title="Избранные книги"
                           description="Просмотр книг, добавленных в избранное"
                         />
@@ -361,7 +358,7 @@ const ProfilePage = () => {
                         onClick={() => setActiveTab('history')}
                       >
                         <Card.Meta
-                          avatar={<Avatar icon={<HistoryOutlined />} style={{ backgroundColor: '#1890ff' }} />}
+                          avatar={<Avatar icon={<FiClock />} style={{ backgroundColor: '#1890ff' }} />}
                           title="История чтения"
                           description="Просмотр ваших прочитанных и текущих книг"
                         />
@@ -371,7 +368,7 @@ const ProfilePage = () => {
                 </div>
               </TabPane>
               
-              <TabPane tab={<span><HeartOutlined /> Избранное</span>} key="favorites">
+              <TabPane tab={<span><FiHeart /> Избранное</span>} key="favorites">
                 <div style={{ minHeight: '300px' }}>
                   {loadingFavorites ? (
                     <div style={{ textAlign: 'center', padding: '40px 0' }}>
@@ -418,7 +415,7 @@ const ProfilePage = () => {
                                   <Text type="secondary">Добавлено: {formatDate(item.addedDate)}</Text>
                                 </div>
                                 <div style={{ marginTop: '4px' }}>
-                                  {item.categories.map(category => (
+                                  {item.categories.map((category: Category) => (
                                     <Tag color="blue" key={category.id} style={{ marginRight: '4px' }}>
                                       {category.name}
                                     </Tag>
@@ -434,7 +431,7 @@ const ProfilePage = () => {
                 </div>
               </TabPane>
               
-              <TabPane tab={<span><HistoryOutlined /> История чтения</span>} key="history">
+              <TabPane tab={<span><FiClock /> История чтения</span>} key="history">
                 <div style={{ minHeight: '300px' }}>
                   {loadingHistory ? (
                     <div style={{ textAlign: 'center', padding: '40px 0' }}>

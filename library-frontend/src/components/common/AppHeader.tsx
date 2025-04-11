@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Menu, Button, Space } from 'antd';
-import { 
-  HomeOutlined, 
-  BookOutlined, 
-  UserOutlined, 
-  LoginOutlined, 
-  LogoutOutlined
-} from '@ant-design/icons';
 import { useAppSelector, useAppDispatch } from '../../hooks/reduxHooks';
 import { logout } from '../../store/slices/authSlice';
-
-const { Header } = Layout;
+import { AiOutlineHome, AiOutlineBook, AiOutlineUser, AiOutlineLogin, AiOutlineLogout } from 'react-icons/ai';
 
 const AppHeader = () => {
   const navigate = useNavigate();
@@ -26,77 +17,149 @@ const AppHeader = () => {
   };
 
   return (
-    <Header style={{ 
+    <header className="app-header" style={{ 
       position: 'fixed', 
-      zIndex: 1, 
+      zIndex: 999, 
       width: '100%', 
       display: 'flex', 
       alignItems: 'center',
-      justifyContent: 'space-between'
+      justifyContent: 'space-between',
+      background: 'var(--primary-color, #3769f5)',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+      padding: '0 20px',
+      height: '64px',
+      color: 'white',
+      top: 0,
+      left: 0,
+      right: 0,
+      margin: 0
     }}>
       <div className="logo" style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>
         <Link to="/" style={{ color: 'white' }}>Онлайн-библиотека</Link>
       </div>
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          selectedKeys={[selectedKey]}
-          onSelect={({ key }) => setSelectedKey(key)}
-          style={{ flex: 1, minWidth: 200 }}
-        >
-          <Menu.Item key="home" icon={<HomeOutlined />}>
-            <Link to="/">Главная</Link>
-          </Menu.Item>
-          <Menu.Item key="books" icon={<BookOutlined />}>
-            <Link to="/books">Книги</Link>
-          </Menu.Item>
-          <Menu.Item key="categories" icon={<BookOutlined />}>
-            <Link to="/categories">Категории</Link>
-          </Menu.Item>
-        </Menu>
+        <nav className="main-nav" style={{ display: 'flex', marginRight: '20px' }}>
+          <Link 
+            to="/" 
+            className={`nav-link ${selectedKey === 'home' ? 'active' : ''}`}
+            onClick={() => setSelectedKey('home')}
+            style={{ 
+              color: 'white', 
+              margin: '0 10px',
+              padding: '5px 10px',
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: '4px',
+              backgroundColor: selectedKey === 'home' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+            }}
+          >
+            <AiOutlineHome style={{ marginRight: '5px' }} /> Главная
+          </Link>
+          <Link 
+            to="/books" 
+            className={`nav-link ${selectedKey === 'books' ? 'active' : ''}`}
+            onClick={() => setSelectedKey('books')}
+            style={{ 
+              color: 'white', 
+              margin: '0 10px',
+              padding: '5px 10px',
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: '4px',
+              backgroundColor: selectedKey === 'books' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+            }}
+          >
+            <AiOutlineBook style={{ marginRight: '5px' }} /> Книги
+          </Link>
+          <Link 
+            to="/categories" 
+            className={`nav-link ${selectedKey === 'categories' ? 'active' : ''}`}
+            onClick={() => setSelectedKey('categories')}
+            style={{ 
+              color: 'white', 
+              margin: '0 10px',
+              padding: '5px 10px',
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: '4px',
+              backgroundColor: selectedKey === 'categories' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+            }}
+          >
+            <AiOutlineBook style={{ marginRight: '5px' }} /> Категории
+          </Link>
+        </nav>
         
-        <Space>
+        <div className="auth-buttons" style={{ display: 'flex', gap: '10px' }}>
           {isAuthenticated ? (
             <>
-              <Button 
-                type="text" 
-                icon={<UserOutlined />} 
-                style={{ color: 'white' }}
+              <button 
+                className="btn btn-text"
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '6px 12px'
+                }}
                 onClick={() => navigate('/profile')}
               >
-                Профиль
-              </Button>
-              <Button 
-                type="text" 
-                icon={<LogoutOutlined />} 
-                style={{ color: 'white' }}
+                <AiOutlineUser style={{ marginRight: '5px' }} /> Профиль
+              </button>
+              <button 
+                className="btn btn-text"
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '6px 12px'
+                }}
                 onClick={handleLogout}
               >
-                Выйти
-              </Button>
+                <AiOutlineLogout style={{ marginRight: '5px' }} /> Выйти
+              </button>
             </>
           ) : (
             <>
-              <Button 
-                type="text" 
-                icon={<LoginOutlined />} 
-                style={{ color: 'white' }}
+              <button 
+                className="btn btn-text"
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '6px 12px'
+                }}
                 onClick={() => navigate('/login')}
               >
-                Войти
-              </Button>
-              <Button 
-                type="primary" 
+                <AiOutlineLogin style={{ marginRight: '5px' }} /> Войти
+              </button>
+              <button 
+                className="btn btn-primary"
+                style={{ 
+                  background: '#fff', 
+                  border: 'none',
+                  color: '#3769f5',
+                  fontWeight: 'bold',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  padding: '6px 12px'
+                }}
                 onClick={() => navigate('/register')}
               >
                 Регистрация
-              </Button>
+              </button>
             </>
           )}
-        </Space>
+        </div>
       </div>
-    </Header>
+    </header>
   );
 };
 

@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
+// Row props
 interface RowProps {
-  children: React.ReactNode;
-  gutter?: number | [number, number];
+  children: ReactNode;
+  gutter?: number | [number, number]; // [horizontal, vertical]
+  align?: 'top' | 'middle' | 'bottom';
+  justify?: 'start' | 'end' | 'center' | 'space-around' | 'space-between';
   className?: string;
   style?: React.CSSProperties;
 }
 
+// Col props
 interface ColProps {
-  children: React.ReactNode;
+  children: ReactNode;
   span?: number;
   xs?: number;
   sm?: number;
@@ -19,50 +23,49 @@ interface ColProps {
   style?: React.CSSProperties;
 }
 
+// Row component
 export const Row: React.FC<RowProps> = ({
   children,
   gutter = 0,
+  align = 'top',
+  justify = 'start',
   className = '',
   style
 }) => {
-  const [horizontalGutter, verticalGutter] = Array.isArray(gutter) 
-    ? gutter 
-    : [gutter, gutter];
+  const [horizontalGap, verticalGap] = Array.isArray(gutter) ? gutter : [gutter, 0];
+  
+  const rowStyle: React.CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    marginLeft: horizontalGap ? -horizontalGap / 2 : 0,
+    marginRight: horizontalGap ? -horizontalGap / 2 : 0,
+    ...getAlignStyle(align),
+    ...getJustifyStyle(justify),
+    ...style
+  };
 
   return (
-    <div
-      className={`custom-row ${className}`}
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        marginLeft: `-${horizontalGutter / 2}px`,
-        marginRight: `-${horizontalGutter / 2}px`,
-        marginTop: `-${verticalGutter / 2}px`,
-        marginBottom: `-${verticalGutter / 2}px`,
-        ...style
-      }}
-    >
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement<{ style?: React.CSSProperties }>(child)) {
-          return React.cloneElement(child, {
-            style: {
-              ...child.props.style,
-              paddingLeft: `${horizontalGutter / 2}px`,
-              paddingRight: `${horizontalGutter / 2}px`,
-              paddingTop: `${verticalGutter / 2}px`,
-              paddingBottom: `${verticalGutter / 2}px`
-            }
-          });
-        }
-        return child;
+    <div className={`row ${className}`} style={rowStyle}>
+      {React.Children.map(children, child => {
+        if (!React.isValidElement(child)) return child;
+        
+        return React.cloneElement(child, {
+          style: {
+            ...(child.props.style || {}),
+            paddingLeft: horizontalGap ? horizontalGap / 2 : 0,
+            paddingRight: horizontalGap ? horizontalGap / 2 : 0,
+            ...(verticalGap ? { paddingTop: verticalGap / 2, paddingBottom: verticalGap / 2 } : {})
+          }
+        });
       })}
     </div>
   );
 };
 
+// Col component
 export const Col: React.FC<ColProps> = ({
   children,
-  span = 24,
+  span,
   xs,
   sm,
   md,
@@ -71,36 +74,58 @@ export const Col: React.FC<ColProps> = ({
   className = '',
   style
 }) => {
-  const getWidth = (size?: number) => {
-    if (!size) return undefined;
-    return `${(size / 24) * 100}%`;
+  // Calculate responsive width
+  const getColumnWidth = () => {
+    const baseWidth = span ? (span / 24) * 100 : 100;
+    return `${baseWidth}%`;
+  };
+
+  const colStyle: React.CSSProperties = {
+    boxSizing: 'border-box',
+    position: 'relative',
+    width: getColumnWidth(),
+    ...getResponsiveStyles(xs, sm, md, lg, xl),
+    ...style
   };
 
   return (
-    <div
-      className={`custom-col ${className}`}
-      style={{
-        width: getWidth(span),
-        flex: span === 0 ? 'none' : undefined,
-        ...style,
-        '@media (max-width: 576px)': {
-          width: getWidth(xs)
-        },
-        '@media (min-width: 576px)': {
-          width: getWidth(sm)
-        },
-        '@media (min-width: 768px)': {
-          width: getWidth(md)
-        },
-        '@media (min-width: 992px)': {
-          width: getWidth(lg)
-        },
-        '@media (min-width: 1200px)': {
-          width: getWidth(xl)
-        }
-      }}
-    >
+    <div className={`col ${className}`} style={colStyle}>
       {children}
     </div>
   );
-}; 
+};
+
+// Helper functions
+function getAlignStyle(align: string): React.CSSProperties {
+  switch (align) {
+    case 'middle':
+      return { alignItems: 'center' };
+    case 'bottom':
+      return { alignItems: 'flex-end' };
+    case 'top':
+    default:
+      return { alignItems: 'flex-start' };
+  }
+}
+
+function getJustifyStyle(justify: string): React.CSSProperties {
+  switch (justify) {
+    case 'end':
+      return { justifyContent: 'flex-end' };
+    case 'center':
+      return { justifyContent: 'center' };
+    case 'space-around':
+      return { justifyContent: 'space-around' };
+    case 'space-between':
+      return { justifyContent: 'space-between' };
+    case 'start':
+    default:
+      return { justifyContent: 'flex-start' };
+  }
+}
+
+function getResponsiveStyles(xs?: number, sm?: number, md?: number, lg?: number, xl?: number): React.CSSProperties {
+  // In a real implementation, this would add media queries via CSS-in-JS
+  // For simplicity, we're just returning an empty object
+  return {};
+} 

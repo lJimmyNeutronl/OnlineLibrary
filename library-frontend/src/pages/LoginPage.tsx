@@ -1,10 +1,11 @@
-import { Form, Input, Button, Card, message } from 'antd';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { login } from '../store/slices/authSlice';
 import { AppDispatch } from '../store';
 import { motion } from 'framer-motion';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import Button from '../components/common/Button';
+import { AiOutlineUser, AiOutlineLock } from 'react-icons/ai';
 
 interface LoginFormValues {
   email: string;
@@ -24,14 +25,19 @@ const slideUp = {
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const onFinish = async (values: LoginFormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
     try {
-      await dispatch(login(values)).unwrap();
-      message.success('Успешный вход');
+      await dispatch(login({ email, password })).unwrap();
       navigate('/');
     } catch (error) {
-      message.error('Ошибка входа. Проверьте email и пароль');
+      setError('Ошибка входа. Проверьте email и пароль');
     }
   };
 
@@ -52,64 +58,119 @@ const LoginPage = () => {
         style={{ width: '100%', maxWidth: '400px', padding: '0 16px' }}
       >
         <motion.div variants={slideUp}>
-          <Card 
-            title="Вход в систему" 
-            bordered={false}
-            className="card-hover"
+          <div 
             style={{ 
+              background: 'white',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               borderRadius: '12px',
+              padding: '24px',
             }}
           >
-            <Form
-              name="login"
-              initialValues={{ remember: true }}
-              onFinish={onFinish}
-              layout="vertical"
-              size="large"
-            >
-              <Form.Item
-                label="Email"
-                name="email"
-                rules={[
-                  { required: true, message: 'Пожалуйста, введите email' },
-                  { type: 'email', message: 'Введите корректный email' }
-                ]}
-              >
-                <Input prefix={<UserOutlined />} placeholder="Ваш email" />
-              </Form.Item>
-
-              <Form.Item
-                label="Пароль"
-                name="password"
-                rules={[{ required: true, message: 'Пожалуйста, введите пароль' }]}
-              >
-                <Input.Password prefix={<LockOutlined />} placeholder="Ваш пароль" />
-              </Form.Item>
-
-              <Form.Item style={{ marginBottom: '12px' }}>
+            <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>Вход в систему</h2>
+            
+            {error && (
+              <div style={{ 
+                padding: '10px', 
+                backgroundColor: '#fff2f0', 
+                border: '1px solid #ffccc7',
+                color: '#f5222d', 
+                borderRadius: '4px',
+                marginBottom: '16px'
+              }}>
+                {error}
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 500 
+                }}>
+                  Email
+                </label>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '0 11px'
+                }}>
+                  <AiOutlineUser style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  <input 
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="Ваш email"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '12px 11px',
+                      width: '100%',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px',
+                  fontWeight: 500
+                }}>
+                  Пароль
+                </label>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '0 11px'
+                }}>
+                  <AiOutlineLock style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  <input 
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Ваш пароль"
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '12px 11px',
+                      width: '100%',
+                      fontSize: '16px'
+                    }}
+                  />
+                </div>
+              </div>
+              
                 <Button 
                   type="primary" 
-                  htmlType="submit" 
-                  block
-                  style={{ height: '45px', borderRadius: '8px' }}
+                style={{ 
+                  width: '100%',
+                  height: '45px', 
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
                 >
                   Войти
                 </Button>
-              </Form.Item>
 
-              <Form.Item>
+              <div style={{ marginTop: '16px', textAlign: 'center' }}>
                 <Button 
                   type="link" 
                   onClick={() => navigate('/register')} 
-                  block
-                  style={{ color: '#4096ff' }}
+                  style={{ color: '#3769f5' }}
                 >
                   Нет аккаунта? Зарегистрироваться
                 </Button>
-              </Form.Item>
-            </Form>
-          </Card>
+              </div>
+            </form>
+          </div>
         </motion.div>
       </motion.div>
     </div>

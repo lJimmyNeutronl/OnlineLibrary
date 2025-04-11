@@ -9,11 +9,11 @@ import {
   Spin, 
   Empty, 
   Breadcrumb,
-  Pagination,
   Tag,
-  Rate
-} from 'antd';
-import { ArrowLeftOutlined, BookOutlined } from '@ant-design/icons';
+  Rate,
+  Pagination
+} from '../components/common';
+import { FiArrowLeft, FiBook } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
 const { Title, Paragraph, Text } = Typography;
@@ -125,7 +125,7 @@ const CategoryBooksPage = () => {
 
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
         <Link to="/categories" style={{ marginRight: '16px' }}>
-          <ArrowLeftOutlined /> Назад к категориям
+          <FiArrowLeft size={20} /> Назад к категориям
         </Link>
         <Title level={2} style={{ margin: 0 }}>
           {category?.name || 'Загрузка...'}
@@ -201,10 +201,9 @@ const CategoryBooksPage = () => {
           <div style={{ textAlign: 'center', marginTop: '32px' }}>
             <Pagination
               current={currentPage}
-              pageSize={pageSize}
               total={totalBooks}
+              pageSize={pageSize}
               onChange={handlePageChange}
-              showSizeChanger={false}
             />
           </div>
         </>

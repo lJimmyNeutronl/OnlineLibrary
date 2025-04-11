@@ -1,66 +1,132 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { ReactNode } from 'react';
 
-interface CardProps {
-  children: React.ReactNode;
-  cover?: React.ReactNode;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
+interface CardMetaProps {
+  avatar?: ReactNode;
+  title?: ReactNode;
+  description?: ReactNode;
   className?: string;
   style?: React.CSSProperties;
-  hoverable?: boolean;
 }
 
-const Card: React.FC<CardProps> = ({
-  children,
-  cover,
+const CardMeta: React.FC<CardMetaProps> = ({
+  avatar,
   title,
   description,
   className = '',
-  style,
-  hoverable = false
+  style = {}
 }) => {
   return (
-    <motion.div
-      whileHover={hoverable ? { y: -5 } : {}}
-      className={`custom-card ${className}`}
-      style={{
-        background: 'white',
-        borderRadius: 'var(--border-radius)',
-        boxShadow: 'var(--shadow-sm)',
-        overflow: 'hidden',
-        transition: 'all 0.3s ease',
-        ...style
-      }}
-    >
-      {cover && (
-        <div className="card-cover" style={{ position: 'relative' }}>
-          {cover}
+    <div className={`card-meta ${className}`} style={{ display: 'flex', ...style }}>
+      {avatar && (
+        <div className="card-meta-avatar" style={{ marginRight: '16px' }}>
+          {avatar}
         </div>
       )}
-      <div className="card-content" style={{ padding: '16px' }}>
+      <div className="card-meta-detail">
         {title && (
-          <div className="card-title" style={{ 
-            fontSize: '16px',
-            fontWeight: 500,
-            marginBottom: '8px'
+          <div className="card-meta-title" style={{ 
+            fontSize: '16px', 
+            fontWeight: 'bold', 
+            marginBottom: description ? '4px' : 0, 
+            color: 'rgba(0, 0, 0, 0.85)'
           }}>
             {title}
           </div>
         )}
         {description && (
+          <div className="card-meta-description" style={{ 
+            fontSize: '14px', 
+            color: 'rgba(0, 0, 0, 0.45)'
+          }}>
+            {description}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface CardProps {
+  children?: ReactNode;
+  title?: string | ReactNode;
+  description?: string | ReactNode;
+  cover?: ReactNode;
+  hoverable?: boolean;
+  style?: React.CSSProperties;
+  className?: string;
+  onClick?: () => void;
+}
+
+// Расширяем тип компонента, чтобы включить Meta как дочерний компонент
+const Card: React.FC<CardProps> & {
+  Meta: React.FC<CardMetaProps>;
+} = ({
+  children,
+  title,
+  description,
+  cover,
+  hoverable = false,
+  style,
+  className = '',
+  onClick
+}) => {
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+    overflow: 'hidden',
+    transition: 'all 0.3s ease',
+    ...(hoverable && {
+      cursor: 'pointer',
+      ':hover': {
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        transform: 'translateY(-5px)'
+      }
+    }),
+    ...style
+  };
+
+  return (
+    <div 
+      className={`card ${hoverable ? 'card-hoverable' : ''} ${className}`}
+      style={cardStyle}
+      onClick={onClick}
+    >
+      {cover && (
+        <div className="card-cover">
+          {cover}
+        </div>
+      )}
+      
+      <div className="card-content" style={{ padding: '16px' }}>
+        {title && (
+          <div className="card-title" style={{ 
+            fontSize: '16px',
+            fontWeight: 'bold',
+            marginBottom: description ? '8px' : '0',
+            color: 'rgba(0, 0, 0, 0.85)'
+          }}>
+            {title}
+          </div>
+        )}
+        
+        {description && (
           <div className="card-description" style={{ 
-            color: 'var(--text-light)',
             fontSize: '14px',
+            color: 'rgba(0, 0, 0, 0.65)',
             marginBottom: '16px'
           }}>
             {description}
           </div>
         )}
+        
         {children}
       </div>
-    </motion.div>
+    </div>
   );
 };
+
+// Присваиваем Meta к Card
+Card.Meta = CardMeta;
 
 export default Card; 
