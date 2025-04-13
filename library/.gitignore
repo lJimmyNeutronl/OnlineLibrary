@@ -32,5 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 
-.task_ai.md
-.task.md
+### Project Specific ###
+task_ai.md
+task.md
