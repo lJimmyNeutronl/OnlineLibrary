@@ -25,7 +25,7 @@ const CardMeta: React.FC<CardMetaProps> = ({
       <div className="card-meta-detail">
         {title && (
           <div className="card-meta-title" style={{ 
-            fontSize: '16px', 
+            fontSize: '18px', 
             fontWeight: 'bold', 
             marginBottom: description ? '4px' : 0, 
             color: 'rgba(0, 0, 0, 0.85)'
@@ -35,8 +35,8 @@ const CardMeta: React.FC<CardMetaProps> = ({
         )}
         {description && (
           <div className="card-meta-description" style={{ 
-            fontSize: '14px', 
-            color: 'rgba(0, 0, 0, 0.45)'
+            fontSize: '15px', 
+            color: 'rgba(0, 0, 0, 0.65)'
           }}>
             {description}
           </div>
@@ -72,10 +72,16 @@ const Card: React.FC<CardProps> & {
 }) => {
   const cardStyle: React.CSSProperties = {
     backgroundColor: '#fff',
-    borderRadius: '8px',
+    borderRadius: '12px',
     boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
     overflow: 'hidden',
     transition: 'all 0.3s ease',
+    maxWidth: '260px',
+    margin: '0 auto',
+    border: '1px solid #eaeaea',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
     ...(hoverable && {
       cursor: 'pointer',
       ':hover': {
@@ -93,15 +99,17 @@ const Card: React.FC<CardProps> & {
       onClick={onClick}
     >
       {cover && (
-        <div className="card-cover">
+        <div className="card-cover" style={{ 
+          height: '250px'
+        }}>
           {cover}
         </div>
       )}
       
-      <div className="card-content" style={{ padding: '16px' }}>
+      <div className="card-content" style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {title && (
           <div className="card-title" style={{ 
-            fontSize: '16px',
+            fontSize: '18px',
             fontWeight: 'bold',
             marginBottom: description ? '8px' : '0',
             color: 'rgba(0, 0, 0, 0.85)'
@@ -112,7 +120,7 @@ const Card: React.FC<CardProps> & {
         
         {description && (
           <div className="card-description" style={{ 
-            fontSize: '14px',
+            fontSize: '15px',
             color: 'rgba(0, 0, 0, 0.65)',
             marginBottom: '16px'
           }}>

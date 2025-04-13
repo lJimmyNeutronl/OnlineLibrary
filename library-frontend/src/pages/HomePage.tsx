@@ -93,6 +93,7 @@ const HomePage = () => {
     { id: 1, title: 'Книга 1', author: 'Автор 1', cover: 'https://picsum.photos/200/300?random=1' },
     { id: 2, title: 'Книга 2', author: 'Автор 2', cover: 'https://picsum.photos/200/300?random=2' },
     { id: 3, title: 'Книга 3', author: 'Автор 3', cover: 'https://picsum.photos/200/300?random=3' },
+    { id: 4, title: 'Книга 4', author: 'Автор 4', cover: 'https://picsum.photos/200/300?random=4' },
   ];
 
   return (
@@ -110,12 +111,12 @@ const HomePage = () => {
         animate="animate"
         variants={floatAnimation}
         style={{
-          position: 'absolute',
-          width: '400px',
-          height: '400px',
-          top: '-150px',
-          right: '-100px',
-          zIndex: 0,
+        position: 'absolute',
+        width: '400px',
+        height: '400px',
+        top: '-150px',
+        right: '-100px',
+        zIndex: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -131,12 +132,12 @@ const HomePage = () => {
         animate="animate"
         variants={rotateAnimation}
         style={{
-          position: 'absolute',
-          width: '300px',
-          height: '300px',
-          bottom: '-100px',
-          left: '-100px',
-          zIndex: 0,
+        position: 'absolute',
+        width: '300px',
+        height: '300px',
+        bottom: '-100px',
+        left: '-100px',
+        zIndex: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -151,12 +152,12 @@ const HomePage = () => {
         animate="animate"
         variants={pulseAnimation}
         style={{
-          position: 'absolute',
-          width: '200px',
-          height: '200px',
-          top: '30%',
-          right: '10%',
-          zIndex: 0,
+        position: 'absolute',
+        width: '200px',
+        height: '200px',
+        top: '30%',
+        right: '10%',
+        zIndex: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -356,26 +357,48 @@ const HomePage = () => {
 
           {/* Новые поступления */}
           <div style={{ marginBottom: '40px' }}>
-            <Divider>
-              <Title level={3} style={{ margin: 0 }}>
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              margin: '40px 0 30px',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                flex: 1, 
+                height: '1px',
+                background: 'linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
+              }}></div>
+              <Title level={3} style={{ 
+                margin: '0 20px', 
+                background: 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 'bold',
+                letterSpacing: '0.5px'
+              }}>
                 Новые поступления
               </Title>
-            </Divider>
+              <div style={{ 
+                flex: 1, 
+                height: '1px',
+                background: 'linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
+              }}></div>
+            </div>
 
-            <Row gutter={[24, 24]}>
+            <Row gutter={[0, 4]}>
               {featuredBooks.map((book) => (
-                <Col xs={24} sm={12} md={8} key={book.id}>
-                  <motion.div 
-                    variants={slideUp} 
-                    whileHover={{ y: -5 }}
-                  >
+                <Col xs={24} sm={12} md={6} lg={6} key={book.id} style={{ padding: '0 2px' }}>
                     <Card
                       hoverable
                       cover={
                         <div style={{ 
-                          height: '220px', 
+                        width: '100%',
+                        height: '250px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
                           overflow: 'hidden',
-                          position: 'relative'
+                        borderBottom: '1px solid #f0f0f0'
                         }}>
                           <img 
                             alt={book.title} 
@@ -383,37 +406,18 @@ const HomePage = () => {
                             style={{ 
                               width: '100%', 
                               height: '100%', 
-                              objectFit: 'cover',
-                              transition: 'transform 0.3s ease'
-                            }}
-                          />
-                          <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%)',
-                            opacity: 0,
-                            transition: 'opacity 0.3s ease'
-                          }} />
+                            objectFit: 'cover'
+                          }}
+                        />
                         </div>
                       }
+                    className="new-arrival-card"
+                  >
+                    <Card.Meta
                       title={book.title}
                       description={book.author}
-                    >
-                      <Button 
-                        type="primary" 
-                        style={{ 
-                          margin: '0 16px 16px',
-                          width: 'calc(100% - 32px)',
-                          transition: 'all 0.3s ease'
-                        }}
-                      >
-                        Подробнее
-                      </Button>
+                    />
                     </Card>
-                  </motion.div>
                 </Col>
               ))}
             </Row>
@@ -421,14 +425,43 @@ const HomePage = () => {
 
           {/* Популярные категории */}
           <div style={{ marginBottom: '40px' }}>
-            <Divider>
-              <Title level={3} style={{ margin: 0 }}>
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              margin: '40px 0 30px',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                flex: 1, 
+                height: '1px',
+                background: 'linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
+              }}></div>
+              <Title level={3} style={{ 
+                margin: '0 20px', 
+                background: 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 'bold',
+                letterSpacing: '0.5px'
+              }}>
                 Популярные категории
               </Title>
-            </Divider>
+              <div style={{ 
+                flex: 1, 
+                height: '1px',
+                background: 'linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
+              }}></div>
+            </div>
 
-            <div style={{ textAlign: 'center' }}>
-              {['Фантастика', 'Детективы', 'Романы', 'Наука', 'История', 'Искусство'].map((category, index) => (
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
+              {[
+                { name: 'Фантастика', icon: <FaBookReader style={{ marginRight: '8px' }} /> },
+                { name: 'Детективы', icon: <FaGraduationCap style={{ marginRight: '8px' }} /> },
+                { name: 'Романы', icon: <FaFeatherAlt style={{ marginRight: '8px' }} /> },
+                { name: 'Наука', icon: <FaBook style={{ marginRight: '8px' }} /> },
+                { name: 'История', icon: <FaBookOpen style={{ marginRight: '8px' }} /> },
+                { name: 'Искусство', icon: <FaPencilAlt style={{ marginRight: '8px' }} /> }
+              ].map((category, index) => (
                 <motion.div
                   key={index}
                   whileHover={{ scale: 1.05 }}
@@ -437,17 +470,21 @@ const HomePage = () => {
                 >
                   <Button 
                     size="large" 
-                    icon={<Icon type="book" style={{ fontSize: '16px' }} />}
                     style={{ 
                       borderRadius: '20px',
-                      padding: '0 20px',
-                      background: 'rgba(55, 105, 245, 0.1)',
-                      border: 'none',
-                      color: '#3769f5',
-                      transition: 'all 0.3s ease'
+                      padding: '6px 20px',
+                      background: index === 5 ? 'rgba(142, 84, 233, 0.15)' : 'rgba(55, 105, 245, 0.08)',
+                      border: index === 5 ? '1px solid rgba(142, 84, 233, 0.3)' : '1px solid rgba(55, 105, 245, 0.2)',
+                      color: index === 5 ? '#8e54e9' : '#3769f5',
+                      transition: 'all 0.3s ease',
+                      height: '42px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      boxShadow: index === 5 ? '0 2px 8px rgba(142, 84, 233, 0.15)' : '0 2px 8px rgba(55, 105, 245, 0.05)'
                     }}
                   >
-                    {category}
+                    {category.icon} {category.name}
                   </Button>
                 </motion.div>
               ))}

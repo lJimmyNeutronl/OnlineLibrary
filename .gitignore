@@ -39,3 +39,6 @@ build/
 
 ### Application Properties ###
 **/application.properties
+
+### Cursor ###
+.cursor/

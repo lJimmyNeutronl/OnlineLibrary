@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../hooks/reduxHooks';
 import { logout } from '../../store/slices/authSlice';
-import { AiOutlineHome, AiOutlineBook, AiOutlineUser, AiOutlineLogin, AiOutlineLogout } from 'react-icons/ai';
+import { 
+  FiHome, 
+  FiBookOpen, 
+  FiGrid, 
+  FiUser, 
+  FiLogIn, 
+  FiLogOut 
+} from 'react-icons/fi';
 import logoImg from '../../assets/images/image.png';
 
 const AppHeader = () => {
@@ -10,11 +17,29 @@ const AppHeader = () => {
   const dispatch = useAppDispatch();
   const { token, user } = useAppSelector(state => state.auth);
   const isAuthenticated = !!token;
-  const [selectedKey, setSelectedKey] = useState('home');
 
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
+  };
+
+  // Общие стили для кнопок навигации
+  const navLinkStyle = {
+    color: 'white',
+    margin: '0 5px',
+    padding: '8px 12px',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: '8px',
+    fontSize: '16px',
+    transition: 'all 0.2s ease',
+    textDecoration: 'none'
+  };
+
+  // Общие стили для иконок навигации
+  const iconStyle = {
+    marginRight: '8px',
+    fontSize: '20px'
   };
 
   return (
@@ -25,9 +50,9 @@ const AppHeader = () => {
       display: 'flex', 
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'var(--primary-color, #3769f5)',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-      padding: '0 20px',
+      background: 'linear-gradient(90deg, #3b5bdb 0%, #4c6ef5 100%)',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      padding: '0 24px',
       height: '64px',
       color: 'white',
       top: 0,
@@ -36,77 +61,68 @@ const AppHeader = () => {
       margin: 0
     }}>
       <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
-        <Link to="/" style={{ color: 'white', display: 'flex', alignItems: 'center' }}>
+        <Link to="/" style={{ color: 'white', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <img 
             src={logoImg} 
             alt="LitCloud Logo" 
             style={{ 
               height: '48px', 
-              marginRight: '10px',
+              marginRight: '12px',
               filter: 'brightness(0) invert(1)'
             }} 
           />
-          <span style={{ fontWeight: 'bold', fontSize: '20px' }}>LitCloud</span>
+          <span style={{ fontWeight: 'bold', fontSize: '22px', letterSpacing: '0.5px' }}>LitCloud</span>
         </Link>
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <nav className="main-nav" style={{ display: 'flex', marginRight: '20px' }}>
+        <nav className="main-nav" style={{ display: 'flex', marginRight: '24px' }}>
           <Link 
             to="/" 
-            className={`nav-link ${selectedKey === 'home' ? 'active' : ''}`}
-            onClick={() => setSelectedKey('home')}
-            style={{ 
-              color: 'white', 
-              margin: '0 10px',
-              padding: '5px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              borderRadius: '4px',
-              backgroundColor: selectedKey === 'home' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+            className="nav-link"
+            style={navLinkStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <AiOutlineHome style={{ marginRight: '5px' }} /> Главная
+            <FiHome style={iconStyle} /> Главная
           </Link>
           <Link 
             to="/books" 
-            className={`nav-link ${selectedKey === 'books' ? 'active' : ''}`}
-            onClick={() => setSelectedKey('books')}
-            style={{ 
-              color: 'white', 
-              margin: '0 10px',
-              padding: '5px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              borderRadius: '4px',
-              backgroundColor: selectedKey === 'books' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+            className="nav-link"
+            style={navLinkStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <AiOutlineBook style={{ marginRight: '5px' }} /> Книги
+            <FiBookOpen style={iconStyle} /> Книги
           </Link>
           <Link 
             to="/categories" 
-            className={`nav-link ${selectedKey === 'categories' ? 'active' : ''}`}
-            onClick={() => setSelectedKey('categories')}
-            style={{ 
-              color: 'white', 
-              margin: '0 10px',
-              padding: '5px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              borderRadius: '4px',
-              backgroundColor: selectedKey === 'categories' ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+            className="nav-link"
+            style={navLinkStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <AiOutlineBook style={{ marginRight: '5px' }} /> Категории
+            <FiGrid style={iconStyle} /> Категории
           </Link>
         </nav>
         
-        <div className="auth-buttons" style={{ display: 'flex', gap: '10px' }}>
+        <div className="auth-buttons" style={{ display: 'flex', gap: '12px' }}>
           {isAuthenticated ? (
             <>
               <button 
-                className="btn btn-text"
+                className="btn-header"
                 style={{ 
                   background: 'transparent', 
                   border: 'none',
@@ -114,14 +130,23 @@ const AppHeader = () => {
                   display: 'flex',
                   alignItems: 'center',
                   cursor: 'pointer',
-                  padding: '6px 12px'
+                  padding: '8px 12px',
+                  fontSize: '16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onClick={() => navigate('/profile')}
               >
-                <AiOutlineUser style={{ marginRight: '5px' }} /> Профиль
+                <FiUser style={iconStyle} /> Профиль
               </button>
               <button 
-                className="btn btn-text"
+                className="btn-header"
                 style={{ 
                   background: 'transparent', 
                   border: 'none',
@@ -129,17 +154,26 @@ const AppHeader = () => {
                   display: 'flex',
                   alignItems: 'center',
                   cursor: 'pointer',
-                  padding: '6px 12px'
+                  padding: '8px 12px',
+                  fontSize: '16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onClick={handleLogout}
               >
-                <AiOutlineLogout style={{ marginRight: '5px' }} /> Выйти
+                <FiLogOut style={iconStyle} /> Выйти
               </button>
             </>
           ) : (
             <>
               <button 
-                className="btn btn-text"
+                className="btn-header"
                 style={{ 
                   background: 'transparent', 
                   border: 'none',
@@ -147,22 +181,39 @@ const AppHeader = () => {
                   display: 'flex',
                   alignItems: 'center',
                   cursor: 'pointer',
-                  padding: '6px 12px'
+                  padding: '8px 12px',
+                  fontSize: '16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
                 onClick={() => navigate('/login')}
               >
-                <AiOutlineLogin style={{ marginRight: '5px' }} /> Войти
+                <FiLogIn style={iconStyle} /> Войти
               </button>
               <button 
-                className="btn btn-primary"
+                className="btn-register"
                 style={{ 
-                  background: '#fff', 
-                  border: 'none',
-                  color: '#3769f5',
+                  background: 'rgba(255, 255, 255, 0.2)', 
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: 'white',
                   fontWeight: 'bold',
-                  borderRadius: '4px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  padding: '6px 12px'
+                  padding: '8px 16px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
                 }}
                 onClick={() => navigate('/register')}
               >

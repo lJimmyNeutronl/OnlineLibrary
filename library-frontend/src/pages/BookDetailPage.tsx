@@ -1,12 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Typography, Row, Col, Card, Divider, Spin, Empty, Breadcrumb, Button, Tag, Tabs, TabPane, Rate, Space, message } from '../components/common';
+import Typography from '../components/common/Typography';
+import Row from '../components/common/Row';
+import Col from '../components/common/Col';
+import Card from '../components/common/Card';
+import Divider from '../components/common/Divider';
+import Spin from '../components/common/Spin';
+import Empty from '../components/common/Empty';
+import Breadcrumb from '../components/common/Breadcrumb';
+import Button from '../components/common/Button';
+import Tag from '../components/common/Tag';
+import Rate from '../components/common/Rate';
+import Tabs, { TabPane } from '../components/common/Tabs';
+import Space from '../components/common/Space';
+import message from '../components/common/message';
+import { FiArrowLeft, FiBook, FiUser, FiHeart, FiBookOpen, FiDownload, FiShare2 } from 'react-icons/fi';
+import { AiFillHeart } from 'react-icons/ai';
 import { motion } from 'framer-motion';
 import { useAppSelector } from '../hooks/reduxHooks';
-import { FiArrowLeft, FiBook, FiHeart, FiDownload, FiShare2, FiUser } from 'react-icons/fi';
-// Потребуется установить библиотеку react-icons: npm install react-icons
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 interface BookDetail {
   id: number;
@@ -138,7 +151,7 @@ const BookDetailPage = () => {
             <div style={{ marginTop: '24px' }}>
               <Button 
                 type="primary" 
-                icon={<FiBook size={20} />} 
+                icon={<FiBookOpen size={20} />} 
                 size="large" 
                 block
                 onClick={startReading}
@@ -148,7 +161,7 @@ const BookDetailPage = () => {
               </Button>
               
               <Button 
-                icon={isFavorite ? <FiHeart size={20} fill="red" /> : <FiHeart size={20} />}
+                icon={isFavorite ? <AiFillHeart size={20} /> : <FiHeart size={20} />}
                 size="large"
                 block
                 onClick={toggleFavorite}
