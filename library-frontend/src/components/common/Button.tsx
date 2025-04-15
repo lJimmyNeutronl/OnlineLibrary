@@ -11,6 +11,8 @@ interface ButtonProps {
   disabled?: boolean;
   danger?: boolean;
   block?: boolean;
+  fontSize?: string | number;
+  fontWeight?: number | string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -23,14 +25,16 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   disabled = false,
   danger = false,
-  block = false
+  block = false,
+  fontSize,
+  fontWeight
 }) => {
   // Базовые стили кнопки
   const baseStyle: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontWeight: 400,
+    fontWeight: fontWeight || 400,
     whiteSpace: 'nowrap',
     textAlign: 'center',
     cursor: disabled ? 'not-allowed' : 'pointer',
@@ -71,19 +75,19 @@ const Button: React.FC<ButtonProps> = ({
     small: {
       height: '24px',
       padding: '0 7px',
-      fontSize: '12px',
+      fontSize: fontSize || '12px',
       borderRadius: '4px'
     },
     middle: {
       height: '32px',
       padding: '4px 15px',
-      fontSize: '14px',
+      fontSize: fontSize || '14px',
       borderRadius: '4px'
     },
     large: {
       height: '40px',
       padding: '6px 16px',
-      fontSize: '16px',
+      fontSize: fontSize || '16px',
       borderRadius: '4px'
     }
   };

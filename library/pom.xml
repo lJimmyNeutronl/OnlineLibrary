@@ -122,6 +122,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
 <artifactId>commons-io</artifactId>
 <version>2.15.1</version>
 </dependency>
+
+<!-- .env файл поддержка -->
+<dependency>
+<groupId>me.paulschwarz</groupId>
+<artifactId>spring-dotenv</artifactId>
+<version>3.0.0</version>
+</dependency>
 </dependencies>
 
 <build>

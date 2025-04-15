@@ -37,8 +37,8 @@ build/
 
 .windsurfrules
 
-### Application Properties ###
-**/application.properties
+### Environment Variables ###
+.env
 
 ### Cursor ###
 .cursor/
