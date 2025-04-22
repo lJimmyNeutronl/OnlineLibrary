@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { baseButtonStyle } from '../../styles';
 
 interface ButtonProps {
   children: ReactNode;
@@ -31,9 +32,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   // Базовые стили кнопки
   const baseStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...baseButtonStyle,
     fontWeight: fontWeight || 400,
     whiteSpace: 'nowrap',
     textAlign: 'center',
