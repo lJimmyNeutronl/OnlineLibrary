@@ -5,10 +5,9 @@ interface AuthState {
   user: {
     id: number;
     email: string;
-    firstName: string;
-    lastName: string;
-    registrationDate: string;
-    lastLoginDate: string;
+    firstName: string | null;
+    lastName: string | null;
+    displayName: string;
     roles: string[];
   } | null;
   token: string | null;
@@ -18,16 +17,31 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  token: null,
+  token: localStorage.getItem('token'),
   isLoading: false,
   error: null,
 };
 
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials: { email: string; password: string }) => {
-    const response = await authService.login(credentials);
-    return response;
+  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
+    try {
+      const response = await authService.login(credentials);
+      
+      // Сохраняем токен в localStorage
+      localStorage.setItem('token', response.token);
+      
+      return response;
+    } catch (error: any) {
+      // Логируем ошибку для отладки
+      console.error('Login error in thunk:', error);
+      
+      // Возвращаем сообщение об ошибке для обработки в slice
+      if (error.response && error.response.data) {
+        return rejectWithValue(error.response.data.message || 'Ошибка авторизации');
+      }
+      return rejectWithValue('Ошибка сервера. Пожалуйста, попробуйте позже.');
+    }
   }
 );
 
@@ -36,11 +50,26 @@ export const register = createAsyncThunk(
   async (userData: {
     email: string;
     password: string;
-    firstName: string;
-    lastName: string;
-  }) => {
-    const response = await authService.register(userData);
-    return response;
+    firstName?: string;
+    lastName?: string;
+  }, { rejectWithValue }) => {
+    try {
+      await authService.register(userData);
+      // После успешной регистрации выполняем вход
+      return await authService.login({
+        email: userData.email,
+        password: userData.password
+      });
+    } catch (error: any) {
+      // Логируем ошибку для отладки
+      console.error('Registration error in thunk:', error);
+      
+      // Возвращаем сообщение об ошибке для обработки в slice
+      if (error.response && error.response.data) {
+        return rejectWithValue(error.response.data.message || 'Ошибка регистрации');
+      }
+      return rejectWithValue('Ошибка сервера. Пожалуйста, попробуйте позже.');
+    }
   }
 );
 
@@ -52,6 +81,9 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.error = null;
+      // Удаляем токен из localStorage
+      localStorage.removeItem('token');
+      authService.logout();
     },
     clearError: (state) => {
       state.error = null;
@@ -70,7 +102,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Ошибка входа';
+        state.error = action.payload as string || 'Ошибка входа';
       })
       .addCase(register.pending, (state) => {
         state.isLoading = true;
@@ -83,7 +115,7 @@ const authSlice = createSlice({
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Ошибка регистрации';
+        state.error = action.payload as string || 'Ошибка регистрации';
       });
   },
 });

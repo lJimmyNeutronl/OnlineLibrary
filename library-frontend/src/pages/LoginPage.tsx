@@ -61,6 +61,7 @@ const LoginPage = () => {
   // Устанавливаем ошибку аутентификации из Redux
   useEffect(() => {
     if (authError) {
+      console.log('Auth error from Redux:', authError);
       setFormError(authError);
     }
   }, [authError]);
@@ -120,25 +121,24 @@ const LoginPage = () => {
       return;
     }
     
+    console.log('Attempting login with:', { 
+      email: formValues.email,
+      password: formValues.password.length > 0 ? '***' : '' // Не логируем сам пароль в целях безопасности
+    });
+    
     try {
-      // Отправляем запрос на авторизацию
-      const result = await dispatch(login({ 
+      // Отправляем запрос на авторизацию через Redux
+      await dispatch(login({ 
         email: formValues.email, 
         password: formValues.password 
       })).unwrap();
       
-      // Сохраняем JWT-токен в localStorage
-      localStorage.setItem('token', result.token);
-      
-      // Перенаправляем на главную страницу
-      navigate('/');
+      // Если успешно авторизовались, Redux сохранит токен
+      // и useEffect перенаправит на главную страницу
+      console.log('Login successful');
     } catch (error: any) {
-      // Обрабатываем ошибку
-      if (error.message) {
-        setFormError(error.message);
-      } else {
-        setFormError('Ошибка входа. Проверьте email и пароль');
-      }
+      // Ошибка будет обработана в extraReducers в authSlice
+      console.error('Login failed:', error);
     }
   };
 

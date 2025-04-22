@@ -178,8 +178,15 @@ const RegisterPage = () => {
       return;
     }
     
+    console.log('Attempting registration with:', { 
+      email: formValues.email,
+      password: formValues.password.length > 0 ? '***' : '', // Не логируем сам пароль в целях безопасности
+      firstName: formValues.firstName || undefined,
+      lastName: formValues.lastName || undefined
+    });
+    
     try {
-      // Отправляем запрос на регистрацию (confirmPassword теперь не нужен, дублируем password)
+      // Отправляем запрос на регистрацию через Redux
       await dispatch(register({ 
         email: formValues.email, 
         password: formValues.password,
@@ -202,13 +209,10 @@ const RegisterPage = () => {
       // Показываем сообщение об успешной регистрации
       setFormError('');
       
+      console.log('Registration successful');
     } catch (error: any) {
-      // Обрабатываем ошибку
-      if (error.message) {
-        setFormError(error.message);
-      } else {
-        setFormError('Ошибка регистрации. Возможно, такой email уже существует');
-      }
+      // Ошибка будет обработана в extraReducers в authSlice
+      console.error('Registration failed:', error);
     }
   };
 
