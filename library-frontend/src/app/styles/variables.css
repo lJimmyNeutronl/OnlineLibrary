@@ -1,0 +1,28 @@
+:root {
+  --font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --line-height: 1.5;
+  --font-weight: 400;
+  --text-color: rgba(0, 0, 0, 0.87);
+  --bg-color: #f8f9fa;
+  
+  /* Цвета */
+  --primary-color: #1890ff;
+  --hover-color: #40a9ff;
+  --active-color: #096dd9;
+  --error-color: #ff4d4f;
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --disabled-color: rgba(0, 0, 0, 0.25);
+  
+  /* Тени */
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  
+  /* Размеры */
+  --border-radius: 4px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+} 

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Документация и планы рефакторинга
+frontend_refactoring_plan.md
+frontend_documentation.md
