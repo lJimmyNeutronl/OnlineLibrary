@@ -12,8 +12,8 @@ export interface User {
 }
 
 export interface UserProfileUpdateData {
-  firstName: string | null;
-  lastName: string | null;
+  firstName: string;
+  lastName: string;
 }
 
 export interface PasswordChangeData {
@@ -68,8 +68,15 @@ const userService = {
 
   // Обновление профиля пользователя
   async updateProfile(data: UserProfileUpdateData): Promise<User> {
-    const response = await API.put('/users/update', data);
-    return response.data;
+    try {
+      console.log('Отправляем запрос на обновление профиля:', data);
+      const response = await API.put('/users/update', data);
+      console.log('Профиль успешно обновлен:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при обновлении профиля:', error);
+      throw error;
+    }
   },
 
   // Получение избранных книг пользователя

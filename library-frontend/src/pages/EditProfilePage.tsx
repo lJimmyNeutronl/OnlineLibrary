@@ -59,9 +59,11 @@ const EditProfilePage = () => {
       
       // Подготавливаем данные для обновления
       const profileData: UserProfileUpdateData = {
-        firstName: firstName || null,
-        lastName: lastName || null
+        firstName: firstName || '',
+        lastName: lastName || ''
       };
+      
+      console.log('Отправляем данные профиля:', profileData);
       
       // Отправляем запрос на обновление профиля
       await userService.updateProfile(profileData);

@@ -1,5 +1,7 @@
 package ru.arseniy.library.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -17,8 +19,11 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<?> resourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
+        logger.error("Ресурс не найден: {}", ex.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 new Date(),
                 ex.getMessage(),
@@ -29,6 +34,7 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<?> badCredentialsException(BadCredentialsException ex, WebRequest request) {
+        logger.error("Ошибка аутентификации: {}", ex.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 new Date(),
                 "Неверные учетные данные",
@@ -39,6 +45,7 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<?> accessDeniedException(AccessDeniedException ex, WebRequest request) {
+        logger.error("Доступ запрещен: {}", ex.getMessage());
         ErrorDetails errorDetails = new ErrorDetails(
                 new Date(),
                 "Доступ запрещен",
@@ -54,6 +61,7 @@ public class GlobalExceptionHandler {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
+            logger.error("Ошибка валидации поля '{}': {}", fieldName, errorMessage);
         });
         
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
@@ -61,6 +69,8 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> globalExceptionHandler(Exception ex, WebRequest request) {
+        logger.error("Необработанное исключение: ", ex);
+        
         ErrorDetails errorDetails = new ErrorDetails(
                 new Date(),
                 ex.getMessage(),

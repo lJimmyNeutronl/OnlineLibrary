@@ -8,12 +8,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.arseniy.library.dto.ChangePasswordRequest;
 import ru.arseniy.library.dto.MessageResponse;
+import ru.arseniy.library.dto.UpdateProfileRequest;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.model.ReadingHistory;
 import ru.arseniy.library.model.User;
 import ru.arseniy.library.repository.BookRepository;
 import ru.arseniy.library.repository.ReadingHistoryRepository;
 import ru.arseniy.library.repository.UserRepository;
+import ru.arseniy.library.exception.ResourceNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -131,5 +133,23 @@ public class UserService {
     
     public Page<ReadingHistory> getUserReadingHistory(Integer userId, Pageable pageable) {
         return readingHistoryRepository.findByUserId(userId, pageable);
+    }
+
+    /**
+     * Обновляет профиль пользователя
+     * @param userId ID пользователя
+     * @param updateProfileRequest запрос на обновление профиля
+     * @return обновленный пользователь
+     */
+    public User updateProfile(Integer userId, UpdateProfileRequest updateProfileRequest) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден: " + userId));
+        
+        // Обновляем поля пользователя
+        user.setFirstName(updateProfileRequest.getFirstName());
+        user.setLastName(updateProfileRequest.getLastName());
+        
+        // Сохраняем обновленного пользователя
+        return userRepository.save(user);
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ru.arseniy.library.dto.ChangePasswordRequest;
 import ru.arseniy.library.dto.MessageResponse;
+import ru.arseniy.library.dto.UpdateProfileRequest;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.model.ReadingHistory;
 import ru.arseniy.library.model.User;
@@ -36,6 +37,16 @@ public class UserController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         User user = userService.getUserById(userDetails.getId());
         return ResponseEntity.ok(user);
+    }
+    
+    @PutMapping("/update")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<User> updateProfile(@Valid @RequestBody UpdateProfileRequest updateProfileRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        User updatedUser = userService.updateProfile(userDetails.getId(), updateProfileRequest);
+        return ResponseEntity.ok(updatedUser);
     }
     
     @PostMapping("/change-password")
