@@ -65,6 +65,17 @@ const RegisterPage = () => {
   const [formError, setFormError] = useState('');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
+  // Функция для проверки на наличие кириллических символов
+  const containsCyrillic = (text: string): boolean => {
+    return /[а-яА-ЯёЁ]/.test(text);
+  };
+  
+  // Функция для проверки на допустимые символы (буквы латинского алфавита, цифры и спецсимволы)
+  const hasValidChars = (text: string): boolean => {
+    // Разрешены латинские буквы, цифры и специальные символы
+    return /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(text);
+  };
+
   // Если пользователь уже авторизован, перенаправляем на главную
   useEffect(() => {
     if (token && user) {
@@ -139,7 +150,22 @@ const RegisterPage = () => {
       newErrors.password = 'Пароль обязателен';
       isValid = false;
     } else if (formValues.password.length < 6) {
-      newErrors.password = 'Пароль должен быть не менее 6 символов';
+      newErrors.password = 'Пароль должен содержать не менее 6 символов';
+      isValid = false;
+    } else if (containsCyrillic(formValues.password)) {
+      newErrors.password = 'Пароль не должен содержать кириллические символы';
+      isValid = false;
+    } else if (!hasValidChars(formValues.password)) {
+      newErrors.password = 'Пароль должен содержать только латинские буквы, цифры и специальные символы';
+      isValid = false;
+    }
+    
+    // Проверка подтверждения пароля
+    if (!formValues.confirmPassword) {
+      newErrors.confirmPassword = 'Подтвердите пароль';
+      isValid = false;
+    } else if (formValues.password !== formValues.confirmPassword) {
+      newErrors.confirmPassword = 'Пароли не совпадают';
       isValid = false;
     }
     
@@ -397,45 +423,94 @@ const RegisterPage = () => {
                       </label>
                       <div style={infoDisplayStyle}>
                         {formValues.email}
-                </div>
-              </div>
+                      </div>
+                    </div>
+                    
+                    {/* Информационное сообщение о требованиях к паролю */}
+                    <div style={{
+                      marginBottom: '16px',
+                      padding: '12px',
+                      backgroundColor: 'rgba(55, 105, 245, 0.05)',
+                      borderRadius: '8px',
+                      borderLeft: '4px solid #3769f5',
+                      fontSize: '14px',
+                      color: '#666'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', color: '#3769f5' }}>
+                        <AiOutlineIdcard style={{ marginRight: '8px' }} /> 
+                        <strong>Требования к паролю:</strong>
+                      </div>
+                      <ul style={{ marginLeft: '24px', padding: 0 }}>
+                        <li>Минимум 6 символов</li>
+                        <li>Использование только латинских букв (a-z, A-Z)</li>
+                        <li>Допускаются цифры и специальные символы</li>
+                        <li>Кириллические символы (а-я, А-Я) не допускаются</li>
+                      </ul>
+                    </div>
               
-              <div style={{ marginBottom: '24px' }}>
+                    <div style={{ marginBottom: '24px' }}>
                       <label style={labelStyle}>
                         Пароль
-                </label>
-                <div style={{ 
+                      </label>
+                      <div style={{ 
                         ...inputContainerStyle,
                         border: `1px solid ${errors.password ? '#f5222d' : '#d9d9d9'}`,
                       }}>
                         <AiOutlineLock style={{ color: errors.password ? '#f5222d' : '#3769f5' }} />
-                  <input 
-                    type="password"
+                        <input 
+                          type="password"
                           name="password"
                           value={formValues.password}
                           onChange={handleChange}
-                    required
+                          required
                           placeholder="Ваш пароль"
                           style={inputStyle}
-                  />
-                </div>
+                        />
+                      </div>
                       {errors.password && (
                         <div style={errorMessageStyle}>
                           {errors.password}
                         </div>
                       )}
-              </div>
+                    </div>
+                    
+                    <div style={{ marginBottom: '24px' }}>
+                      <label style={labelStyle}>
+                        Подтверждение пароля
+                      </label>
+                      <div style={{ 
+                        ...inputContainerStyle,
+                        border: `1px solid ${errors.confirmPassword ? '#f5222d' : '#d9d9d9'}`,
+                      }}>
+                        <AiOutlineLock style={{ color: errors.confirmPassword ? '#f5222d' : '#3769f5' }} />
+                        <input 
+                          type="password"
+                          name="confirmPassword"
+                          value={formValues.confirmPassword}
+                          onChange={handleChange}
+                          required
+                          placeholder="Подтвердите пароль"
+                          style={inputStyle}
+                        />
+                      </div>
+                      {errors.confirmPassword && (
+                        <div style={errorMessageStyle}>
+                          {errors.confirmPassword}
+                        </div>
+                      )}
+                    </div>
               
-                <Button 
-                  type="primary" 
+                    <Button 
+                      type="primary" 
                       disabled={isLoading || registrationSuccess}
                       style={primaryButtonStyle}
                       fontSize="15px"
                       fontWeight={600}
                       size="large"
+                      htmlType="submit"
                     >
                       {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
-                </Button>
+                    </Button>
 
                     {/* Кнопка "Назад" в стиле Cursor */}
                     <div style={{ 

@@ -1,55 +1,67 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios';
 
-// Базовый URL для API
-const API_URL = 'http://localhost:8080/api';
+// Определяем базовый URL из переменных окружения или используем значение по умолчанию
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+console.log('[Auth Debug] API initialized with baseURL:', baseURL);
 
-// Создаем экземпляр axios с базовым URL
+// Создаем экземпляр axios с базовым URL и заголовками
 const API = axios.create({
-  baseURL: API_URL,
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Добавляем перехватчик запросов для добавления заголовка авторизации
+// Перехватчик запросов, который добавляет токен к каждому запросу
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
-// Добавляем перехватчик ответов для обработки ошибок
+// Перехватчик ответов для обработки ошибок
 API.interceptors.response.use(
   (response) => {
-    // Если ответ успешный, просто возвращаем его
     return response;
   },
   (error) => {
-    // Логируем подробности ошибки для отладки
+    // Проверка наличия ответа от сервера
     if (error.response) {
-      // Ошибка от сервера
-      console.error('API Response Error:', {
-        status: error.response.status,
-        statusText: error.response.statusText,
-        data: error.response.data,
-        url: error.response.config.url
-      });
-    } else if (error.request) {
-      // Запрос был отправлен, но ответ не получен
-      console.error('API Request Error (No Response):', error.request);
+      const { status, config } = error.response;
+      
+      // Для отладки
+      console.error(`API Error: ${status} on ${config.url}`, error.response.data);
+      
+      // Список эндпоинтов авторизации, для которых не нужно удалять токен
+      const authEndpoints = [
+        '/auth/signin',
+        '/auth/signup',
+        '/users/change-password'
+      ];
+      
+      // Определяем, является ли текущий запрос авторизационным
+      const isAuthEndpoint = authEndpoints.some(endpoint => 
+        config.url && config.url.includes(endpoint)
+      );
+      
+      // Обработка ошибки авторизации
+      if (status === 401 && !isAuthEndpoint) {
+        // Удаляем токен только для не-авторизационных эндпоинтов
+        console.warn('Авторизация не действительна. Удаление токена.');
+        localStorage.removeItem('token');
+      }
     } else {
-      // Ошибка при настройке запроса
-      console.error('API Setup Error:', error.message);
+      // Ошибка без ответа сервера (сетевая ошибка)
+      console.error('Network Error:', error.message);
     }
-
+    
     return Promise.reject(error);
   }
 );

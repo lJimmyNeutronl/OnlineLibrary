@@ -3,8 +3,11 @@ package ru.arseniy.library.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.arseniy.library.dto.ChangePasswordRequest;
+import ru.arseniy.library.dto.MessageResponse;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.model.ReadingHistory;
 import ru.arseniy.library.model.User;
@@ -27,6 +30,33 @@ public class UserService {
     
     @Autowired
     private ReadingHistoryRepository readingHistoryRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    /**
+     * Изменяет пароль пользователя
+     * 
+     * @param userId ID пользователя
+     * @param request запрос на изменение пароля
+     * @return сообщение о результате операции
+     */
+    @Transactional
+    public MessageResponse changePassword(Integer userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+        
+        // Проверяем текущий пароль
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            return new MessageResponse("Текущий пароль указан неверно");
+        }
+        
+        // Устанавливаем новый пароль
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        
+        return new MessageResponse("Пароль успешно изменен");
+    }
     
     public User getUserById(Integer id) {
         return userRepository.findById(id)

@@ -61,7 +61,6 @@ const LoginPage = () => {
   // Устанавливаем ошибку аутентификации из Redux
   useEffect(() => {
     if (authError) {
-      console.log('Auth error from Redux:', authError);
       setFormError(authError);
     }
   }, [authError]);
@@ -110,35 +109,110 @@ const LoginPage = () => {
     return isValid;
   };
 
+  // Функция для перехода на главную страницу
+  const navigateToHome = () => {
+    console.log('Выполняем переход на главную страницу');
+    
+    // Сначала пробуем через React Router
+    try {
+      navigate('/', { replace: true });
+      console.log('Переход через React Router успешен');
+    } catch (error) {
+      console.error('Ошибка при переходе через React Router:', error);
+      
+      // Если не получилось, пробуем напрямую через window.location
+      try {
+        window.location.href = '/';
+        console.log('Переход через window.location успешен');
+      } catch (redirectError) {
+        console.error('Ошибка при переходе через window.location:', redirectError);
+      }
+    }
+  };
+
+  // Обновляем обработчик логина
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    // Предотвращаем стандартное поведение формы
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     
-    // Сбрасываем ошибки
+    console.log('Форма отправлена, предотвращаем стандартное поведение');
+    
+    // Очищаем предыдущие ошибки
     setFormError('');
+    setErrors({});
     
-    // Валидируем форму
+    // Проверяем правильность заполнения формы
     if (!validateForm()) {
+      console.log('Валидация формы не пройдена');
       return;
     }
     
-    console.log('Attempting login with:', { 
-      email: formValues.email,
-      password: formValues.password.length > 0 ? '***' : '' // Не логируем сам пароль в целях безопасности
-    });
-    
     try {
+      console.log('Попытка входа для пользователя:', formValues.email);
+      
       // Отправляем запрос на авторизацию через Redux
-      await dispatch(login({ 
+      const result = await dispatch(login({ 
         email: formValues.email, 
         password: formValues.password 
       })).unwrap();
       
-      // Если успешно авторизовались, Redux сохранит токен
-      // и useEffect перенаправит на главную страницу
-      console.log('Login successful');
+      console.log('Успешный вход, переход на главную страницу');
+      
+      // Проверяем наличие пользователя и токена
+      if (result.user && result.token) {
+        // Переходим на главную страницу
+        navigateToHome();
+      } else {
+        // Если по какой-то причине не получили данные пользователя
+        console.error('Нет данных пользователя в ответе после входа');
+        setFormError('Ошибка входа: не получены данные пользователя');
+      }
     } catch (error: any) {
-      // Ошибка будет обработана в extraReducers в authSlice
-      console.error('Login failed:', error);
+      console.error('Ошибка при входе:', error);
+      
+      // Устанавливаем сообщение об ошибке
+      if (typeof error === 'string') {
+        setFormError(error);
+      } else if (error?.message) {
+        setFormError(error.message);
+      } else {
+        setFormError('Произошла ошибка при входе. Пожалуйста, попробуйте еще раз.');
+      }
+    }
+  };
+
+  // Обработчик кнопки входа
+  const handleLoginClick = (e: React.MouseEvent) => {
+    console.log('1. Кнопка входа нажата');
+    
+    try {
+      // Пробуем вызвать handleSubmit напрямую
+      handleSubmit(e as unknown as React.FormEvent);
+    } catch (error) {
+      console.error('Ошибка при вызове handleSubmit из кнопки:', error);
+      
+      // Пробуем отправить форму другим способом
+      try {
+        const form = document.querySelector('form');
+        if (form) {
+          console.log('Попытка вызвать form.submit()');
+          // @ts-ignore
+          form.submit();
+        } else {
+          console.error('Форма не найдена для отправки');
+          
+          // Если все способы не работают, пробуем выполнить вход напрямую
+          console.log('Прямой вызов login через Redux');
+          dispatch(login({
+            email: formValues.email,
+            password: formValues.password
+          }));
+        }
+      } catch (submitError) {
+        console.error('Ошибка при попытке отправить форму:', submitError);
+      }
     }
   };
 
@@ -183,7 +257,7 @@ const LoginPage = () => {
             <h2 style={formTitleStyle}>Вход</h2>
 
             {/* Форма входа */}
-            <form onSubmit={handleSubmit}>
+            <form id="loginForm" onSubmit={handleSubmit}>
               {formError && (
                 <div style={{ 
                   marginBottom: '16px', 
@@ -250,28 +324,114 @@ const LoginPage = () => {
                   )}
                 </div>
 
-                <Button 
-                  type="primary" 
+                {/* Стандартная кнопка HTML вместо компонента */}
+                <button 
+                  type="submit"
                   disabled={isLoading}
-                  style={primaryButtonStyle}
-                  fontSize="15px"
-                  fontWeight={600}
-                  size="large"
+                  onClick={handleLoginClick}
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#3769f5',
+                    color: 'white',
+                    padding: '12px 20px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 10px rgba(55, 105, 245, 0.2)',
+                    transition: 'all 0.2s ease'
+                  }}
                 >
                   {isLoading ? 'Вход...' : 'Войти'}
-                </Button>
-
-                <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                  <Button 
-                    type="link" 
-                    onClick={() => navigate('/register')} 
-                    style={{ color: '#3769f5' }}
-                  >
-                    Нет аккаунта? Зарегистрироваться
-                  </Button>
-                </div>
+                </button>
               </motion.div>
             </form>
+
+            {/* Запасная простая форма без компонентов от фреймворков */}
+            <div style={{ marginTop: '20px', display: isLoading ? 'none' : 'block' }}>
+              <div style={{ textAlign: 'center', margin: '20px 0', fontSize: '14px', color: '#888' }}>
+                {formError ? 'Проблемы со входом? Попробуйте эту форму:' : ''}
+              </div>
+              
+              {formError && (
+                <form 
+                  action="/api/auth/signin" 
+                  method="post"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleLoginClick(e as any);
+                  }}
+                  style={{ 
+                    border: '1px solid #eee', 
+                    padding: '20px', 
+                    borderRadius: '8px',
+                    display: formError ? 'block' : 'none'
+                  }}
+                >
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                      Email:
+                    </label>
+                    <input 
+                      type="email" 
+                      name="email" 
+                      value={formValues.email}
+                      onChange={handleChange}
+                      style={{ 
+                        width: '100%', 
+                        padding: '8px 12px', 
+                        border: '1px solid #d9d9d9', 
+                        borderRadius: '4px' 
+                      }} 
+                    />
+                  </div>
+                  
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500 }}>
+                      Пароль:
+                    </label>
+                    <input 
+                      type="password" 
+                      name="password" 
+                      value={formValues.password}
+                      onChange={handleChange}
+                      style={{ 
+                        width: '100%', 
+                        padding: '8px 12px', 
+                        border: '1px solid #d9d9d9', 
+                        borderRadius: '4px' 
+                      }} 
+                    />
+                  </div>
+                  
+                  <button 
+                    type="submit"
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px', 
+                      backgroundColor: '#52c41a', 
+                      color: 'white', 
+                      border: 'none', 
+                      borderRadius: '4px', 
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Альтернативный вход
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <Button 
+                type="link" 
+                onClick={() => navigate('/register')} 
+                style={{ color: '#3769f5' }}
+              >
+                Нет аккаунта? Зарегистрироваться
+              </Button>
+            </div>
           </div>
         </motion.div>
       </motion.div>

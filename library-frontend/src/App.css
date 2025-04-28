@@ -500,6 +500,11 @@ body {
   }
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Стили для карточек книг */
 .ant-card {
   transition: all 0.3s ease;
@@ -526,4 +531,351 @@ body {
 .ant-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(55, 105, 245, 0.2);
+}
+
+/* Добавляем стили для hover эффекта обложек книг */
+.book-cover-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.book-cover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.5));
+  opacity: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 10px;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.book-item:hover .book-cover-overlay {
+  opacity: 1;
+}
+
+/* Стили для страницы профиля */
+.profile-page-wrapper {
+  position: relative;
+  min-height: 100vh;
+  background-color: #f6f8fa;
+  overflow: hidden;
+  padding: 24px 16px;
+}
+
+.profile-container {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 24px auto;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  position: relative;
+  z-index: 2;
+}
+
+/* Кнопки профиля */
+.profile-btn {
+  width: 100%;
+  height: 44px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.profile-btn-primary {
+  background: #6c5ce7;
+  border-color: #6c5ce7;
+}
+
+.profile-btn-primary:hover {
+  background: #5d4adb;
+  border-color: #5d4adb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+
+.profile-btn-secondary {
+  border-color: #ff7675;
+  color: #ff7675;
+}
+
+.profile-btn-secondary:hover {
+  color: #ff5e5b;
+  border-color: #ff5e5b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 118, 117, 0.2);
+}
+
+.profile-btn-tertiary {
+  border-color: #dfe6e9;
+  color: #636e72;
+}
+
+.profile-btn-tertiary:hover {
+  color: #2d3436;
+  border-color: #b2bec3;
+  transform: translateY(-2px);
+}
+
+/* Статистика пользователя */
+.stats-card {
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 32px;
+  background-color: #fff;
+  transition: box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.stats-item {
+  padding: 24px;
+  text-align: center;
+  border-right: 1px solid #f0f0f0;
+}
+
+.stats-item:last-child {
+  border-right: none;
+}
+
+.stats-number {
+  margin: 0;
+  font-weight: bold;
+  color: #6c5ce7;
+  font-size: 2.5rem;
+}
+
+.stats-label {
+  font-size: 16px;
+  color: #636e72;
+  margin-top: 4px;
+}
+
+/* Адаптивность профиля */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 24px 16px;
+    margin: 16px auto;
+  }
+  
+  .stats-item {
+    padding: 16px;
+  }
+  
+  .stats-number {
+    font-size: 2rem;
+  }
+}
+
+/* Дополнительные стили для профиля */
+.profile-user-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  background-color: #fafafa;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 24px;
+}
+
+.profile-username {
+  margin: 16px 0 4px 0 !important;
+  font-weight: 600;
+  color: #2d3436;
+  text-align: center;
+}
+
+.profile-email {
+  margin-bottom: 24px;
+  font-size: 16px;
+  color: #636e72 !important;
+  text-align: center;
+}
+
+/* Новая сетка для кнопок профиля */
+.profile-buttons-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.profile-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.profile-action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: rgba(108, 92, 231, 0.12);
+  color: #6c5ce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.profile-action-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #2d3436;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.profile-action-card:hover .profile-action-icon {
+  transform: scale(1.1);
+}
+
+/* Иконки для статистики */
+.stats-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background-color: rgba(108, 92, 231, 0.12);
+  color: #6c5ce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  transition: all 0.3s ease;
+}
+
+.stats-item:hover .stats-icon {
+  transform: scale(1.1);
+}
+
+.section-title {
+  margin-bottom: 24px !important;
+  color: #2d3436;
+  font-weight: 600;
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background-color: #6c5ce7;
+  border-radius: 3px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.empty-favorites {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.book-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.book-item:hover {
+  background-color: #f5f5f5;
+  transform: translateY(-5px);
+}
+
+.book-cover-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.book-item:hover .book-cover-image {
+  transform: scale(1.05);
+}
+
+.book-title {
+  margin-top: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #2d3436;
+}
+
+.book-author {
+  font-size: 12px;
+  color: #636e72;
+  margin-top: 4px;
+}
+
+.catalog-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+/* Адаптивные стили для профиля */
+@media (max-width: 768px) {
+  .book-cover-image {
+    height: 140px;
+  }
+  
+  .book-title {
+    font-size: 12px;
+  }
+  
+  .book-author {
+    font-size: 10px;
+  }
+  
+  .profile-user-section {
+    padding: 16px;
+  }
+  
+  .profile-buttons-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-buttons-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-card {
+    flex-direction: column;
+  }
+  
+  .stats-item {
+    margin-bottom: 16px;
+  }
 }

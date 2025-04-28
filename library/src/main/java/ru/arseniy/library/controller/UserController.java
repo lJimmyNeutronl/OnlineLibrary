@@ -1,5 +1,6 @@
 package ru.arseniy.library.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import ru.arseniy.library.dto.ChangePasswordRequest;
+import ru.arseniy.library.dto.MessageResponse;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.model.ReadingHistory;
 import ru.arseniy.library.model.User;
@@ -33,6 +36,21 @@ public class UserController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         User user = userService.getUserById(userDetails.getId());
         return ResponseEntity.ok(user);
+    }
+    
+    @PostMapping("/change-password")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        MessageResponse response = userService.changePassword(userDetails.getId(), changePasswordRequest);
+        
+        if (response.getMessage().contains("неверно")) {
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")

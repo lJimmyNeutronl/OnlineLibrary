@@ -1,20 +1,38 @@
-import React, { ReactNode } from 'react';
-import { baseButtonStyle } from '../../styles';
+import React from 'react';
 
 interface ButtonProps {
-  children: ReactNode;
-  type?: 'primary' | 'default' | 'text' | 'link';
+  children?: React.ReactNode;
+  type?: 'default' | 'primary' | 'text' | 'link';
   size?: 'small' | 'middle' | 'large';
-  icon?: ReactNode;
-  onClick?: () => void;
+  icon?: React.ReactNode;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   style?: React.CSSProperties;
   className?: string;
   disabled?: boolean;
+  loading?: boolean;
   danger?: boolean;
   block?: boolean;
-  fontSize?: string | number;
-  fontWeight?: number | string;
+  fontSize?: string;
+  fontWeight?: number;
+  htmlType?: 'button' | 'submit' | 'reset';
 }
+
+// Базовые стили кнопки
+const baseButtonStyle: React.CSSProperties = {
+  outline: 'none',
+  position: 'relative',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  transition: 'all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1)',
+  userSelect: 'none',
+  touchAction: 'manipulation',
+  lineHeight: 1.5,
+  fontWeight: 400,
+  border: '1px solid transparent'
+};
 
 const Button: React.FC<ButtonProps> = ({
   children,
@@ -25,10 +43,12 @@ const Button: React.FC<ButtonProps> = ({
   style,
   className = '',
   disabled = false,
+  loading = false,
   danger = false,
   block = false,
   fontSize,
-  fontWeight
+  fontWeight,
+  htmlType = 'button'
 }) => {
   // Базовые стили кнопки
   const baseStyle: React.CSSProperties = {
@@ -36,7 +56,7 @@ const Button: React.FC<ButtonProps> = ({
     fontWeight: fontWeight || 400,
     whiteSpace: 'nowrap',
     textAlign: 'center',
-    cursor: disabled ? 'not-allowed' : 'pointer',
+    cursor: disabled || loading ? 'not-allowed' : 'pointer',
     transition: 'all 0.3s ease',
     opacity: disabled ? 0.6 : 1,
     width: block ? '100%' : 'auto',
@@ -98,14 +118,46 @@ const Button: React.FC<ButtonProps> = ({
     ...sizeStyles[size]
   };
 
+  // Индикатор загрузки
+  const loadingIcon = loading ? (
+    <span style={{ 
+      display: 'inline-block', 
+      marginRight: children ? '8px' : 0,
+      width: '14px',
+      height: '14px',
+      border: '2px solid currentColor',
+      borderRightColor: 'transparent',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    }}></span>
+  ) : null;
+
+  // Добавляем глобальные стили для анимации
+  React.useEffect(() => {
+    // Проверяем, есть ли уже стиль с ключом spin-animation
+    if (loading && !document.getElementById('spin-animation')) {
+      const style = document.createElement('style');
+      style.id = 'spin-animation';
+      style.innerHTML = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, [loading]);
+
   return (
     <button
       className={`btn btn-${type} btn-${size} ${danger ? 'btn-danger' : ''} ${className}`}
       style={combinedStyle}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || loading}
+      type={htmlType}
     >
-      {icon && <span style={{ marginRight: children ? '8px' : 0 }}>{icon}</span>}
+      {loadingIcon}
+      {icon && !loading && <span style={{ marginRight: children ? '8px' : 0 }}>{icon}</span>}
       {children}
     </button>
   );
