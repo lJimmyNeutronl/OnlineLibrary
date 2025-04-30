@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.arseniy.library.model.Book;
-import ru.arseniy.library.model.Category;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;

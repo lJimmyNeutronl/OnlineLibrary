@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -84,7 +85,7 @@ public class WebSecurityConfig {
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(CorsRegistry registry) {
+            public void addCorsMappings(@NonNull CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
@@ -93,7 +94,7 @@ public class WebSecurityConfig {
             }
             
             @Override
-            public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+            public void configureMessageConverters(@NonNull List<HttpMessageConverter<?>> converters) {
                 // Убедимся, что наш конвертер находится в начале списка
                 converters.add(0, jacksonMessageConverter);
             }
