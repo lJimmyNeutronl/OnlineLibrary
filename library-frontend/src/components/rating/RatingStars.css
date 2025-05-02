@@ -1,0 +1,31 @@
+.rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rating-stars svg {
+  transition: transform 0.2s ease;
+}
+
+.rating-stars svg:hover {
+  transform: scale(1.2);
+}
+
+.rating-login-note {
+  margin-left: 12px;
+  font-size: 14px;
+  color: #777;
+  font-style: italic;
+}
+
+/* Анимация для только что поставленной оценки */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.rating-stars.just-rated svg {
+  animation: pulse 0.5s ease-in-out;
+} 

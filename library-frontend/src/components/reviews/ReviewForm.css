@@ -1,0 +1,70 @@
+.review-form-container {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-form-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-form-stars {
+  padding: 8px 0;
+}
+
+.review-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #d9d9d9;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+  transition: border-color 0.3s;
+}
+
+.review-textarea:focus {
+  outline: none;
+  border-color: #3769f5;
+  box-shadow: 0 0 0 2px rgba(55, 105, 245, 0.2);
+}
+
+.review-form-error {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.review-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .review-form-container {
+    padding: 16px;
+  }
+  
+  .review-form-actions {
+    justify-content: center;
+  }
+} 

@@ -10,7 +10,6 @@ import Empty from '../components/common/Empty';
 import Breadcrumb from '../components/common/Breadcrumb';
 import Button from '../components/common/Button';
 import Tag from '../components/common/Tag';
-import Rate from '../components/common/Rate';
 import Tabs, { TabPane } from '../components/common/Tabs';
 import Space from '../components/common/Space';
 import message from '../components/common/message';
@@ -19,7 +18,10 @@ import { AiFillHeart } from 'react-icons/ai';
 import { motion } from 'framer-motion';
 import { useAppSelector } from '../hooks/reduxHooks';
 import bookService, { Book } from '../services/bookService';
-import { FaBookOpen, FaBookReader, FaPencilAlt, FaGraduationCap, FaFeatherAlt } from 'react-icons/fa';
+import { FaBookOpen, FaBookReader, FaPencilAlt, FaGraduationCap, FaFeatherAlt, FaInfoCircle, FaComments, FaBookmark } from 'react-icons/fa';
+import BookRating from '../components/rating/BookRating';
+import ReviewList from '../components/reviews/ReviewList';
+import ReviewForm from '../components/reviews/ReviewForm';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -65,6 +67,7 @@ const BookDetailPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [relatedBooks, setRelatedBooks] = useState<Book[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("description");
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -115,6 +118,26 @@ const BookDetailPage = () => {
     
     // В реальном приложении здесь будет переход на страницу чтения книги
     navigate(`/books/${bookId}/read`);
+  };
+
+  const shareBook = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: book?.title || 'Интересная книга',
+        text: `Посмотрите книгу "${book?.title}" от ${book?.author}`,
+        url: window.location.href,
+      })
+        .then(() => message.success('Успешно поделились!'))
+        .catch((error) => {
+          console.error('Ошибка при попытке поделиться:', error);
+          message.error('Не удалось поделиться книгой');
+        });
+    } else {
+      // Резервный вариант - копирование ссылки в буфер обмена
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => message.success('Ссылка скопирована в буфер обмена!'))
+        .catch(() => message.error('Не удалось скопировать ссылку'));
+    }
   };
 
   if (loading) {
@@ -238,6 +261,7 @@ const BookDetailPage = () => {
                       src={book.coverImageUrl || 'https://via.placeholder.com/300x450?text=Нет+обложки'}
                       alt={book.title}
                       style={{ maxWidth: '100%', borderRadius: '8px' }}
+                      loading="eager" // Добавляем eager для приоритетной загрузки
                     />
                   </div>
                   
@@ -279,6 +303,16 @@ const BookDetailPage = () => {
                     >
                       Скачать
                     </Button>
+
+                    <Button 
+                      icon={<FiShare2 size={18} />}
+                      size="large"
+                      block
+                      onClick={shareBook}
+                      style={{ height: '44px' }}
+                    >
+                      Поделиться
+                    </Button>
                   </div>
                 </Card>
               </Col>
@@ -291,8 +325,7 @@ const BookDetailPage = () => {
                 </div>
                 
                 <div style={{ marginBottom: '16px' }}>
-                  <Rate disabled defaultValue={4.5} allowHalf />{' '}
-                  <Text type="secondary">(25 отзывов)</Text>
+                  <BookRating bookId={Number(bookId)} isAuthenticated={isAuthenticated} />
                 </div>
                 
                 <div style={{ marginBottom: '16px' }}>
@@ -306,100 +339,183 @@ const BookDetailPage = () => {
                 </div>
                 
                 <Divider style={{ margin: '16px 0' }} />
-                
-                <div>
-                  <Paragraph style={{ fontSize: '16px', lineHeight: '1.6' }}>
-                    {book.description || 'Описание отсутствует'}
-                  </Paragraph>
-                </div>
-                
-                <Divider style={{ margin: '16px 0' }} />
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
-                  {book.publicationYear && (
-                    <div className="book-info-item">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiCalendar style={{ marginRight: '8px', color: '#3769f5' }} />
-                        <Text strong>Год издания:</Text>
-                      </div>
-                      <div>{book.publicationYear}</div>
-                    </div>
-                  )}
-                  
-                  {book.publisher && (
-                    <div className="book-info-item">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiBook style={{ marginRight: '8px', color: '#3769f5' }} />
-                        <Text strong>Издательство:</Text>
-                      </div>
-                      <div>{book.publisher}</div>
-                    </div>
-                  )}
-                  
-                  {book.language && (
-                    <div className="book-info-item">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiFlag style={{ marginRight: '8px', color: '#3769f5' }} />
-                        <Text strong>Язык:</Text>
-                      </div>
-                      <div>{book.language}</div>
-                    </div>
-                  )}
-                  
-                  {book.pageCount && (
-                    <div className="book-info-item">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiBookOpen style={{ marginRight: '8px', color: '#3769f5' }} />
-                        <Text strong>Страниц:</Text>
-                      </div>
-                      <div>{book.pageCount}</div>
-                    </div>
-                  )}
-                  
-                  {book.isbn && (
-                    <div className="book-info-item">
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <FiHash style={{ marginRight: '8px', color: '#3769f5' }} />
-                        <Text strong>ISBN:</Text>
-                      </div>
-                      <div>{book.isbn}</div>
-                    </div>
-                  )}
-                </div>
 
-                {relatedBooks.length > 0 && (
-                  <>
-                    <Divider>Похожие книги</Divider>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-                      {relatedBooks.map(relatedBook => (
-                        <Link key={relatedBook.id} to={`/books/${relatedBook.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <div style={{ 
-                            width: '120px', 
-                            textAlign: 'center',
-                            transition: 'transform 0.2s'
-                          }}
-                          className="related-book-item"
-                          >
-                            <img 
-                              src={relatedBook.coverImageUrl || 'https://via.placeholder.com/120x180?text=Нет+обложки'} 
-                              alt={relatedBook.title}
-                              style={{ 
-                                width: '120px', 
-                                height: '180px', 
-                                objectFit: 'cover',
-                                borderRadius: '4px',
-                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                              }}
-                            />
-                            <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 500, height: '40px', overflow: 'hidden' }}>
-                              {relatedBook.title}
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
+                {/* Система вкладок */}
+                <Tabs activeKey={activeTab} onChange={setActiveTab}>
+                  <TabPane 
+                    tab={
+                      <span>
+                        <FaInfoCircle style={{ marginRight: '8px' }} />
+                        Описание
+                      </span>
+                    } 
+                    key="description"
+                  >
+                    <div>
+                      <Paragraph style={{ fontSize: '16px', lineHeight: '1.6' }}>
+                        {book.description || 'Описание отсутствует'}
+                      </Paragraph>
                     </div>
-                  </>
-                )}
+                    
+                    <Divider style={{ margin: '16px 0' }} />
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                      {book.publicationYear && (
+                        <div className="book-info-item">
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <FiCalendar style={{ marginRight: '8px', color: '#3769f5' }} />
+                            <Text strong>Год издания:</Text>
+                          </div>
+                          <div>{book.publicationYear}</div>
+                        </div>
+                      )}
+                      
+                      {book.publisher && (
+                        <div className="book-info-item">
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <FiBook style={{ marginRight: '8px', color: '#3769f5' }} />
+                            <Text strong>Издательство:</Text>
+                          </div>
+                          <div>{book.publisher}</div>
+                        </div>
+                      )}
+                      
+                      {book.language && (
+                        <div className="book-info-item">
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <FiFlag style={{ marginRight: '8px', color: '#3769f5' }} />
+                            <Text strong>Язык:</Text>
+                          </div>
+                          <div>{book.language}</div>
+                        </div>
+                      )}
+                      
+                      {book.pageCount && (
+                        <div className="book-info-item">
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <FiBookOpen style={{ marginRight: '8px', color: '#3769f5' }} />
+                            <Text strong>Страниц:</Text>
+                          </div>
+                          <div>{book.pageCount}</div>
+                        </div>
+                      )}
+                      
+                      {book.isbn && (
+                        <div className="book-info-item">
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <FiHash style={{ marginRight: '8px', color: '#3769f5' }} />
+                            <Text strong>ISBN:</Text>
+                          </div>
+                          <div>{book.isbn}</div>
+                        </div>
+                      )}
+                    </div>
+                  </TabPane>
+                  
+                  <TabPane 
+                    tab={
+                      <span>
+                        <FaBookmark style={{ marginRight: '8px' }} />
+                        Похожие книги
+                      </span>
+                    } 
+                    key="related"
+                  >
+                    {relatedBooks.length > 0 ? (
+                      <div style={{ padding: '16px 0' }}>
+                        <Title level={4} style={{ marginTop: 0 }}>Книги из этой же категории</Title>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+                          {relatedBooks.map(relatedBook => (
+                            <Link key={relatedBook.id} to={`/books/${relatedBook.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                              <Card 
+                                hoverable
+                                style={{ 
+                                  width: '180px', 
+                                  borderRadius: '8px',
+                                  overflow: 'hidden',
+                                  transition: 'transform 0.2s'
+                                }}
+                                cover={
+                                  <img 
+                                    src={relatedBook.coverImageUrl || 'https://via.placeholder.com/180x240?text=Нет+обложки'} 
+                                    alt={relatedBook.title}
+                                    style={{ 
+                                      height: '240px', 
+                                      objectFit: 'cover'
+                                    }}
+                                  />
+                                }
+                              >
+                                <Card.Meta 
+                                  title={relatedBook.title} 
+                                  description={relatedBook.author}
+                                  style={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}
+                                />
+                              </Card>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <Empty description="Нет похожих книг" />
+                    )}
+                  </TabPane>
+                  
+                  <TabPane 
+                    tab={
+                      <span>
+                        <FaComments style={{ marginRight: '8px' }} />
+                        Отзывы
+                      </span>
+                    } 
+                    key="reviews"
+                  >
+                    <div style={{ padding: '16px 0' }}>
+                      <div style={{ marginBottom: '24px' }}>
+                        <BookRating 
+                          bookId={Number(bookId)} 
+                          isAuthenticated={isAuthenticated} 
+                          size={24}
+                          showCount={true}
+                          interactive={true}
+                        />
+                      </div>
+                      
+                      {isAuthenticated ? (
+                        <div style={{ marginBottom: '24px' }}>
+                          <Title level={4}>Оставить отзыв</Title>
+                          <Paragraph>
+                            Расскажите свое мнение о книге. Что вам понравилось или не понравилось?
+                          </Paragraph>
+                          <Button type="primary" size="large">
+                            Написать отзыв
+                          </Button>
+                        </div>
+                      ) : (
+                        <div style={{ 
+                          background: '#f5f5f5', 
+                          padding: '16px', 
+                          borderRadius: '8px', 
+                          marginBottom: '24px'
+                        }}>
+                          <Paragraph>
+                            <Text strong>Авторизуйтесь</Text>, чтобы оставить отзыв о книге.
+                          </Paragraph>
+                          <Link to="/login">
+                            <Button type="primary">Войти</Button>
+                          </Link>
+                        </div>
+                      )}
+                      
+                      <Divider />
+                      
+                      <ReviewList bookId={Number(bookId)} />
+                    </div>
+                  </TabPane>
+                </Tabs>
               </Col>
             </Row>
           </div>

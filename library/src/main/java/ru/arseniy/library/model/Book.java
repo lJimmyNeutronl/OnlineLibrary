@@ -69,6 +69,14 @@ public class Book {
     @JsonBackReference
     private Set<ReadingHistory> readingHistory = new HashSet<>();
     
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonBackReference
+    private Set<Review> reviews = new HashSet<>();
+    
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonBackReference
+    private Set<Rating> ratings = new HashSet<>();
+    
     public Integer getId() {
         return id;
     }
@@ -187,5 +195,21 @@ public class Book {
     
     public void setReadingHistory(Set<ReadingHistory> readingHistory) {
         this.readingHistory = readingHistory;
+    }
+    
+    public Set<Review> getReviews() {
+        return reviews;
+    }
+    
+    public void setReviews(Set<Review> reviews) {
+        this.reviews = reviews;
+    }
+    
+    public Set<Rating> getRatings() {
+        return ratings;
+    }
+    
+    public void setRatings(Set<Rating> ratings) {
+        this.ratings = ratings;
     }
 }

@@ -53,6 +53,12 @@ public class User {
     @JsonManagedReference
     private Set<ReadingHistory> readingHistory = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Review> reviews = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Rating> ratings = new HashSet<>();
+
     @ManyToMany
     @JoinTable(
             name = "favorites",
@@ -132,6 +138,22 @@ public class User {
     
     public void setReadingHistory(Set<ReadingHistory> readingHistory) {
         this.readingHistory = readingHistory;
+    }
+    
+    public Set<Review> getReviews() {
+        return reviews;
+    }
+    
+    public void setReviews(Set<Review> reviews) {
+        this.reviews = reviews;
+    }
+    
+    public Set<Rating> getRatings() {
+        return ratings;
+    }
+    
+    public void setRatings(Set<Rating> ratings) {
+        this.ratings = ratings;
     }
     
     public Set<Book> getFavorites() {

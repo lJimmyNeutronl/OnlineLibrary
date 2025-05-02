@@ -85,7 +85,7 @@ const Tabs: React.FC<TabsProps> = ({
               paddingTop: '16px'
             }}
           >
-            {child}
+            {React.cloneElement(child, { key: undefined })}
           </div>
         );
       }

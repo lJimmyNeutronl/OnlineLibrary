@@ -1,0 +1,68 @@
+.book-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.book-rating-stars {
+  display: flex;
+  align-items: center;
+}
+
+.book-rating-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.book-rating-average {
+  font-size: 18px;
+  font-weight: bold;
+  color: #555;
+}
+
+.book-rating-count {
+  font-size: 14px;
+  color: #777;
+}
+
+.book-rating-user {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #444;
+  background-color: rgba(255, 215, 0, 0.1);
+  padding: 6px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.book-rating-status {
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-top: 8px;
+  background-color: #f0f0f0;
+  color: #555;
+}
+
+.book-rating-status.success {
+  background-color: #e6f7e6;
+  color: #2e7d32;
+}
+
+.book-rating-status.error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.book-rating-loading {
+  color: #888;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.book-rating-error {
+  color: #c62828;
+  font-size: 14px;
+} 
