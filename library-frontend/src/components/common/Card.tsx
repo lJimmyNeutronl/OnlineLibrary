@@ -82,6 +82,7 @@ const Card: React.FC<CardProps> & {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
     ...(hoverable && {
       cursor: 'pointer',
       ':hover': {
@@ -106,7 +107,13 @@ const Card: React.FC<CardProps> & {
         </div>
       )}
       
-      <div className="card-content" style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="card-content" style={{ 
+        padding: '14px', 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
         {title && (
           <div className="card-title" style={{ 
             fontSize: '18px',

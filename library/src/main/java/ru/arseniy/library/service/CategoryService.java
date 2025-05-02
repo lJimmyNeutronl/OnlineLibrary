@@ -6,6 +6,8 @@ import ru.arseniy.library.model.Category;
 import ru.arseniy.library.repository.CategoryRepository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CategoryService {
@@ -28,6 +30,31 @@ public class CategoryService {
     public Category getCategoryById(Integer id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Категория с ID " + id + " не найдена"));
+    }
+    
+    /**
+     * Получает все категории с подсчитанным количеством книг в каждой категории
+     * @return Список категорий
+     */
+    public List<Category> getAllCategoriesWithBookCount() {
+        List<Category> categories = categoryRepository.findAll();
+        
+        // Чтобы не перегружать канал передачи данных, мы возвращаем те же объекты категорий,
+        // поскольку количество книг можно получить через getBooks().size()
+        return categories;
+    }
+    
+    /**
+     * Получает карту с id категорий и количеством книг в каждой
+     * @return Карта id категории -> количество книг
+     */
+    public Map<Integer, Integer> getCategoriesBookCount() {
+        List<Category> categories = categoryRepository.findAll();
+        return categories.stream()
+                .collect(Collectors.toMap(
+                        Category::getId,
+                        category -> category.getBooks().size()
+                ));
     }
     
     public Category createCategory(Category category, Integer parentId) {

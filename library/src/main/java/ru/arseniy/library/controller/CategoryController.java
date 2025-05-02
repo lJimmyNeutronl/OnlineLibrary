@@ -5,10 +5,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.arseniy.library.dto.CategoryDTO;
+import ru.arseniy.library.dto.CategoryWithCountDTO;
 import ru.arseniy.library.model.Category;
 import ru.arseniy.library.service.CategoryService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -26,6 +28,21 @@ public class CategoryController {
                 .map(CategoryDTO::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(categoryDTOs);
+    }
+    
+    @GetMapping("/book-count")
+    public ResponseEntity<List<CategoryWithCountDTO>> getCategoriesWithBookCount() {
+        Map<Integer, Integer> bookCountMap = categoryService.getCategoriesBookCount();
+        List<Category> categories = categoryService.getAllCategories();
+        
+        List<CategoryWithCountDTO> result = categories.stream()
+                .map(category -> CategoryWithCountDTO.fromEntity(
+                    category, 
+                    bookCountMap.getOrDefault(category.getId(), 0))
+                )
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(result);
     }
     
     @GetMapping("/root")

@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import Typography from '../components/common/Typography';
 
+const { Title, Paragraph } = Typography;
+
 const fadeIn = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.8 } }
@@ -31,9 +33,9 @@ const BooksPage = () => {
         }}
       >
         <motion.div variants={slideUp}>
-          <Typography level={1} style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <Title level={1} style={{ textAlign: 'center', marginBottom: '40px' }}>
             Каталог книг
-          </Typography>
+          </Title>
           
           <div style={{ 
             background: 'white', 
@@ -42,13 +44,13 @@ const BooksPage = () => {
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             marginBottom: '40px'
           }}>
-            <Typography level={2} style={{ marginBottom: '20px' }}>
+            <Title level={2} style={{ marginBottom: '20px' }}>
               Страница находится в разработке
-            </Typography>
-            <Typography type="paragraph">
+            </Title>
+            <Paragraph>
               Здесь будет отображаться список всех доступных книг в библиотеке с возможностью поиска, 
               фильтрации по жанрам, авторам и другим параметрам.
-            </Typography>
+            </Paragraph>
           </div>
         </motion.div>
       </motion.div>

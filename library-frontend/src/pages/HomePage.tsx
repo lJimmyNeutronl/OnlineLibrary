@@ -6,10 +6,15 @@ import Typography from '../components/common/Typography';
 import Divider from '../components/common/Divider';
 import { Row, Col } from '../components/common/Grid';
 import Icon from '../components/common/Icon';
+import { Spin } from '../components/common';
 import { AiOutlineSearch } from 'react-icons/ai';
 import { BsArrowRight } from 'react-icons/bs';
 import { FaBook, FaBookOpen, FaBookReader, FaPencilAlt, FaGraduationCap, FaFeatherAlt } from 'react-icons/fa';
 import { MdClear } from 'react-icons/md';
+import BookCard from '../components/books/BookCard';
+import bookService, { Book } from '../services/bookService';
+import categoryService, { CategoryWithCount } from '../services/categoryService';
+import { Link } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -78,6 +83,45 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [inputFocused, setInputFocused] = useState<boolean>(false);
+  const [popularBooks, setPopularBooks] = useState<Book[]>([]);
+  const [featuredBooksLoading, setFeaturedBooksLoading] = useState<boolean>(true);
+  const [popularCategories, setPopularCategories] = useState<CategoryWithCount[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Загрузка популярных книг при монтировании компонента
+    const loadPopularBooks = async () => {
+      setFeaturedBooksLoading(true);
+      try {
+        const books = await bookService.getPopularBooks(8);
+        setPopularBooks(books);
+      } catch (error) {
+        console.error('Ошибка при загрузке популярных книг:', error);
+      } finally {
+        setFeaturedBooksLoading(false);
+      }
+    };
+
+    // Загрузка популярных категорий
+    const loadPopularCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        const categoriesWithCount = await categoryService.getCategoriesWithBookCount();
+        // Сортируем по количеству книг и берем топ-6
+        const topCategories = [...categoriesWithCount]
+          .sort((a, b) => b.bookCount - a.bookCount)
+          .slice(0, 6);
+        setPopularCategories(topCategories);
+      } catch (error) {
+        console.error('Ошибка при загрузке популярных категорий:', error);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    loadPopularBooks();
+    loadPopularCategories();
+  }, []);
 
   const onSearch = (value: string) => {
     setSearchQuery(value);
@@ -356,71 +400,34 @@ const HomePage = () => {
           </motion.div>
 
           {/* Новые поступления */}
-          <div style={{ marginBottom: '40px' }}>
-            <div style={{ 
-              display: 'flex',
-              alignItems: 'center',
-              margin: '40px 0 30px',
-              textAlign: 'center'
-            }}>
-              <div style={{ 
-                flex: 1, 
-                height: '1px',
-                background: 'linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
-              }}></div>
-              <Title level={3} style={{ 
-                margin: '0 20px', 
-                background: 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontWeight: 'bold',
-                letterSpacing: '0.5px'
-              }}>
-                Новые поступления
-              </Title>
-              <div style={{ 
-                flex: 1, 
-                height: '1px',
-                background: 'linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
-              }}></div>
+          <div className="section">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <Title level={3} style={{ margin: 0 }}>Новые поступления</Title>
+              <Button type="link" style={{ color: '#3769f5' }}>
+                Смотреть все <BsArrowRight style={{ marginLeft: '4px' }} />
+              </Button>
             </div>
-
-            <Row gutter={[0, 4]}>
-              {featuredBooks.map((book) => (
-                <Col xs={24} sm={12} md={6} lg={6} key={book.id} style={{ padding: '0 2px' }}>
-                    <Card
-                      hoverable
-                      cover={
-                        <div style={{ 
-                        width: '100%',
-                        height: '250px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                          overflow: 'hidden',
-                        borderBottom: '1px solid #f0f0f0'
-                        }}>
-                          <img 
-                            alt={book.title} 
-                            src={book.cover} 
-                            style={{ 
-                              width: '100%', 
-                              height: '100%', 
-                            objectFit: 'cover'
-                          }}
-                        />
-                        </div>
-                      }
-                    className="new-arrival-card"
-                  >
-                    <Card.Meta
+            
+            {featuredBooksLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                <Spin size="large" />
+              </div>
+            ) : (
+              <div className="book-grid">
+                {popularBooks.map((book) => (
+                  <div key={book.id} className="motion-container">
+                    <BookCard
+                      id={book.id}
                       title={book.title}
-                      description={book.author}
+                      author={book.author}
+                      coverImageUrl={book.coverImageUrl || 'https://via.placeholder.com/200x300?text=Нет+обложки'}
+                      publicationYear={book.publicationYear}
+                      showRating={true}
                     />
-                    </Card>
-                </Col>
-              ))}
-            </Row>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Популярные категории */}
@@ -454,40 +461,53 @@ const HomePage = () => {
             </div>
 
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              {[
-                { name: 'Фантастика', icon: <FaBookReader style={{ marginRight: '8px' }} /> },
-                { name: 'Детективы', icon: <FaGraduationCap style={{ marginRight: '8px' }} /> },
-                { name: 'Романы', icon: <FaFeatherAlt style={{ marginRight: '8px' }} /> },
-                { name: 'Наука', icon: <FaBook style={{ marginRight: '8px' }} /> },
-                { name: 'История', icon: <FaBookOpen style={{ marginRight: '8px' }} /> },
-                { name: 'Искусство', icon: <FaPencilAlt style={{ marginRight: '8px' }} /> }
-              ].map((category, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{ display: 'inline-block', margin: '0 8px 16px' }}
-                >
-                  <Button 
-                    size="large" 
-                    style={{ 
-                      borderRadius: '20px',
-                      padding: '6px 20px',
-                      background: index === 5 ? 'rgba(142, 84, 233, 0.15)' : 'rgba(55, 105, 245, 0.08)',
-                      border: index === 5 ? '1px solid rgba(142, 84, 233, 0.3)' : '1px solid rgba(55, 105, 245, 0.2)',
-                      color: index === 5 ? '#8e54e9' : '#3769f5',
-                      transition: 'all 0.3s ease',
-                      height: '42px',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      boxShadow: index === 5 ? '0 2px 8px rgba(142, 84, 233, 0.15)' : '0 2px 8px rgba(55, 105, 245, 0.05)'
-                    }}
-                  >
-                    {category.icon} {category.name}
-                  </Button>
-                </motion.div>
-              ))}
+              {categoriesLoading ? (
+                <div style={{ padding: '20px 0' }}>
+                  <Spin size="large" />
+                </div>
+              ) : (
+                popularCategories.map((category, index) => {
+                  // Выбираем иконку в зависимости от индекса
+                  const icons = [
+                    <FaBookReader style={{ marginRight: '8px' }} />,
+                    <FaGraduationCap style={{ marginRight: '8px' }} />,
+                    <FaFeatherAlt style={{ marginRight: '8px' }} />,
+                    <FaBook style={{ marginRight: '8px' }} />,
+                    <FaBookOpen style={{ marginRight: '8px' }} />,
+                    <FaPencilAlt style={{ marginRight: '8px' }} />
+                  ];
+                  
+                  return (
+                    <motion.div
+                      key={category.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      style={{ display: 'inline-block', margin: '0 8px 16px' }}
+                    >
+                      <Link to={`/categories/${category.id}`} style={{ textDecoration: 'none' }}>
+                        <Button 
+                          size="large" 
+                          style={{ 
+                            borderRadius: '20px',
+                            padding: '6px 20px',
+                            background: index === 5 ? 'rgba(142, 84, 233, 0.15)' : 'rgba(55, 105, 245, 0.08)',
+                            border: index === 5 ? '1px solid rgba(142, 84, 233, 0.3)' : '1px solid rgba(55, 105, 245, 0.2)',
+                            color: index === 5 ? '#8e54e9' : '#3769f5',
+                            transition: 'all 0.3s ease',
+                            height: '42px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            boxShadow: index === 5 ? '0 2px 8px rgba(142, 84, 233, 0.15)' : '0 2px 8px rgba(55, 105, 245, 0.05)'
+                          }}
+                        >
+                          {icons[index % icons.length]} {category.name} ({category.bookCount})
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  );
+                })
+              )}
             </div>
           </div>
         </motion.div>

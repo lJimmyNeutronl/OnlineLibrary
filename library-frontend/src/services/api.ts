@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-// Определяем базовый URL из переменных окружения или используем значение по умолчанию
+// Базовый URL для всех API-запросов
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 console.log('[Auth Debug] API initialized with baseURL:', baseURL);
 
-// Создаем экземпляр axios с базовым URL и заголовками
+// Создаем экземпляр axios с настроенным baseURL
 const API = axios.create({
   baseURL,
   headers: {
@@ -12,7 +12,7 @@ const API = axios.create({
   },
 });
 
-// Перехватчик запросов, который добавляет токен к каждому запросу
+// Интерцептор запросов для добавления токена авторизации
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -21,47 +21,19 @@ API.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Перехватчик ответов для обработки ошибок
+// Интерцептор ответов для обработки ошибок
 API.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Проверка наличия ответа от сервера
-    if (error.response) {
-      const { status, config } = error.response;
-      
-      // Для отладки
-      console.error(`API Error: ${status} on ${config.url}`, error.response.data);
-      
-      // Список эндпоинтов авторизации, для которых не нужно удалять токен
-      const authEndpoints = [
-        '/auth/signin',
-        '/auth/signup',
-        '/users/change-password'
-      ];
-      
-      // Определяем, является ли текущий запрос авторизационным
-      const isAuthEndpoint = authEndpoints.some(endpoint => 
-        config.url && config.url.includes(endpoint)
-      );
-      
-      // Обработка ошибки авторизации
-      if (status === 401 && !isAuthEndpoint) {
-        // Удаляем токен только для не-авторизационных эндпоинтов
-        console.warn('Авторизация не действительна. Удаление токена.');
-        localStorage.removeItem('token');
-      }
-    } else {
-      // Ошибка без ответа сервера (сетевая ошибка)
-      console.error('Network Error:', error.message);
+    // Обрабатываем 401 Unauthorized
+    if (error.response && error.response.status === 401) {
+      // Очищаем токен и перенаправляем на страницу входа
+      localStorage.removeItem('token');
+      window.location.href = '/login';
     }
-    
     return Promise.reject(error);
   }
 );

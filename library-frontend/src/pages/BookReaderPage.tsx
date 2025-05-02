@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Typography from '../components/common/Typography';
 import Button from '../components/common/Button';
-import { AiOutlineArrowLeft, AiOutlineMenu, AiOutlineHeart, AiFillHeart, AiOutlineFullscreen, AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineInfoCircle, AiOutlineClose } from 'react-icons/ai';
+import { AiOutlineArrowLeft, AiOutlineFullscreen, AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineHeart } from 'react-icons/ai';
 import { useAppSelector } from '../hooks/reduxHooks';
+
+const { Title, Paragraph } = Typography;
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -91,9 +93,9 @@ const BookReaderPage = () => {
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             marginBottom: '40px'
           }}>
-            <Typography level={2} style={{ marginBottom: '20px', textAlign: 'center' }}>
+            <Title style={{ marginBottom: '20px', textAlign: 'center' }}>
               Функционал чтения в разработке
-            </Typography>
+            </Title>
 
             <div style={{ 
               border: '1px solid #eee', 
@@ -106,9 +108,9 @@ const BookReaderPage = () => {
               flexDirection: 'column',
               background: '#f9f9f9'
             }}>
-              <Typography type="paragraph" style={{ marginBottom: '20px', textAlign: 'center' }}>
+              <Paragraph style={{ marginBottom: '20px', textAlign: 'center' }}>
                 Для просмотра полной версии PDF-документа необходимо авторизоваться и перейти к полной версии страницы.
-              </Typography>
+              </Paragraph>
 
               <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
                 <Button type="primary" onClick={() => navigate(`/books/${bookId}`)}>
