@@ -22,6 +22,22 @@ export interface Book {
   coverImageUrl?: string;
   uploadDate?: string;
   categories: Category[];
+  reviewsCount?: number;
+  rating?: number;
+  ratingsCount?: number;
+}
+
+export interface Review {
+  id: number;
+  content: string;
+  rating: number;
+  creationDate: string;
+  editedDate?: string;
+  userId: number;
+  userFirstName?: string;
+  userLastName?: string;
+  userAvatarUrl?: string;
+  bookId: number;
 }
 
 export interface PagedResponse<T> {
@@ -241,6 +257,71 @@ const bookService = {
     });
     
     return response.data.coverUrl;
+  },
+  
+  // Получение отзывов книги
+  async getBookReviews(bookId: number): Promise<Review[]> {
+    try {
+      const response = await API.get<Review[]>(`/books/${bookId}/reviews`);
+      return response.data;
+    } catch (error) {
+      console.error(`Ошибка при получении отзывов для книги ${bookId}:`, error);
+      return [];
+    }
+  },
+  
+  // Добавление нового отзыва
+  async addReview(bookId: number, content: string, rating: number): Promise<Review> {
+    const response = await API.post<Review>(`/books/${bookId}/reviews`, {
+      content,
+      rating
+    });
+    return response.data;
+  },
+  
+  // Обновление существующего отзыва
+  async updateReview(reviewId: number, content: string, rating: number): Promise<Review> {
+    const response = await API.put<Review>(`/reviews/${reviewId}`, {
+      content,
+      rating
+    });
+    return response.data;
+  },
+  
+  // Удаление отзыва
+  async deleteReview(reviewId: number): Promise<void> {
+    await API.delete(`/reviews/${reviewId}`);
+  },
+  
+  // Оценка книги (без отзыва)
+  async rateBook(bookId: number, rating: number): Promise<{ averageRating: number, ratingCount: number }> {
+    const response = await API.post<{ averageRating: number, ratingCount: number }>(`/books/${bookId}/rating`, {
+      rating
+    });
+    return response.data;
+  },
+  
+  // Получение рейтинга книги
+  async getBookRating(bookId: number): Promise<{ 
+    averageRating: number, 
+    ratingCount: number,
+    userRating: number | null
+  }> {
+    try {
+      const response = await API.get<{ 
+        averageRating: number, 
+        ratingCount: number,
+        userRating: number | null
+      }>(`/books/${bookId}/rating`);
+      return response.data;
+    } catch (error) {
+      console.error(`Ошибка при получении рейтинга для книги ${bookId}:`, error);
+      return {
+        averageRating: 0,
+        ratingCount: 0,
+        userRating: null
+      };
+    }
   }
 };
 

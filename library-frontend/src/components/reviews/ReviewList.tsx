@@ -1,53 +1,134 @@
 import React, { useState, useEffect } from 'react';
 import './ReviewList.css';
 import Typography from '../common/Typography';
+import api from '../../services/api';
+import RatingStars from '../rating/RatingStars';
 import Empty from '../common/Empty';
 import Spin from '../common/Spin';
+import Button from '../common/Button';
 import Divider from '../common/Divider';
-import RatingStars from '../rating/RatingStars';
-import api from '../../services/api';
+import bookService, { Review } from '../../services/bookService';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 interface ReviewListProps {
   bookId: number;
-}
-
-interface Review {
-  id: number;
-  userId: number;
-  bookId: number;
-  content: string;
-  userFirstName: string;
-  userLastName: string;
-  creationDate: string;
-  editedDate?: string;
 }
 
 const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedReviews, setExpandedReviews] = useState<Record<number, boolean>>({});
+
+  // Функция загрузки отзывов
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      const reviewsData = await bookService.getBookReviews(bookId);
+      setReviews(reviewsData);
+      setError(null);
+    } catch (err) {
+      console.error('Ошибка при загрузке отзывов:', err);
+      setError('Не удалось загрузить отзывы.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(`/books/${bookId}/reviews`);
-        setReviews(response.data);
-        setError(null);
-      } catch (err) {
-        console.error('Ошибка при загрузке отзывов:', err);
-        setError('Не удалось загрузить отзывы.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (bookId) {
       fetchReviews();
     }
   }, [bookId]);
+
+  // Слушатель события добавления нового отзыва
+  useEffect(() => {
+    const handleReviewAdded = () => {
+      fetchReviews();
+    };
+    
+    document.addEventListener('review-added', handleReviewAdded);
+    
+    return () => {
+      document.removeEventListener('review-added', handleReviewAdded);
+    };
+  }, []);
+
+  const toggleExpandReview = (reviewId: number) => {
+    setExpandedReviews(prev => ({
+      ...prev,
+      [reviewId]: !prev[reviewId]
+    }));
+  };
+
+  // Функция для форматирования даты без использования date-fns
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      
+      // Получение разницы в миллисекундах
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      
+      // Преобразование в минуты, часы, дни
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      // Форматирование даты на русском языке
+      if (diffMins < 60) {
+        return `${diffMins} ${getRussianMinutesText(diffMins)} назад`;
+      } else if (diffHours < 24) {
+        return `${diffHours} ${getRussianHoursText(diffHours)} назад`;
+      } else if (diffDays < 7) {
+        return `${diffDays} ${getRussianDaysText(diffDays)} назад`;
+      } else {
+        // Преобразование в полную дату
+        const day = date.getDate();
+        const month = getMonthName(date.getMonth());
+        const year = date.getFullYear();
+        return `${day} ${month} ${year}`;
+      }
+    } catch (e) {
+      return 'Недавно';
+    }
+  };
+  
+  // Вспомогательные функции для склонения слов
+  const getRussianMinutesText = (minutes: number) => {
+    if (minutes >= 11 && minutes <= 19) return 'минут';
+    const lastDigit = minutes % 10;
+    
+    if (lastDigit === 1) return 'минута';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'минуты';
+    return 'минут';
+  };
+  
+  const getRussianHoursText = (hours: number) => {
+    if (hours >= 11 && hours <= 19) return 'часов';
+    const lastDigit = hours % 10;
+    if (lastDigit === 1) return 'час';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'часа';
+    return 'часов';
+  };
+  
+  const getRussianDaysText = (days: number) => {
+    if (days >= 11 && days <= 19) return 'дней';
+    const lastDigit = days % 10;
+    if (lastDigit === 1) return 'день';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'дня';
+    return 'дней';
+  };
+  
+  // Получение названия месяца на русском
+  const getMonthName = (month: number): string => {
+    const monthNames = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    return monthNames[month];
+  };
 
   if (loading) {
     return <div className="review-list-loading"><Spin /></div>;
@@ -63,40 +144,68 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
 
   return (
     <div className="review-list">
-      <Title level={4}>Отзывы читателей ({reviews.length})</Title>
+      <Title level={4} className="review-list-title">Отзывы читателей <span className="review-count">({reviews.length})</span></Title>
       
-      {reviews.map((review, index) => (
-        <div key={review.id} className="review-item">
-          <div className="review-header">
-            <div className="review-user">
-              <div className="review-avatar">
-                {review.userFirstName?.[0] || 'U'}{review.userLastName?.[0] || ''}
-              </div>
-              <div className="review-user-info">
-                <Text strong>
-                  {review.userFirstName} {review.userLastName}
-                </Text>
-                <div className="review-date">
-                  {new Date(review.creationDate).toLocaleDateString('ru-RU', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                  {review.editedDate && ' (ред.)'}
+      {reviews.map((review, index) => {
+        const isExpanded = expandedReviews[review.id] || false;
+        const reviewContent = review.content;
+        const shouldTruncate = reviewContent.length > 300;
+        
+        return (
+          <div key={review.id} className="review-item">
+            <div className="review-header">
+              <div className="review-user">
+                {review.userAvatarUrl ? (
+                  <img src={review.userAvatarUrl} alt={`${review.userFirstName} ${review.userLastName}`} className="review-avatar-img" />
+                ) : (
+                  <div className="review-avatar">
+                    {review.userFirstName?.[0] || 'U'}{review.userLastName?.[0] || ''}
+                  </div>
+                )}
+                <div className="review-user-info">
+                  <Text strong className="review-username">
+                    {review.userFirstName} {review.userLastName}
+                  </Text>
+                  <div className="review-date">
+                    {formatDate(review.creationDate)}
+                    {review.editedDate && ' (ред.)'}
+                  </div>
                 </div>
               </div>
+              
+              {review.rating > 0 && (
+                <div className="review-rating">
+                  <RatingStars 
+                    rating={review.rating} 
+                    interactive={false} 
+                    size={18} 
+                  />
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="review-content">
-            <Paragraph>
-              {review.content}
-            </Paragraph>
+            <div className="review-content">
+              <Paragraph className={`review-text ${shouldTruncate && !isExpanded ? 'truncated' : ''}`}>
+                {shouldTruncate && !isExpanded 
+                  ? `${reviewContent.substring(0, 300)}...` 
+                  : reviewContent
+                }
+              </Paragraph>
+              
+              {shouldTruncate && (
+                <button 
+                  className="review-expand-btn"
+                  onClick={() => toggleExpandReview(review.id)}
+                >
+                  {isExpanded ? 'Свернуть' : 'Читать полностью'}
+                </button>
+              )}
+            </div>
+            
+            {index < reviews.length - 1 && <Divider className="review-divider" />}
           </div>
-          
-          {index < reviews.length - 1 && <Divider />}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

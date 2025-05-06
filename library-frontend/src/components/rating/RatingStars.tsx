@@ -10,6 +10,7 @@ interface RatingStarsProps {
   interactive?: boolean;
   onRatingChange?: (rating: number) => void;
   isAuthenticated?: boolean;
+  onClick?: () => void;
 }
 
 const RatingStars: React.FC<RatingStarsProps> = ({
@@ -19,7 +20,8 @@ const RatingStars: React.FC<RatingStarsProps> = ({
   color = '#FFD700', // золотой цвет для звезд
   interactive = false,
   onRatingChange,
-  isAuthenticated = false
+  isAuthenticated = false,
+  onClick
 }) => {
   const [hoverRating, setHoverRating] = useState(0);
   const [hasRated, setHasRated] = useState(false);
@@ -32,6 +34,16 @@ const RatingStars: React.FC<RatingStarsProps> = ({
     if (canRate && onRatingChange) {
       onRatingChange(selectedRating);
       setHasRated(true);
+      
+      // Отправка пользовательского события для обновления формы отзыва
+      const ratingChangeEvent = new CustomEvent('book-rating-change', { 
+        detail: { rating: selectedRating },
+        bubbles: true
+      });
+      document.dispatchEvent(ratingChangeEvent);
+    } else if (onClick) {
+      // Если пользователь не может оценивать, но есть обработчик общего клика
+      onClick();
     }
   };
 
@@ -58,7 +70,7 @@ const RatingStars: React.FC<RatingStarsProps> = ({
     const starStyle = {
       color,
       fontSize: `${size}px`,
-      cursor: canRate ? 'pointer' : 'default'
+      cursor: (canRate || onClick) ? 'pointer' : 'default'
     };
     
     // Если текущий рейтинг больше или равен значению звезды, отображаем полную звезду
@@ -100,7 +112,7 @@ const RatingStars: React.FC<RatingStarsProps> = ({
   };
 
   return (
-    <div className="rating-stars">
+    <div className="rating-stars" onClick={onClick ? () => onClick() : undefined}>
       {Array.from({ length: totalStars }, (_, index) => renderStar(index))}
       {interactive && !isAuthenticated && (
         <div className="rating-login-note">

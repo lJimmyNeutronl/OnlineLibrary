@@ -1,31 +1,65 @@
 .rating-stars {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  position: relative;
+  padding: 2px 0;
 }
 
 .rating-stars svg {
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  color: #f39c12; /* Цвет звезды - желтый/золотой */
 }
 
 .rating-stars svg:hover {
   transform: scale(1.2);
+  filter: drop-shadow(0 0 2px rgba(243, 156, 18, 0.4));
 }
 
 .rating-login-note {
-  margin-left: 12px;
-  font-size: 14px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 5px;
+  font-size: 13px;
   color: #777;
   font-style: italic;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  z-index: 5;
+  animation: fadeIn 0.2s ease;
 }
 
 /* Анимация для только что поставленной оценки */
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .rating-stars.just-rated svg {
-  animation: pulse 0.5s ease-in-out;
+  animation: pulse 0.6s ease-in-out;
+}
+
+/* Цвета звезд в зависимости от рейтинга */
+.rating-stars.high-rating svg {
+  color: #f39c12; /* Золотой для высокого рейтинга */
+}
+
+.rating-stars.medium-rating svg {
+  color: #f5b041; /* Оранжевый для среднего рейтинга */
+}
+
+.rating-stars.low-rating svg {
+  color: #e67e22; /* Темно-оранжевый для низкого рейтинга */
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 } 

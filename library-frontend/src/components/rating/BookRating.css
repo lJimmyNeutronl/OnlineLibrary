@@ -2,39 +2,193 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 }
 
-.book-rating-stars {
+/* Детальный блок рейтинга (верхняя часть страницы) */
+.book-rating-detailed {
+  position: relative;
+}
+
+.book-rating-header {
   display: flex;
   align-items: center;
+  gap: 16px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.book-rating-stats {
+.book-rating-value {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
 }
 
-.book-rating-average {
-  font-size: 18px;
-  font-weight: bold;
-  color: #555;
+.book-rating-number {
+  font-size: 36px;
+  font-weight: 700;
+  color: #f39c12;
+  line-height: 1;
+}
+
+.book-rating-stars-container {
+  display: none; /* Скрываем звезды в верхнем блоке, как на изображении */
+}
+
+.book-rating-counters {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .book-rating-count {
   font-size: 14px;
-  color: #777;
+  color: #666;
+  cursor: pointer;
 }
 
-.book-rating-user {
-  margin-top: 8px;
+.book-rating-reviews {
   font-size: 14px;
-  color: #444;
-  background-color: rgba(255, 215, 0, 0.1);
-  padding: 6px 10px;
-  border-radius: 4px;
-  display: inline-block;
+  cursor: pointer;
+}
+
+.book-rating-reviews a {
+  color: #673ab7;
+  text-decoration: none;
+}
+
+.book-rating-reviews a:hover {
+  text-decoration: underline;
+}
+
+/* Всплывающее окно статистики */
+.book-rating-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 360px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  z-index: 10;
+  animation: fadeIn 0.2s ease-in;
+}
+
+.book-rating-tooltip:before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 25px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  transform: rotate(45deg);
+  box-shadow: -3px -3px 5px rgba(0, 0, 0, 0.04);
+}
+
+.book-rating-tooltip-header {
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.book-rating-tooltip-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.book-rating-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.book-rating-distribution-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 24px;
+}
+
+.book-rating-distribution-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 40px;
+  color: #f39c12;
+  font-weight: 500;
+}
+
+.book-rating-distribution-bar-container {
+  flex: 1;
+  height: 12px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.book-rating-distribution-bar {
+  height: 100%;
+  background: #f39c12; /* Изменен цвет на однотонный золотой */
+  border-radius: 10px;
+}
+
+.book-rating-distribution-count {
+  width: 60px;
+  text-align: right;
+  font-size: 13px;
+  color: #666;
+}
+
+.book-rating-distribution-percentage {
+  text-align: right;
+  font-size: 13px;
+  color: #999;
+  margin-right: 5px;
+}
+
+.book-rating-distribution-absolute {
+  color: #666;
+  font-size: 13px;
+}
+
+.book-rating-user-container {
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.book-rating-user-header {
+  margin-bottom: 10px;
+}
+
+.book-rating-user-title {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.book-rating-user-stars {
+  display: flex;
+  justify-content: center;
+}
+
+/* Простая версия для формы отзывов */
+.book-rating-simple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.book-rating-count-simple {
+  font-size: 13px;
+  color: #999;
+  margin-top: 5px;
 }
 
 .book-rating-status {
@@ -44,6 +198,11 @@
   margin-top: 8px;
   background-color: #f0f0f0;
   color: #555;
+}
+
+.book-rating-status.submitting {
+  background-color: #e3f2fd;
+  color: #1976d2;
 }
 
 .book-rating-status.success {
@@ -65,4 +224,15 @@
 .book-rating-error {
   color: #c62828;
   font-size: 14px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 } 
