@@ -602,8 +602,10 @@ const CategoryBooksPage = () => {
                           id={book.id}
                           title={book.title}
                           author={book.author}
-                          coverImageUrl={book.coverImageUrl || 'https://via.placeholder.com/180x250?text=Нет+обложки'}
+                          coverImageUrl={book.coverImageUrl || '/src/assets/images/placeholder.png'}
                           publicationYear={book.publicationYear || undefined}
+                          showRating={true}
+                          rating={book.rating || 0}
                         />
                       </motion.div>
                     ))}
@@ -635,7 +637,7 @@ const CategoryBooksPage = () => {
                               }}
                             >
                             <img 
-                                src={book.coverImageUrl || 'https://via.placeholder.com/100x150?text=Нет+обложки'} 
+                                src={book.coverImageUrl || '/src/assets/images/placeholder.png'} 
                               alt={book.title} 
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />

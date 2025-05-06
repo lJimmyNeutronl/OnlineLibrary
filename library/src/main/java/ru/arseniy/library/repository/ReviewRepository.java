@@ -43,4 +43,14 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
      * Удаляет отзыв по ID пользователя и ID книги
      */
     void deleteByUserIdAndBookId(Integer userId, Integer bookId);
+    
+    /**
+     * Подсчитывает количество отзывов от конкретного пользователя для конкретной книги
+     */
+    long countByUserIdAndBookId(Integer userId, Integer bookId);
+    
+    /**
+     * Находит все отзывы конкретного пользователя для конкретной книги
+     */
+    List<Review> findAllByUserIdAndBookId(Integer userId, Integer bookId);
 } 

@@ -48,10 +48,10 @@ public class ReviewService {
     }
 
     /**
-     * Добавить или обновить отзыв к книге
+     * Добавить новый отзыв к книге или обновить существующий (если указан ID отзыва)
      */
     @Transactional
-    public ReviewDTO addOrUpdateReview(Integer userId, Integer bookId, String content) {
+    public ReviewDTO addOrUpdateReview(Integer userId, Integer bookId, String content, Integer reviewId) {
         // Проверяем, что книга существует
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new IllegalArgumentException("Книга с ID " + bookId + " не найдена"));
@@ -60,13 +60,26 @@ public class ReviewService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь с ID " + userId + " не найден"));
         
-        // Проверяем, существует ли уже отзыв от этого пользователя для этой книги
-        Optional<Review> existingReview = reviewRepository.findByUserIdAndBookId(userId, bookId);
+        // Проверка на лимит отзывов (3 отзыва на книгу от одного пользователя)
+        if (reviewId == null) {
+            // Считаем количество отзывов пользователя на данную книгу
+            long userReviewCount = reviewRepository.countByUserIdAndBookId(userId, bookId);
+            if (userReviewCount >= 3) {
+                throw new IllegalStateException("Достигнут лимит отзывов (максимум 3) для данной книги от одного пользователя");
+            }
+        }
         
         Review review;
-        if (existingReview.isPresent()) {
-            // Обновляем существующий отзыв
-            review = existingReview.get();
+        if (reviewId != null) {
+            // Если указан ID отзыва, обновляем существующий отзыв
+            review = reviewRepository.findById(reviewId)
+                    .orElseThrow(() -> new IllegalArgumentException("Отзыв с ID " + reviewId + " не найден"));
+            
+            // Проверяем, принадлежит ли отзыв данному пользователю и для данной книги
+            if (!review.getUser().getId().equals(userId) || !review.getBook().getId().equals(bookId)) {
+                throw new IllegalArgumentException("Отзыв принадлежит другому пользователю или относится к другой книге");
+            }
+            
             review.setContent(content);
             // Дата редактирования обновится автоматически через @PreUpdate
         } else {
@@ -82,6 +95,14 @@ public class ReviewService {
         Review savedReview = reviewRepository.save(review);
         
         return ReviewDTO.fromEntity(savedReview);
+    }
+
+    /**
+     * Добавить новый отзыв к книге без указания ID (для совместимости со старыми вызовами)
+     */
+    @Transactional
+    public ReviewDTO addOrUpdateReview(Integer userId, Integer bookId, String content) {
+        return addOrUpdateReview(userId, bookId, content, null);
     }
 
     /**
@@ -104,5 +125,15 @@ public class ReviewService {
      */
     public boolean hasUserReviewedBook(Integer userId, Integer bookId) {
         return reviewRepository.existsByUserIdAndBookId(userId, bookId);
+    }
+
+    /**
+     * Получить все отзывы пользователя для конкретной книги
+     */
+    public List<ReviewDTO> getUserReviewsForBook(Integer userId, Integer bookId) {
+        List<Review> reviews = reviewRepository.findAllByUserIdAndBookId(userId, bookId);
+        return reviews.stream()
+                .map(ReviewDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 } 

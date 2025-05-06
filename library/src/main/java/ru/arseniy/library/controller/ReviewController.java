@@ -62,7 +62,7 @@ public class ReviewController {
     @PostMapping("/{bookId}/review")
     public ResponseEntity<ReviewDTO> addOrUpdateReview(
             @PathVariable Integer bookId,
-            @RequestBody Map<String, String> payload,
+            @RequestBody Map<String, Object> payload,
             Authentication authentication) {
         
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -75,16 +75,33 @@ public class ReviewController {
         User user = userService.getUserByEmail(username);
         
         // Получаем текст отзыва из тела запроса
-        String content = payload.get("content");
+        String content = (String) payload.get("content");
         if (content == null || content.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         
-        // Добавляем или обновляем отзыв
-        ReviewDTO reviewDTO = reviewService.addOrUpdateReview(
-                user.getId(), bookId, content);
+        // Получаем ID отзыва для обновления (если он есть)
+        Integer reviewId = null;
+        if (payload.containsKey("reviewId")) {
+            try {
+                reviewId = Integer.valueOf(payload.get("reviewId").toString());
+            } catch (NumberFormatException | NullPointerException e) {
+                // Игнорируем ошибки конвертации, reviewId останется null
+            }
+        }
+        
+        try {
+            // Добавляем или обновляем отзыв
+            ReviewDTO reviewDTO = reviewService.addOrUpdateReview(
+                    user.getId(), bookId, content, reviewId);
                 
-        return ResponseEntity.ok(reviewDTO);
+            return ResponseEntity.ok(reviewDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(null);
+        }
     }
 
     /**
@@ -130,5 +147,28 @@ public class ReviewController {
         boolean hasReview = reviewService.hasUserReviewedBook(user.getId(), bookId);
         
         return ResponseEntity.ok(Map.of("hasReview", hasReview));
+    }
+
+    /**
+     * Получить все отзывы пользователя для книги
+     */
+    @GetMapping("/{bookId}/user-reviews")
+    public ResponseEntity<List<ReviewDTO>> getUserReviewsForBook(
+            @PathVariable Integer bookId,
+            Authentication authentication) {
+        
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        // Получаем текущего пользователя
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+        User user = userService.getUserByEmail(username);
+        
+        // Получаем все отзывы пользователя для данной книги
+        List<ReviewDTO> userReviews = reviewService.getUserReviewsForBook(user.getId(), bookId);
+        
+        return ResponseEntity.ok(userReviews);
     }
 } 

@@ -94,13 +94,67 @@ const BookRating: React.FC<BookRatingProps> = ({
   }, []);
 
   // Обработчик изменения рейтинга
-  const handleRatingChange = async (newRating: number) => {
+  const handleRatingChange = async (newRating: number | null) => {
     if (!isAuthenticated) {
       return;
     }
 
     try {
       setSubmitStatus('submitting');
+      
+      // Если передан null, удаляем рейтинг
+      if (newRating === null) {
+        await api.delete(`/books/${bookId}/rating`);
+        
+        // Обновляем локальные данные
+        setRatingData(prev => {
+          if (!prev) return null;
+          
+          // Если у пользователя не было рейтинга, ничего не меняем
+          if (!prev.userRating) return prev;
+          
+          const userOldRating = prev.userRating;
+          const newCount = prev.ratingCount - 1;
+          
+          // Рассчитываем новый средний рейтинг без оценки пользователя
+          let newAverage = 0;
+          if (newCount > 0) {
+            // Убираем старую оценку пользователя из суммы
+            const totalBeforeRemoval = prev.averageRating * prev.ratingCount;
+            const totalAfterRemoval = totalBeforeRemoval - userOldRating;
+            newAverage = totalAfterRemoval / newCount;
+          }
+          
+          // Обновляем распределение оценок
+          const updatedDistribution = { ...prev.ratingsDistribution };
+          if (updatedDistribution && userOldRating) {
+            updatedDistribution[userOldRating] = Math.max(0, (updatedDistribution[userOldRating] || 0) - 1);
+          }
+          
+          return {
+            ...prev,
+            averageRating: newAverage,
+            ratingCount: newCount,
+            userRating: null,
+            ratingsDistribution: updatedDistribution
+          };
+        });
+        
+        // Отправляем событие об удалении рейтинга
+        const ratingChangeEvent = new CustomEvent('book-rating-change', { 
+          detail: { rating: null, bookId },
+          bubbles: true
+        });
+        document.dispatchEvent(ratingChangeEvent);
+        
+        setSubmitStatus('success');
+        setTimeout(() => {
+          setSubmitStatus('idle');
+        }, 2000);
+        return;
+      }
+      
+      // Стандартный код для добавления/обновления рейтинга
       const response = await api.post(`/books/${bookId}/rating`, { rating: newRating });
       
       // Обновляем локальные данные с сервера
@@ -153,9 +207,9 @@ const BookRating: React.FC<BookRatingProps> = ({
       
       setSubmitStatus('success');
       
-      // Отправляем пользовательское событие для обновления формы отзыва
+      // Отправляем пользовательское событие для обновления формы отзыва и статистики рейтинга на странице
       const ratingChangeEvent = new CustomEvent('book-rating-change', { 
-        detail: { rating: newRating },
+        detail: { rating: newRating, bookId },
         bubbles: true
       });
       document.dispatchEvent(ratingChangeEvent);

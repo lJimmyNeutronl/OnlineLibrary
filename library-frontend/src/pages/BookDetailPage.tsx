@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Typography from '../components/common/Typography';
 import Row from '../components/common/Row';
@@ -26,12 +26,15 @@ import '../styles/bookDetail.css';
 
 const { Title, Paragraph, Text } = Typography;
 
+// Путь к плейсхолдеру
+const PLACEHOLDER_IMAGE = '/src/assets/images/placeholder.png';
+
 const fadeIn = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.5 } }
 };
 
-// Стили для анимаций фоновых элементов
+// Стили для анимаций фоновых элементов - оптимизированы для производительности
 const floatAnimation = {
   initial: { y: 0, rotate: 0 },
   animate: {
@@ -41,7 +44,10 @@ const floatAnimation = {
       duration: 6,
       repeat: Infinity,
       repeatType: "reverse" as const,
-      ease: "easeInOut"
+      ease: "easeInOut",
+      // Оптимизированные настройки анимации
+      restDelta: 0.01,
+      restSpeed: 0.01
     }
   }
 };
@@ -53,7 +59,10 @@ const rotateAnimation = {
     transition: {
       duration: 60,
       repeat: Infinity,
-      ease: "linear"
+      ease: "linear",
+      // Оптимизированные настройки анимации
+      restDelta: 0.01,
+      restSpeed: 0.01
     }
   }
 };
@@ -75,40 +84,88 @@ const BookDetailPage = () => {
   const [charCount, setCharCount] = useState<number>(0);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<boolean>(false);
   
   const contentRef = useRef<HTMLDivElement>(null);
   
-  useEffect(() => {
-    const fetchBookDetails = async () => {
-      if (!bookId) return;
+  // Мемоизируем идентификатор книги, чтобы избежать лишних ререндеров
+  const parsedBookId = useMemo(() => bookId ? parseInt(bookId) : 0, [bookId]);
+  
+  // Состояние для хранения отзывов пользователя для этой книги
+  const [userReviews, setUserReviews] = useState<any[]>([]);
+  // Состояние для отслеживания редактируемого отзыва
+  const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+  
+  const fetchBookDetails = useCallback(async () => {
+    if (!parsedBookId) return;
+    
+    setLoading(true);
+    try {
+      const bookData = await bookService.getBookById(parsedBookId);
+      setBook(bookData);
       
-      setLoading(true);
-      try {
-        const bookData = await bookService.getBookById(parseInt(bookId));
-        setBook(bookData);
-        
-        // Загружаем книги из той же категории
-        if (bookData.categories && bookData.categories.length > 0) {
-          const randomCategoryId = bookData.categories[0].id;
-          const response = await bookService.getBooksByCategory(randomCategoryId, { 
-            size: 4
-          });
-          // Фильтруем, чтобы исключить текущую книгу
-          const filtered = response.content.filter(b => b.id !== bookData.id);
-          setRelatedBooks(filtered.slice(0, 3)); // Берем только 3 книги
-        }
-      } catch (error) {
-        console.error('Ошибка при загрузке данных книги:', error);
-        message.error('Не удалось загрузить данные книги');
-      } finally {
-        setLoading(false);
+      // Загружаем книги из той же категории если есть категории
+      if (bookData.categories && bookData.categories.length > 0) {
+        const randomCategoryId = bookData.categories[0].id;
+        const response = await bookService.getBooksByCategory(randomCategoryId, { 
+          size: 4
+        });
+        // Фильтруем, чтобы исключить текущую книгу
+        const filtered = response.content.filter(b => b.id !== bookData.id);
+        setRelatedBooks(filtered.slice(0, 3)); // Берем только 3 книги
       }
-    };
+    } catch (error) {
+      console.error('Ошибка при загрузке данных книги:', error);
+      message.error('Не удалось загрузить данные книги');
+    } finally {
+      setLoading(false);
+    }
+  }, [parsedBookId]);
 
+  useEffect(() => {
     fetchBookDetails();
-  }, [bookId]);
+  }, [fetchBookDetails]);
 
-  const toggleFavorite = () => {
+  // Обработчик обновления рейтинга книги
+  const handleRatingUpdate = useCallback(async () => {
+    if (!parsedBookId) return;
+    
+    try {
+      // Получаем обновленные данные о рейтинге
+      const ratingData = await bookService.getBookRating(parsedBookId);
+      
+      // Обновляем информацию о книге с новыми данными о рейтинге
+      setBook(prevBook => {
+        if (!prevBook) return null;
+        return {
+          ...prevBook,
+          rating: ratingData.averageRating,
+          ratingsCount: ratingData.ratingCount
+        };
+      });
+    } catch (error) {
+      console.error('Ошибка при обновлении рейтинга:', error);
+    }
+  }, [parsedBookId]);
+
+  // Слушатель события обновления рейтинга
+  useEffect(() => {
+    // Обработчик события изменения рейтинга
+    const handleBookRatingUpdated = () => {
+      handleRatingUpdate();
+    };
+    
+    // Регистрируем обработчик события
+    document.addEventListener('book-rating-change', handleBookRatingUpdated);
+    
+    // Удаляем обработчик при размонтировании компонента
+    return () => {
+      document.removeEventListener('book-rating-change', handleBookRatingUpdated);
+    };
+  }, [handleRatingUpdate]);
+
+  // Мемоизируем обработчики событий, чтобы избежать лишних ререндеров
+  const toggleFavorite = useCallback(() => {
     if (!isAuthenticated) {
       message.warning('Для добавления книги в избранное необходимо авторизоваться');
       return;
@@ -117,19 +174,19 @@ const BookDetailPage = () => {
     // В реальном приложении здесь будет API-запрос для добавления/удаления из избранного
     setIsFavorite(!isFavorite);
     message.success(isFavorite ? 'Книга удалена из избранного' : 'Книга добавлена в избранное');
-  };
+  }, [isAuthenticated, isFavorite]);
 
-  const startReading = () => {
+  const startReading = useCallback(() => {
     if (!isAuthenticated) {
       message.warning('Для чтения книги необходимо авторизоваться');
       return;
     }
     
     // В реальном приложении здесь будет переход на страницу чтения книги
-    navigate(`/books/${bookId}/read`);
-  };
+    navigate(`/books/${parsedBookId}/read`);
+  }, [isAuthenticated, navigate, parsedBookId]);
 
-  const scrollToReviews = () => {
+  const scrollToReviews = useCallback(() => {
     const reviewsSection = document.getElementById('reviews-section');
     if (reviewsSection) {
       // Получаем высоту хедера - предполагаем, что он 64px (можно заменить на фактическую)
@@ -145,32 +202,47 @@ const BookDetailPage = () => {
         behavior: 'smooth'
       });
     }
-  };
+  }, []);
 
   // Обработчик успешного добавления отзыва
-  const handleReviewSuccess = (newReview: any) => {
+  const handleReviewSuccess = useCallback((newReview: any) => {
     // Обновление списка отзывов после добавления нового
-    setReviews(prevReviews => [newReview, ...prevReviews]);
+    setReviews(prevReviews => {
+      // Проверяем, существует ли уже отзыв с таким ID
+      const existingIndex = prevReviews.findIndex(review => review.id === newReview.id);
+      
+      if (existingIndex >= 0) {
+        // Если отзыв уже существует, обновляем его
+        const updatedReviews = [...prevReviews];
+        updatedReviews[existingIndex] = newReview;
+        return updatedReviews;
+      } else {
+        // Если это новый отзыв, добавляем его в начало списка
+        return [newReview, ...prevReviews];
+      }
+    });
     
-    // Показываем уведомление об успешном добавлении
-    message.success('Отзыв успешно опубликован!');
-    
-    // Обновляем счетчик отзывов
+    // Обновляем счетчик отзывов если это новый отзыв
     if (book) {
-      const reviewsCount = (book.reviewsCount || 0) + 1;
-      setBook({...book, reviewsCount});
+      // Увеличиваем счетчик только для новых отзывов
+      // В реальном приложении это должно быть основано на ответе API
+      setBook(prevBook => {
+        if (prevBook === null) return null;
+        const reviewsCount = (prevBook.reviewsCount || 0) + 1;
+        return { ...prevBook, reviewsCount };
+      });
     }
     
     // Очищаем форму
     setReviewText('');
     setReviewRating(0);
     setCharCount(0);
-  };
+  }, [book]);
 
   // Обработчик изменения рейтинга из компонента BookRating
-  const handleBookRatingChange = (rating: number) => {
+  const handleBookRatingChange = useCallback((rating: number) => {
     setReviewRating(rating);
-  };
+  }, []);
 
   // Создаем слушатель события для отслеживания изменений рейтинга
   useEffect(() => {
@@ -189,7 +261,7 @@ const BookDetailPage = () => {
   }, []);
 
   // Вспомогательные функции для склонения слов
-  const getOcenokText = (count: number) => {
+  const getOcenokText = useCallback((count: number) => {
     if (count % 10 === 1 && count % 100 !== 11) {
       return 'оценка';
     } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
@@ -197,9 +269,9 @@ const BookDetailPage = () => {
     } else {
       return 'оценок';
     }
-  };
+  }, []);
   
-  const getReviewsText = (count: number) => {
+  const getReviewsText = useCallback((count: number) => {
     if (count % 10 === 1 && count % 100 !== 11) {
       return 'отзыв';
     } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
@@ -207,22 +279,57 @@ const BookDetailPage = () => {
     } else {
       return 'отзывов';
     }
-  };
+  }, []);
 
-  const handleReviewTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleReviewTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newText = e.target.value;
     setReviewText(newText);
     setCharCount(newText.length);
-  };
+  }, []);
   
-  const handleReviewSubmit = async () => {
+  // Загрузка отзывов пользователя при изменении bookId
+  useEffect(() => {
+    const loadUserReviews = async () => {
+      if (!isAuthenticated || !parsedBookId) return;
+      
+      try {
+        const reviews = await bookService.getUserReviewsForBook(parsedBookId);
+        setUserReviews(reviews);
+      } catch (error) {
+        console.error('Ошибка при загрузке отзывов пользователя:', error);
+      }
+    };
+    
+    loadUserReviews();
+  }, [isAuthenticated, parsedBookId]);
+
+  // Функция для начала редактирования отзыва
+  const startEditingReview = useCallback((review: any) => {
+    setEditingReviewId(review.id);
+    setReviewText(review.content);
+    setReviewRating(review.rating || 0);
+    setCharCount(review.content.length);
+    
+    // Прокрутка к форме отзыва
+    const reviewFormElement = document.querySelector('.reviews-form-wrapper');
+    if (reviewFormElement) {
+      reviewFormElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, []);
+
+  // Функция для отмены редактирования
+  const cancelEditingReview = useCallback(() => {
+    setEditingReviewId(null);
+    setReviewText('');
+    setReviewRating(0);
+    setCharCount(0);
+    setReviewError(null);
+  }, []);
+
+  // Обновляем handleReviewSubmit для поддержки редактирования
+  const handleReviewSubmit = useCallback(async () => {
     const minCharCount = 10;
     
-    if (reviewRating === 0) {
-      setReviewError('Пожалуйста, выберите рейтинг');
-      return;
-    }
-
     if (reviewText.trim().length < minCharCount) {
       setReviewError(`Отзыв должен содержать не менее ${minCharCount} символов`);
       return;
@@ -232,32 +339,72 @@ const BookDetailPage = () => {
     setSubmitting(true);
     
     try {
-      // Делаем реальный API-запрос через bookService
+      // Делаем реальный API-запрос через bookService с учетом ID отзыва при редактировании
       const newReview = await bookService.addReview(
-        parseInt(bookId || '0'),
+        parsedBookId,
         reviewText,
-        reviewRating
+        reviewRating || null,
+        editingReviewId || undefined
       );
+      
+      // Проверяем, существовал ли уже отзыв от этого пользователя
+      const existingReviewIdx = userReviews.findIndex(r => r.id === newReview.id);
+      const isUpdateOperation = existingReviewIdx >= 0;
+      
+      // Обновляем список отзывов пользователя
+      if (isUpdateOperation) {
+        setUserReviews(prev => prev.map(r => r.id === newReview.id ? newReview : r));
+      } else {
+        setUserReviews(prev => [...prev, newReview]);
+      }
       
       // Вызываем обработчик успешного добавления отзыва
       handleReviewSuccess(newReview);
       
       // Отправляем событие о добавлении отзыва для обновления списка отзывов
       const reviewAddedEvent = new CustomEvent('review-added', {
-        detail: { review: newReview },
+        detail: { review: newReview, isUpdate: isUpdateOperation },
         bubbles: true
       });
       document.dispatchEvent(reviewAddedEvent);
       
-      message.success('Ваш отзыв успешно опубликован!');
+      // Обновляем данные о рейтинге только если была выставлена оценка
+      if (reviewRating > 0) {
+        handleRatingUpdate();
+      }
       
-    } catch (error) {
+      // Показываем соответствующее сообщение
+      if (isUpdateOperation) {
+        message.success('Ваш отзыв успешно обновлен!');
+      } else {
+        message.success('Ваш отзыв успешно опубликован!');
+      }
+      
+      // Сбрасываем состояние редактирования
+      cancelEditingReview();
+      
+    } catch (error: any) {
       console.error('Ошибка при отправке отзыва:', error);
-      setReviewError('Произошла ошибка при отправке отзыва. Пожалуйста, попробуйте позже.');
+      
+      // Более информативное сообщение об ошибке
+      if (error?.response?.status === 400) {
+        setReviewError('Ошибка в формате отзыва. Пожалуйста, проверьте введенные данные.');
+      } else if (error?.response?.status === 429) {
+        setReviewError('Вы достигли лимита отзывов для этой книги (максимум 3 отзыва).');
+      } else if (error?.response?.status === 404) {
+        setReviewError('Отзыв не найден. Возможно, он был удален.');
+      } else {
+        setReviewError('Произошла ошибка при отправке отзыва. Пожалуйста, попробуйте позже.');
+      }
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [reviewRating, reviewText, parsedBookId, handleReviewSuccess, handleRatingUpdate, editingReviewId, userReviews, cancelEditingReview]);
+
+  // Обработчик ошибки загрузки изображения
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   if (loading) {
     return (
@@ -271,14 +418,18 @@ const BookDetailPage = () => {
     return <Empty description="Книга не найдена" />;
   }
 
+  // Определяем URL изображения обложки книги
+  const coverImageUrl = imageError ? PLACEHOLDER_IMAGE : book.coverImageUrl || PLACEHOLDER_IMAGE;
+
   return (
     <div className="book-detail-container">
-      {/* Анимированные декоративные элементы */}
+      {/* Анимированные декоративные элементы с lazy анимацией */}
       <motion.div 
         initial="initial"
         animate="animate"
         variants={floatAnimation}
         className="book-detail-decorative top-right"
+        style={{ willChange: 'transform' }}
       >
         <FaBookOpen size={300} color="#3769f5" />
       </motion.div>
@@ -288,6 +439,7 @@ const BookDetailPage = () => {
         animate="animate"
         variants={rotateAnimation}
         className="book-detail-decorative bottom-left"
+        style={{ willChange: 'transform' }}
       >
         <FaGraduationCap size={250} color="#3769f5" />
       </motion.div>
@@ -336,10 +488,11 @@ const BookDetailPage = () => {
                   <div className="book-cover-shadow"></div>
                   
                   <img
-                    src={book.coverImageUrl || 'https://via.placeholder.com/300x450?text=Нет+обложки'}
+                    src={coverImageUrl}
                     alt={book.title}
                     className="book-cover-img"
                     loading="eager"
+                    onError={handleImageError}
                   />
                 </div>
                 
@@ -495,8 +648,10 @@ const BookDetailPage = () => {
                           id={relatedBook.id}
                           title={relatedBook.title} 
                           author={relatedBook.author}
-                          coverImageUrl={relatedBook.coverImageUrl || 'https://via.placeholder.com/180x240?text=Нет+обложки'}
+                          coverImageUrl={relatedBook.coverImageUrl || PLACEHOLDER_IMAGE}
                           publicationYear={relatedBook.publicationYear}
+                          showRating={true}
+                          rating={relatedBook.rating || 0}
                         />
                       </div>
                     ))}
@@ -522,7 +677,7 @@ const BookDetailPage = () => {
                       <div className="reviews-rating-title">Ваша оценка:</div>
                       <div className="reviews-rating-stars">
                         <BookRating 
-                          bookId={parseInt(bookId || '0')} 
+                          bookId={parsedBookId} 
                           isAuthenticated={isAuthenticated}
                           showCount={false}
                           size={28}
@@ -534,7 +689,9 @@ const BookDetailPage = () => {
                     
                     <div className="reviews-input-block">
                       <div className="reviews-input-header">
-                        <div className="reviews-input-title">Ваш отзыв:</div>
+                        <div className="reviews-input-title">
+                          {editingReviewId ? 'Редактирование отзыва:' : 'Ваш отзыв:'}
+                        </div>
                         <div className={`reviews-char-counter ${charCount < 10 ? 'count-error' : ''}`}>
                           {charCount}/10+ символов
                         </div>
@@ -552,13 +709,65 @@ const BookDetailPage = () => {
                           type="primary" 
                           className="reviews-submit-button"
                           loading={submitting}
-                          disabled={submitting || reviewText.trim().length < 10 || reviewRating === 0}
+                          disabled={submitting || reviewText.trim().length < 10}
                           onClick={handleReviewSubmit}
                         >
-                          Опубликовать отзыв
+                          {editingReviewId ? 'Сохранить изменения' : 'Опубликовать отзыв'}
                         </Button>
+                        
+                        {editingReviewId && (
+                          <Button 
+                            type="default"
+                            className="reviews-cancel-button"
+                            onClick={cancelEditingReview}
+                            style={{ marginLeft: '10px' }}
+                          >
+                            Отменить
+                          </Button>
+                        )}
+                        
+                        {userReviews.length >= 3 && !editingReviewId && (
+                          <div className="reviews-limit-warning">
+                            Достигнут лимит отзывов (максимум 3 для одной книги)
+                          </div>
+                        )}
                       </div>
                     </div>
+                    
+                    {userReviews.length > 0 && !editingReviewId && (
+                      <div className="user-reviews-section">
+                        <h4>Ваши отзывы</h4>
+                        <div className="user-reviews-list">
+                          {userReviews.map(review => (
+                            <div key={review.id} className="user-review-item">
+                              <div className="user-review-content">
+                                {review.content}
+                              </div>
+                              <div className="user-review-meta">
+                                {review.rating > 0 && (
+                                  <div className="user-review-rating">
+                                    Ваша оценка: {review.rating}★
+                                  </div>
+                                )}
+                                <div className="user-review-date">
+                                  {new Date(review.creationDate).toLocaleDateString('ru-RU')}
+                                  {review.editedDate && ' (ред.)'}
+                                </div>
+                              </div>
+                              <div className="user-review-actions">
+                                <Button 
+                                  type="link" 
+                                  size="small"
+                                  onClick={() => startEditingReview(review)}
+                                >
+                                  Редактировать
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="login-prompt">
@@ -568,8 +777,7 @@ const BookDetailPage = () => {
                 )}
                 
                 <div className="reviews-list-container">
-                  <Title level={4} className="reviews-list-title">Отзывы читателей</Title>
-                  <ReviewList bookId={parseInt(bookId || '0')} />
+                  <ReviewList bookId={parsedBookId} />
                 </div>
               </div>
             </div>
@@ -582,7 +790,7 @@ const BookDetailPage = () => {
         className="book-background"
         style={{ 
           background: `linear-gradient(135deg, rgba(245, 247, 250, 0.95) 0%, rgba(195, 207, 226, 0.9) 100%), 
-                       url(${book.coverImageUrl || '/images/book-bg-pattern.jpg'})`,
+                       url(${coverImageUrl})`,
           backgroundSize: 'cover', 
           backgroundPosition: 'center',
           backgroundBlendMode: 'overlay',

@@ -50,8 +50,8 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     };
   }, []);
 
-  const handleRatingChange = (newRating: number) => {
-    setRating(newRating);
+  const handleRatingChange = (newRating: number | null) => {
+    setRating(newRating || 0);
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -89,7 +89,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         message.success('Отзыв успешно обновлен!');
       } else {
         // Создаем новый отзыв
-        response = await api.post(`/books/${bookId}/reviews`, {
+        response = await api.post(`/books/${bookId}/review`, {
           content,
           rating: hideRating ? 0 : rating
         });

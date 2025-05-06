@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../common/Card';
 import Typography from '../common/Typography';
 import { motion } from 'framer-motion';
+import { FaStar } from 'react-icons/fa';
 
 const { Title, Text } = Typography;
 
@@ -13,6 +14,7 @@ interface BookCardProps {
   coverImageUrl: string;
   publicationYear?: number;
   showRating?: boolean;
+  rating?: number;
 }
 
 // Функция для обрезания длинного текста с добавлением многоточия
@@ -28,10 +30,22 @@ const BookCard: React.FC<BookCardProps> = ({
   coverImageUrl,
   publicationYear,
   showRating = false,
+  rating = 0,
 }) => {
   // Ограничиваем длину названия книги и автора
   const truncatedTitle = truncateText(title, 40);
   const truncatedAuthor = truncateText(author, 30);
+  
+  // Состояние для отслеживания ошибок загрузки изображения
+  const [imageError, setImageError] = useState(false);
+  
+  // Путь к изображению-плейсхолдеру
+  const placeholderImage = '/src/assets/images/placeholder.png';
+  
+  // Обработчик ошибки загрузки изображения
+  const handleImageError = () => {
+    setImageError(true);
+  };
   
   return (
     <div className="book-card-wrapper">
@@ -63,8 +77,9 @@ const BookCard: React.FC<BookCardProps> = ({
           >
             <div style={{ textAlign: 'center', marginBottom: '12px' }}>
               <img
-                src={coverImageUrl}
+                src={imageError ? placeholderImage : coverImageUrl}
                 alt={title}
+                onError={handleImageError}
                 style={{
                   height: '180px',
                   objectFit: 'cover',
@@ -106,14 +121,17 @@ const BookCard: React.FC<BookCardProps> = ({
             {showRating && (
               <div style={{ marginTop: '8px' }}>
                 <div style={{ 
-                  display: 'inline-block',
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   background: 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)',
                   color: 'white',
                   padding: '2px 8px',
                   borderRadius: '10px',
-                  fontSize: '12px'
+                  fontSize: '13px',
+                  fontWeight: 500
                 }}>
-                  Рейтинг: 4.5
+                  <FaStar style={{ marginRight: '4px', fontSize: '12px' }} />
+                  {rating ? rating.toFixed(1).replace('.', ',') : '0,0'}
                 </div>
               </div>
             )}

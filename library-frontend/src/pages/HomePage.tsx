@@ -420,9 +420,10 @@ const HomePage = () => {
                       id={book.id}
                       title={book.title}
                       author={book.author}
-                      coverImageUrl={book.coverImageUrl || 'https://via.placeholder.com/200x300?text=Нет+обложки'}
+                      coverImageUrl={book.coverImageUrl || '/src/assets/images/placeholder.png'}
                       publicationYear={book.publicationYear}
                       showRating={true}
+                      rating={book.rating || 0}
                     />
                   </div>
                 ))}

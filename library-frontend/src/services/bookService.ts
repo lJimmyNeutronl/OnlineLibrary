@@ -30,7 +30,7 @@ export interface Book {
 export interface Review {
   id: number;
   content: string;
-  rating: number;
+  rating: number | null;
   creationDate: string;
   editedDate?: string;
   userId: number;
@@ -270,17 +270,29 @@ const bookService = {
     }
   },
   
-  // Добавление нового отзыва
-  async addReview(bookId: number, content: string, rating: number): Promise<Review> {
-    const response = await API.post<Review>(`/books/${bookId}/reviews`, {
+  // Добавление нового отзыва или обновление существующего
+  async addReview(bookId: number, content: string, rating: number | null = null, reviewId?: number): Promise<Review> {
+    const response = await API.post<Review>(`/books/${bookId}/review`, {
       content,
-      rating
+      rating,
+      reviewId
     });
     return response.data;
   },
   
+  // Получение всех отзывов текущего пользователя для книги
+  async getUserReviewsForBook(bookId: number): Promise<Review[]> {
+    try {
+      const response = await API.get<Review[]>(`/books/${bookId}/user-reviews`);
+      return response.data;
+    } catch (error) {
+      console.error(`Ошибка при получении отзывов пользователя для книги ${bookId}:`, error);
+      return [];
+    }
+  },
+  
   // Обновление существующего отзыва
-  async updateReview(reviewId: number, content: string, rating: number): Promise<Review> {
+  async updateReview(reviewId: number, content: string, rating: number | null = null): Promise<Review> {
     const response = await API.put<Review>(`/reviews/${reviewId}`, {
       content,
       rating

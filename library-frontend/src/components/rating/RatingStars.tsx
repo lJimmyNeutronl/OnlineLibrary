@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaStar, FaRegStar, FaStarHalfAlt } from 'react-icons/fa';
 import './RatingStars.css';
 
@@ -8,7 +8,7 @@ interface RatingStarsProps {
   size?: number;
   color?: string;
   interactive?: boolean;
-  onRatingChange?: (rating: number) => void;
+  onRatingChange?: (rating: number | null) => void;
   isAuthenticated?: boolean;
   onClick?: () => void;
 }
@@ -24,23 +24,46 @@ const RatingStars: React.FC<RatingStarsProps> = ({
   onClick
 }) => {
   const [hoverRating, setHoverRating] = useState(0);
-  const [hasRated, setHasRated] = useState(false);
+  const [lastSelectedRating, setLastSelectedRating] = useState<number | null>(null);
+
+  // При изменении рейтинга извне, обновляем lastSelectedRating
+  useEffect(() => {
+    if (rating > 0) {
+      setLastSelectedRating(rating);
+    } else {
+      setLastSelectedRating(null);
+    }
+  }, [rating]);
 
   // Проверка, может ли пользователь оценивать
-  const canRate = interactive && isAuthenticated && !hasRated;
+  const canRate = interactive && isAuthenticated;
 
   // Обработчик клика по звезде
   const handleClick = (selectedRating: number) => {
     if (canRate && onRatingChange) {
-      onRatingChange(selectedRating);
-      setHasRated(true);
-      
-      // Отправка пользовательского события для обновления формы отзыва
-      const ratingChangeEvent = new CustomEvent('book-rating-change', { 
-        detail: { rating: selectedRating },
-        bubbles: true
-      });
-      document.dispatchEvent(ratingChangeEvent);
+      // Если пользователь нажимает на ту же звезду, что и раньше - отменяем оценку
+      if (lastSelectedRating === selectedRating) {
+        onRatingChange(null); // Передаем null для отмены рейтинга
+        setLastSelectedRating(null);
+        
+        // Отправка пользовательского события для обновления формы отзыва
+        const ratingChangeEvent = new CustomEvent('book-rating-change', { 
+          detail: { rating: 0 },
+          bubbles: true
+        });
+        document.dispatchEvent(ratingChangeEvent);
+      } else {
+        // Устанавливаем новый рейтинг
+        onRatingChange(selectedRating);
+        setLastSelectedRating(selectedRating);
+        
+        // Отправка пользовательского события для обновления формы отзыва
+        const ratingChangeEvent = new CustomEvent('book-rating-change', { 
+          detail: { rating: selectedRating },
+          bubbles: true
+        });
+        document.dispatchEvent(ratingChangeEvent);
+      }
     } else if (onClick) {
       // Если пользователь не может оценивать, но есть обработчик общего клика
       onClick();
