@@ -28,6 +28,20 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
       const reviewsData = await bookService.getBookReviews(bookId);
       setReviews(reviewsData);
       setError(null);
+      
+      // Отправляем событие с количеством отзывов для обновления счетчика на странице
+      const reviewsCountEvent = new CustomEvent('reviews-count-update', {
+        detail: { count: reviewsData.length, bookId },
+        bubbles: true
+      });
+      document.dispatchEvent(reviewsCountEvent);
+      
+      // Сохраняем количество отзывов в localStorage для восстановления после перезагрузки
+      try {
+        localStorage.setItem(`book_${bookId}_reviews_count`, reviewsData.length.toString());
+      } catch (e) {
+        console.error('Ошибка при сохранении количества отзывов в localStorage:', e);
+      }
     } catch (err) {
       console.error('Ошибка при загрузке отзывов:', err);
       setError('Не удалось загрузить отзывы.');
@@ -44,8 +58,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
 
   // Слушатель события добавления нового отзыва
   useEffect(() => {
-    const handleReviewAdded = () => {
-      fetchReviews();
+    const handleReviewAdded = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      // Проверяем, что событие относится к текущей книге
+      if (customEvent.detail && customEvent.detail.review && customEvent.detail.review.bookId === bookId) {
+        fetchReviews();
+      }
     };
     
     document.addEventListener('review-added', handleReviewAdded);
@@ -53,7 +71,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
     return () => {
       document.removeEventListener('review-added', handleReviewAdded);
     };
-  }, []);
+  }, [bookId]);
 
   const toggleExpandReview = (reviewId: number) => {
     setExpandedReviews(prev => ({
@@ -173,7 +191,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
                 </div>
               </div>
               
-              {review.rating > 0 && (
+              {review.rating !== null && review.rating > 0 && (
                 <div className="review-rating">
                   <RatingStars 
                     rating={review.rating} 

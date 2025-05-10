@@ -214,6 +214,17 @@ const BookRating: React.FC<BookRatingProps> = ({
       });
       document.dispatchEvent(ratingChangeEvent);
       
+      // Сохраняем рейтинг в локальное хранилище для восстановления после перезагрузки страницы
+      try {
+        const ratingKey = `book_${bookId}_rating`;
+        localStorage.setItem(ratingKey, JSON.stringify({
+          rating: newRating,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.error('Ошибка при сохранении рейтинга в localStorage:', e);
+      }
+      
       // Возвращаем статус в 'idle' через 2 секунды
       setTimeout(() => {
         setSubmitStatus('idle');
@@ -229,6 +240,37 @@ const BookRating: React.FC<BookRatingProps> = ({
       }, 2000);
     }
   };
+
+  // Проверяем наличие сохраненного рейтинга при монтировании компонента
+  useEffect(() => {
+    if (isAuthenticated && bookId) {
+      try {
+        const ratingKey = `book_${bookId}_rating`;
+        const savedRatingData = localStorage.getItem(ratingKey);
+        
+        if (savedRatingData) {
+          const { rating, timestamp } = JSON.parse(savedRatingData);
+          
+          // Проверяем, не устарел ли рейтинг (например, старше 24 часов)
+          const MAX_AGE = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
+          const now = Date.now();
+          
+          if (now - timestamp < MAX_AGE && rating) {
+            // Если рейтинг не устарел, устанавливаем его в состояние
+            setRatingData(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                userRating: rating
+              };
+            });
+          }
+        }
+      } catch (e) {
+        console.error('Ошибка при чтении рейтинга из localStorage:', e);
+      }
+    }
+  }, [isAuthenticated, bookId]);
 
   // Получение максимального значения для распределения оценок
   const getMaxDistributionValue = () => {

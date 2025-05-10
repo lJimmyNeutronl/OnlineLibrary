@@ -87,6 +87,8 @@ const HomePage = () => {
   const [featuredBooksLoading, setFeaturedBooksLoading] = useState<boolean>(true);
   const [popularCategories, setPopularCategories] = useState<CategoryWithCount[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
+  const [latestBooks, setLatestBooks] = useState<Book[]>([]);
+  const [latestBooksLoading, setLatestBooksLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Загрузка популярных книг при монтировании компонента
@@ -99,6 +101,19 @@ const HomePage = () => {
         console.error('Ошибка при загрузке популярных книг:', error);
       } finally {
         setFeaturedBooksLoading(false);
+      }
+    };
+
+    // Загрузка последних добавленных книг
+    const loadLatestBooks = async () => {
+      setLatestBooksLoading(true);
+      try {
+        const books = await bookService.getLatestBooks(4); // Ограничиваем до 4 книг, чтобы не загромождать страницу
+        setLatestBooks(books);
+      } catch (error) {
+        console.error('Ошибка при загрузке новых поступлений:', error);
+      } finally {
+        setLatestBooksLoading(false);
       }
     };
 
@@ -120,6 +135,7 @@ const HomePage = () => {
     };
 
     loadPopularBooks();
+    loadLatestBooks();
     loadPopularCategories();
   }, []);
 
@@ -401,20 +417,45 @@ const HomePage = () => {
 
           {/* Новые поступления */}
           <div className="section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <Title level={3} style={{ margin: 0 }}>Новые поступления</Title>
-              <Button type="link" style={{ color: '#3769f5' }}>
-                Смотреть все <BsArrowRight style={{ marginLeft: '4px' }} />
-              </Button>
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              margin: '40px 0 30px',
+              textAlign: 'center'
+            }}>
+              <div style={{ 
+                flex: 1, 
+                height: '1px',
+                background: 'linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
+              }}></div>
+              <Title level={3} style={{ 
+                margin: '0 20px', 
+                background: 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 'bold',
+                letterSpacing: '0.5px'
+              }}>
+                Новые поступления
+              </Title>
+              <div style={{ 
+                flex: 1, 
+                height: '1px',
+                background: 'linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
+              }}></div>
             </div>
             
-            {featuredBooksLoading ? (
+            {latestBooksLoading ? (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
                 <Spin size="large" />
               </div>
             ) : (
+              <div style={{
+                maxWidth: '1000px',
+                margin: '0 auto'
+              }}>
               <div className="book-grid">
-                {popularBooks.map((book) => (
+                  {latestBooks.map((book) => (
                   <div key={book.id} className="motion-container">
                     <BookCard
                       id={book.id}
@@ -427,6 +468,7 @@ const HomePage = () => {
                     />
                   </div>
                 ))}
+                </div>
               </div>
             )}
           </div>
@@ -467,7 +509,12 @@ const HomePage = () => {
                   <Spin size="large" />
                 </div>
               ) : (
-                popularCategories.map((category, index) => {
+                <div style={{
+                  maxWidth: '1000px',
+                  margin: '0 auto',
+                  textAlign: 'center'
+                }}>
+                  {popularCategories.map((category, index) => {
                   // Выбираем иконку в зависимости от индекса
                   const icons = [
                     <FaBookReader style={{ marginRight: '8px' }} />,
@@ -507,7 +554,8 @@ const HomePage = () => {
                       </Link>
                     </motion.div>
                   );
-                })
+                  })}
+                </div>
               )}
             </div>
           </div>

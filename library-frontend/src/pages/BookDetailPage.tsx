@@ -148,6 +148,27 @@ const BookDetailPage = () => {
     }
   }, [parsedBookId]);
 
+  // Обработчик обновления счетчика отзывов
+  const handleReviewsUpdate = useCallback(async () => {
+    if (!parsedBookId) return;
+    
+    try {
+      const reviews = await bookService.getBookReviews(parsedBookId);
+      setReviews(reviews);
+      
+      // Обновляем счетчик отзывов в информации о книге
+      setBook(prevBook => {
+        if (!prevBook) return null;
+        return {
+          ...prevBook,
+          reviewsCount: reviews.length
+        };
+      });
+    } catch (error) {
+      console.error('Ошибка при обновлении отзывов:', error);
+    }
+  }, [parsedBookId]);
+
   // Слушатель события обновления рейтинга
   useEffect(() => {
     // Обработчик события изменения рейтинга
@@ -163,6 +184,86 @@ const BookDetailPage = () => {
       document.removeEventListener('book-rating-change', handleBookRatingUpdated);
     };
   }, [handleRatingUpdate]);
+
+  // Слушатель события добавления/обновления отзыва
+  useEffect(() => {
+    const handleReviewAdded = () => {
+      handleReviewsUpdate();
+    };
+    
+    document.addEventListener('review-added', handleReviewAdded);
+    
+    return () => {
+      document.removeEventListener('review-added', handleReviewAdded);
+    };
+  }, [handleReviewsUpdate]);
+
+  // Слушатель события обновления счетчика отзывов
+  useEffect(() => {
+    const handleReviewsCountUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.bookId === parsedBookId) {
+        // Обновляем счетчик отзывов в информации о книге
+        setBook(prevBook => {
+          if (!prevBook) return null;
+          return {
+            ...prevBook,
+            reviewsCount: customEvent.detail.count
+          };
+        });
+      }
+    };
+    
+    document.addEventListener('reviews-count-update', handleReviewsCountUpdate);
+    
+    // Проверяем наличие сохраненного счетчика отзывов при монтировании
+    try {
+      const savedReviewsCount = localStorage.getItem(`book_${parsedBookId}_reviews_count`);
+      if (savedReviewsCount && book) {
+        const count = parseInt(savedReviewsCount, 10);
+        if (!isNaN(count) && book.reviewsCount !== count) {
+          setBook(prevBook => {
+            if (!prevBook) return null;
+            return {
+              ...prevBook,
+              reviewsCount: count
+            };
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Ошибка при чтении счетчика отзывов из localStorage:', e);
+    }
+    
+    return () => {
+      document.removeEventListener('reviews-count-update', handleReviewsCountUpdate);
+    };
+  }, [parsedBookId, book]);
+
+  // Проверка наличия сохраненного рейтинга в localStorage
+  useEffect(() => {
+    if (parsedBookId && handleRatingUpdate) {
+      try {
+        const ratingKey = `book_${parsedBookId}_rating`;
+        const savedRatingData = localStorage.getItem(ratingKey);
+        
+        if (savedRatingData) {
+          const { rating, timestamp } = JSON.parse(savedRatingData);
+          
+          // Проверяем, не устарел ли рейтинг (например, старше 24 часов)
+          const MAX_AGE = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
+          const now = Date.now();
+          
+          if (now - timestamp < MAX_AGE) {
+            // Если рейтинг не устарел, принудительно обновляем рейтинг книги
+            handleRatingUpdate();
+          }
+        }
+      } catch (e) {
+        console.error('Ошибка при чтении рейтинга из localStorage:', e);
+      }
+    }
+  }, [parsedBookId, handleRatingUpdate]);
 
   // Мемоизируем обработчики событий, чтобы избежать лишних ререндеров
   const toggleFavorite = useCallback(() => {
@@ -222,22 +323,14 @@ const BookDetailPage = () => {
       }
     });
     
-    // Обновляем счетчик отзывов если это новый отзыв
-    if (book) {
-      // Увеличиваем счетчик только для новых отзывов
-      // В реальном приложении это должно быть основано на ответе API
-      setBook(prevBook => {
-        if (prevBook === null) return null;
-        const reviewsCount = (prevBook.reviewsCount || 0) + 1;
-        return { ...prevBook, reviewsCount };
-      });
-    }
+    // Обновляем счетчик отзывов
+    handleReviewsUpdate();
     
     // Очищаем форму
     setReviewText('');
     setReviewRating(0);
     setCharCount(0);
-  }, [book]);
+  }, [handleReviewsUpdate]);
 
   // Обработчик изменения рейтинга из компонента BookRating
   const handleBookRatingChange = useCallback((rating: number) => {
@@ -302,6 +395,13 @@ const BookDetailPage = () => {
     
     loadUserReviews();
   }, [isAuthenticated, parsedBookId]);
+
+  // Загрузка всех отзывов при монтировании компонента
+  useEffect(() => {
+    if (parsedBookId) {
+      handleReviewsUpdate();
+    }
+  }, [parsedBookId, handleReviewsUpdate]);
 
   // Функция для начала редактирования отзыва
   const startEditingReview = useCallback((review: any) => {
@@ -399,7 +499,7 @@ const BookDetailPage = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [reviewRating, reviewText, parsedBookId, handleReviewSuccess, handleRatingUpdate, editingReviewId, userReviews, cancelEditingReview]);
+  }, [parsedBookId, reviewText, reviewRating, editingReviewId, userReviews, handleReviewSuccess, handleRatingUpdate, cancelEditingReview]);
 
   // Обработчик ошибки загрузки изображения
   const handleImageError = useCallback(() => {

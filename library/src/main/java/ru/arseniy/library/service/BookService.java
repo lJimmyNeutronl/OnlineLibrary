@@ -3,6 +3,7 @@ package ru.arseniy.library.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,7 @@ import ru.arseniy.library.repository.CategoryRepository;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -41,8 +43,53 @@ public class BookService {
         return bookRepository.searchBooks(query, pageable);
     }
     
+    /**
+     * Получает книги только из указанной категории (без подкатегорий)
+     *
+     * @param categoryId ID категории
+     * @param pageable объект пагинации
+     * @return страницу книг
+     */
     public Page<Book> getBooksByCategory(Integer categoryId, Pageable pageable) {
-        return bookRepository.findByCategoryId(categoryId, pageable);
+        return bookRepository.findByExactCategoryId(categoryId, pageable);
+    }
+    
+    /**
+     * Получает книги по категории с учетом всей иерархии подкатегорий (для глубокой иерархии)
+     * Примечание: Использует рекурсию для получения всех подкатегорий любой глубины
+     *
+     * @param categoryId ID категории
+     * @param pageable объект пагинации
+     * @return страницу книг
+     */
+    public Page<Book> getBooksByCategoryWithHierarchy(Integer categoryId, Pageable pageable) {
+        // Получаем категорию
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Категория с ID " + categoryId + " не найдена"));
+        
+        // Получаем все ID категорий (включая саму категорию и все подкатегории любой глубины)
+        Set<Integer> allCategoryIds = new HashSet<>();
+        allCategoryIds.add(categoryId);
+        getAllSubcategoryIds(category, allCategoryIds);
+        
+        // Используем специальный запрос, который исключает дубликаты на уровне SQL
+        return bookRepository.findDistinctByCategoryIdIn(new ArrayList<>(allCategoryIds), pageable);
+    }
+    
+    /**
+     * Рекурсивно собирает ID всех подкатегорий
+     *
+     * @param category родительская категория
+     * @param result множество для накопления ID категорий
+     */
+    private void getAllSubcategoryIds(Category category, Set<Integer> result) {
+        // Загружаем подкатегории текущей категории
+        List<Category> subcategories = categoryRepository.findByParentCategoryId(category.getId());
+        
+        for (Category subcategory : subcategories) {
+            result.add(subcategory.getId());
+            getAllSubcategoryIds(subcategory, result);
+        }
     }
     
     @Transactional

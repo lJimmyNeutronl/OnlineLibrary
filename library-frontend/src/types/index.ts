@@ -42,3 +42,12 @@ export interface Favorite {
   book: Book;
   addedAt: string;
 } 
+
+export interface BookSearchParams {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  direction?: 'asc' | 'desc';
+  query?: string;
+  includeSubcategories?: boolean;
+} 

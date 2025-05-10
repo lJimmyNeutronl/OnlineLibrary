@@ -20,6 +20,17 @@ public interface FileStorageService {
      * @throws IOException если произошла ошибка при загрузке
      */
     String uploadFile(MultipartFile file, String key) throws IOException;
+    
+    /**
+     * Загружает файл в хранилище с указанием названия книги
+     *
+     * @param file файл для загрузки
+     * @param key ключ (путь) для сохранения файла
+     * @param bookTitle название книги для создания папки
+     * @return URL загруженного файла
+     * @throws IOException если произошла ошибка при загрузке
+     */
+    String uploadFile(MultipartFile file, String key, String bookTitle) throws IOException;
 
     /**
      * Загружает данные в хранилище
@@ -32,6 +43,19 @@ public interface FileStorageService {
      * @throws IOException если произошла ошибка при загрузке
      */
     String uploadFile(InputStream inputStream, String key, String contentType, long contentLength) throws IOException;
+    
+    /**
+     * Загружает данные в хранилище с указанием названия книги
+     *
+     * @param inputStream поток данных
+     * @param key ключ (путь) для сохранения файла
+     * @param contentType тип содержимого (MIME-тип)
+     * @param contentLength размер содержимого в байтах
+     * @param bookTitle название книги для создания папки
+     * @return URL загруженного файла
+     * @throws IOException если произошла ошибка при загрузке
+     */
+    String uploadFile(InputStream inputStream, String key, String contentType, long contentLength, String bookTitle) throws IOException;
 
     /**
      * Получает файл из хранилища

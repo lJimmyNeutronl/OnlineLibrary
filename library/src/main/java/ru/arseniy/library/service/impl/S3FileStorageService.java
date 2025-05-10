@@ -43,18 +43,58 @@ public class S3FileStorageService implements FileStorageService {
             return uploadFile(inputStream, key, file.getContentType(), file.getSize());
         }
     }
+    
+    @Override
+    public String uploadFile(MultipartFile file, String key, String bookTitle) throws IOException {
+        log.info("Начинаем загрузку файла: {}, размер: {}, тип: {}, книга: {}", key, file.getSize(), file.getContentType(), bookTitle);
+        try (InputStream inputStream = file.getInputStream()) {
+            return uploadFile(inputStream, key, file.getContentType(), file.getSize(), bookTitle);
+        }
+    }
 
     @Override
     public String uploadFile(InputStream inputStream, String key, String contentType, long contentLength) throws IOException {
+        return uploadFile(inputStream, key, contentType, contentLength, null);
+    }
+    
+    @Override
+    public String uploadFile(InputStream inputStream, String key, String contentType, long contentLength, String bookTitle) throws IOException {
         try {
-            log.info("Подготовка к загрузке файла в S3: ключ={}, тип={}, размер={}", key, contentType, contentLength);
+            log.info("Подготовка к загрузке файла в S3: ключ={}, тип={}, размер={}, книга={}", key, contentType, contentLength, bookTitle);
             
             // Проверяем существование бакета, если нет - создаем
-            createBucketIfNotExists();
+            try {
+                createBucketIfNotExists();
+            } catch (Exception e) {
+                log.error("Ошибка при проверке или создании бакета: {}", e.getMessage(), e);
+                throw new IOException("Ошибка при проверке или создании бакета: " + e.getMessage(), e);
+            }
+            
+            // Если указано название книги, создаем структуру папок
+            if (bookTitle != null && !bookTitle.isEmpty()) {
+                // Заменяем недопустимые символы в имени книги
+                String safeBookTitle = bookTitle.replaceAll("[^a-zA-Z0-9_\\-\\.]", "_");
+                
+                // Извлекаем имя файла из ключа
+                String fileName = key;
+                if (key.contains("/")) {
+                    fileName = key.substring(key.lastIndexOf("/") + 1);
+                }
+                
+                // Формируем новый ключ, включающий название книги как папку
+                key = "books/" + safeBookTitle + "/" + fileName;
+                log.info("Сформирован новый ключ с учетом названия книги: {}", key);
+            }
 
             // Копируем данные из входного потока
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-            log.info("Данные скопированы из потока, размер: {} байт", bytes.length);
+            byte[] bytes;
+            try {
+                bytes = IOUtils.toByteArray(inputStream);
+                log.info("Данные скопированы из потока, размер: {} байт", bytes.length);
+            } catch (IOException e) {
+                log.error("Ошибка при чтении данных из потока: {}", e.getMessage(), e);
+                throw new IOException("Ошибка при чтении данных из потока: " + e.getMessage(), e);
+            }
 
             // Загружаем файл в S3
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -63,16 +103,36 @@ public class S3FileStorageService implements FileStorageService {
                     .contentType(contentType)
                     .build();
 
-            log.info("Отправляем запрос на загрузку файла в бакет: {}, ключ: {}", bucketName, key);
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(bytes));
-            log.info("Файл успешно загружен в S3: {}", key);
+            log.info("Отправляем запрос на загрузку файла в бакет: {}, ключ: {}, endpoint: {}", 
+                    bucketName, key, endpoint != null ? endpoint : "default");
+            try {
+                s3Client.putObject(putObjectRequest, RequestBody.fromBytes(bytes));
+                log.info("Файл успешно загружен в S3: {}", key);
+            } catch (S3Exception e) {
+                log.error("Ошибка S3 при загрузке файла: code={}, statusCode={}, requestId={}, message={}", 
+                        e.awsErrorDetails().errorCode(), 
+                        e.awsErrorDetails().sdkHttpResponse().statusCode(),
+                        e.requestId(),
+                        e.getMessage(), e);
+                throw new IOException("Ошибка S3 при загрузке файла в хранилище: " + e.getMessage() + 
+                        ", code=" + e.awsErrorDetails().errorCode() + 
+                        ", statusCode=" + e.awsErrorDetails().sdkHttpResponse().statusCode() + 
+                        ", requestId=" + e.requestId(), e);
+            }
 
             String fileUrl = getFileUrl(key);
             log.info("Сгенерирован URL для файла: {}", fileUrl);
             return fileUrl;
         } catch (S3Exception e) {
-            log.error("Ошибка при загрузке файла в S3: {} - {}", e.getMessage(), e.getClass().getName(), e);
-            throw new IOException("Ошибка при загрузке файла в хранилище: " + e.getMessage(), e);
+            log.error("Ошибка S3 при загрузке файла: code={}, statusCode={}, requestId={}, message={}", 
+                    e.awsErrorDetails().errorCode(), 
+                    e.awsErrorDetails().sdkHttpResponse().statusCode(),
+                    e.requestId(),
+                    e.getMessage(), e);
+            throw new IOException("Ошибка S3 при загрузке файла в хранилище: " + e.getMessage() + 
+                    ", code=" + e.awsErrorDetails().errorCode() + 
+                    ", statusCode=" + e.awsErrorDetails().sdkHttpResponse().statusCode() + 
+                    ", requestId=" + e.requestId(), e);
         } catch (Exception e) {
             log.error("Неожиданная ошибка при загрузке файла: {} - {}", e.getMessage(), e.getClass().getName(), e);
             throw new IOException("Неожиданная ошибка при загрузке файла: " + e.getMessage(), e);

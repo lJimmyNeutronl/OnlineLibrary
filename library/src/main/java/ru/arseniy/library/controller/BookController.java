@@ -83,10 +83,20 @@ public class BookController {
     public ResponseEntity<Page<BookDTO>> getBooksByCategory(
             @PathVariable Integer categoryId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "true") boolean includeSubcategories) {
         
         Pageable pageable = PageRequest.of(page, size);
-        Page<Book> books = bookService.getBooksByCategory(categoryId, pageable);
+        Page<Book> books;
+        
+        if (includeSubcategories) {
+            // Получаем книги с учетом всей иерархии категорий
+            books = bookService.getBooksByCategoryWithHierarchy(categoryId, pageable);
+        } else {
+            // Получаем книги только из указанной категории без подкатегорий
+            // Для этого используем прямой запрос через репозиторий с JOIN без подкатегорий
+            books = bookService.getBooksByCategory(categoryId, pageable);
+        }
         
         // Преобразуем Page<Book> в Page<BookDTO>
         List<BookDTO> bookDTOs = books.getContent().stream()

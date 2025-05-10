@@ -5,8 +5,11 @@ import org.springframework.stereotype.Service;
 import ru.arseniy.library.model.Category;
 import ru.arseniy.library.repository.CategoryRepository;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,16 +48,47 @@ public class CategoryService {
     }
     
     /**
-     * Получает карту с id категорий и количеством книг в каждой
+     * Получает карту с id категорий и количеством книг в каждой категории, включая книги из подкатегорий
      * @return Карта id категории -> количество книг
      */
     public Map<Integer, Integer> getCategoriesBookCount() {
         List<Category> categories = categoryRepository.findAll();
-        return categories.stream()
-                .collect(Collectors.toMap(
-                        Category::getId,
-                        category -> category.getBooks().size()
-                ));
+        Map<Integer, Integer> result = new HashMap<>();
+        
+        // Для каждой категории вычисляем общее количество книг, включая все подкатегории
+        for (Category category : categories) {
+            // Получаем все книги категории и её подкатегорий (без дубликатов)
+            Set<Integer> bookIds = new HashSet<>();
+            
+            // Сначала добавляем книги из текущей категории
+            category.getBooks().forEach(book -> bookIds.add(book.getId()));
+            
+            // Затем рекурсивно добавляем книги из всех подкатегорий
+            getAllSubcategoryBooks(category, bookIds);
+            
+            // Сохраняем результат
+            result.put(category.getId(), bookIds.size());
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Рекурсивно собирает ID всех книг из подкатегорий
+     *
+     * @param category родительская категория
+     * @param bookIds множество для накопления ID книг
+     */
+    private void getAllSubcategoryBooks(Category category, Set<Integer> bookIds) {
+        List<Category> subcategories = categoryRepository.findByParentCategoryId(category.getId());
+        
+        for (Category subcategory : subcategories) {
+            // Добавляем книги из текущей подкатегории
+            subcategory.getBooks().forEach(book -> bookIds.add(book.getId()));
+            
+            // Рекурсивно обрабатываем вложенные подкатегории
+            getAllSubcategoryBooks(subcategory, bookIds);
+        }
     }
     
     public Category createCategory(Category category, Integer parentId) {

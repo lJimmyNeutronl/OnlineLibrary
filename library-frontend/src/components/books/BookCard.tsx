@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../common/Card';
 import Typography from '../common/Typography';
 import { motion } from 'framer-motion';
 import { FaStar } from 'react-icons/fa';
+import bookService from '../../services/bookService';
 
 const { Title, Text } = Typography;
 
@@ -39,6 +40,9 @@ const BookCard: React.FC<BookCardProps> = ({
   // Состояние для отслеживания ошибок загрузки изображения
   const [imageError, setImageError] = useState(false);
   
+  // Состояние для хранения рейтинга книги
+  const [bookRating, setBookRating] = useState<number>(rating);
+  
   // Путь к изображению-плейсхолдеру
   const placeholderImage = '/src/assets/images/placeholder.png';
   
@@ -46,6 +50,48 @@ const BookCard: React.FC<BookCardProps> = ({
   const handleImageError = () => {
     setImageError(true);
   };
+  
+  // Проверяем кэш рейтингов при монтировании и обновляем рейтинг, если он есть в кэше
+  useEffect(() => {
+    // Проверяем, есть ли рейтинг в кэше
+    const cachedRating = bookService.getBookRatingFromCache(id);
+    if (cachedRating && cachedRating.averageRating > 0) {
+      setBookRating(cachedRating.averageRating);
+    } else if (rating > 0) {
+      setBookRating(rating);
+    } else if (showRating) {
+      // Если рейтинг не передан и его нет в кэше, но нужно отображать рейтинг,
+      // делаем запрос к API для получения рейтинга
+      const fetchRating = async () => {
+        try {
+          const ratingData = await bookService.getBookRating(id);
+          if (ratingData.averageRating > 0) {
+            setBookRating(ratingData.averageRating);
+          }
+        } catch (error) {
+          console.error(`Ошибка при получении рейтинга для книги ${id}:`, error);
+        }
+      };
+      
+      fetchRating();
+    }
+    
+    // Слушатель события обновления рейтинга
+    const handleRatingUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.bookId === id) {
+        setBookRating(customEvent.detail.rating || 0);
+      }
+    };
+    
+    // Регистрируем обработчик события
+    document.addEventListener('book-rating-updated', handleRatingUpdate);
+    
+    // Удаляем обработчик при размонтировании компонента
+    return () => {
+      document.removeEventListener('book-rating-updated', handleRatingUpdate);
+    };
+  }, [id, rating, showRating]);
   
   return (
     <div className="book-card-wrapper">
@@ -131,7 +177,7 @@ const BookCard: React.FC<BookCardProps> = ({
                   fontWeight: 500
                 }}>
                   <FaStar style={{ marginRight: '4px', fontSize: '12px' }} />
-                  {rating ? rating.toFixed(1).replace('.', ',') : '0,0'}
+                  {bookRating > 0 ? bookRating.toFixed(1).replace('.', ',') : '0,0'}
                 </div>
               </div>
             )}

@@ -55,25 +55,64 @@ export interface BookSearchParams {
   sortBy?: string;
   direction?: 'asc' | 'desc';
   query?: string;
+  includeSubcategories?: boolean;
+}
+
+// Интерфейс для кэшированных рейтингов
+interface RatingCacheItem {
+  averageRating: number;
+  ratingCount: number;
+  userRating: number | null;
+  timestamp: number;
 }
 
 // Кэш для книг
 let popularBooksCache: Book[] | null = null;
 let popularBooksTimestamp = 0;
 
+// Кэш для рейтингов книг
+const ratingsCache: Map<number, RatingCacheItem> = new Map();
+
 // Время жизни кэша в миллисекундах (5 минут)
 const CACHE_TTL = 5 * 60 * 1000;
+// Время жизни кэша рейтингов (10 минут)
+const RATINGS_CACHE_TTL = 10 * 60 * 1000;
+
+// Функция для проверки актуальности кэша
+const isValidCache = (timestamp: number, ttl: number = CACHE_TTL): boolean => {
+  return Date.now() - timestamp < ttl;
+};
+
+// Функция для получения рейтинга из localStorage
+const getRatingFromLocalStorage = (bookId: number): { rating: number, timestamp: number } | null => {
+  try {
+    const ratingKey = `book_${bookId}_rating`;
+    const savedRatingData = localStorage.getItem(ratingKey);
+    
+    if (savedRatingData) {
+      const data = JSON.parse(savedRatingData);
+      return {
+        rating: data.rating,
+        timestamp: data.timestamp
+      };
+    }
+  } catch (e) {
+    console.error('Ошибка при чтении рейтинга из localStorage:', e);
+  }
+  return null;
+};
 
 const bookService = {
   // Проверка актуальности кэша
   isValidCache(timestamp: number): boolean {
-    return Date.now() - timestamp < CACHE_TTL;
+    return isValidCache(timestamp);
   },
   
   // Очистка кэша
   clearCache() {
     popularBooksCache = null;
     popularBooksTimestamp = 0;
+    ratingsCache.clear();
   },
   
   // Получение всех книг с пагинацией и сортировкой
@@ -89,6 +128,10 @@ const bookService = {
       if (params.query) queryParams.append('query', params.query);
       
       const response = await API.get<PagedResponse<Book>>(`/books?${queryParams.toString()}`);
+      
+      // Обновляем рейтинги книг в кэше
+      this.updateBooksRatingsCache(response.data.content);
+      
       return response.data;
     } catch (error) {
       console.error('Ошибка при получении книг, используем мок данные:', error);
@@ -116,6 +159,10 @@ const bookService = {
       queryParams.append('query', query);
       
       const response = await API.get<PagedResponse<Book>>(`/books/search?${queryParams.toString()}`);
+      
+      // Обновляем рейтинги книг в кэше
+      this.updateBooksRatingsCache(response.data.content);
+      
       return response.data;
     } catch (error) {
       console.error('Ошибка при поиске книг, используем мок данные:', error);
@@ -133,6 +180,17 @@ const bookService = {
   async getBookById(id: number): Promise<Book> {
     try {
       const response = await API.get<Book>(`/books/${id}`);
+      
+      // Обновляем рейтинг книги в кэше
+      if (response.data.rating !== undefined) {
+        this.updateBookRatingCache(id, {
+          averageRating: response.data.rating,
+          ratingCount: response.data.ratingsCount || 0,
+          userRating: null,
+          timestamp: Date.now()
+        });
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Ошибка при получении книги с ID ${id}, используем мок данные:`, error);
@@ -156,7 +214,15 @@ const bookService = {
       if (params.sortBy) queryParams.append('sortBy', params.sortBy);
       if (params.direction) queryParams.append('direction', params.direction);
       
+      // По умолчанию включаем книги из подкатегорий, если не указано иное
+      const includeSubcategories = params.includeSubcategories !== undefined ? params.includeSubcategories : true;
+      queryParams.append('includeSubcategories', includeSubcategories.toString());
+      
       const response = await API.get<PagedResponse<Book>>(`/books/category/${categoryId}?${queryParams.toString()}`);
+      
+      // Обновляем рейтинги книг в кэше
+      this.updateBooksRatingsCache(response.data.content);
+      
       return response.data;
     } catch (error) {
       console.error(`Ошибка при получении книг для категории ${categoryId}, используем мок данные:`, error);
@@ -185,6 +251,9 @@ const bookService = {
       popularBooksCache = response.data;
       popularBooksTimestamp = Date.now();
       
+      // Обновляем рейтинги книг в кэше
+      this.updateBooksRatingsCache(response.data);
+      
       return response.data;
     } catch (error) {
       console.error('Ошибка при получении популярных книг:', error);
@@ -192,9 +261,35 @@ const bookService = {
     }
   },
   
+  // Получение последних добавленных книг
+  async getLatestBooks(limit: number = 6): Promise<Book[]> {
+    try {
+      const params = new URLSearchParams();
+      params.append('page', '0');
+      params.append('size', limit.toString());
+      params.append('sortBy', 'uploadDate');
+      params.append('direction', 'desc');
+      
+      const response = await API.get<PagedResponse<Book>>(`/books?${params.toString()}`);
+      
+      // Обновляем рейтинги книг в кэше
+      this.updateBooksRatingsCache(response.data.content);
+      
+      return response.data.content;
+    } catch (error) {
+      console.error('Ошибка при получении новых поступлений:', error);
+      // Возвращаем мок-данные при ошибке
+      return mockBooks.slice(0, limit);
+    }
+  },
+  
   // Получение случайных книг для рекомендаций
   async getRandomBooks(limit: number = 5): Promise<Book[]> {
     const response = await API.get<Book[]>(`/books/random?limit=${limit}`);
+    
+    // Обновляем рейтинги книг в кэше
+    this.updateBooksRatingsCache(response.data);
+    
     return response.data;
   },
   
@@ -277,6 +372,12 @@ const bookService = {
       rating,
       reviewId
     });
+    
+    // Если рейтинг был изменен, инвалидируем кэш рейтинга для этой книги
+    if (rating !== null) {
+      ratingsCache.delete(bookId);
+    }
+    
     return response.data;
   },
   
@@ -297,6 +398,12 @@ const bookService = {
       content,
       rating
     });
+    
+    // Если рейтинг был изменен, инвалидируем кэш рейтинга для этой книги
+    if (rating !== null && response.data.bookId) {
+      ratingsCache.delete(response.data.bookId);
+    }
+    
     return response.data;
   },
   
@@ -310,6 +417,15 @@ const bookService = {
     const response = await API.post<{ averageRating: number, ratingCount: number }>(`/books/${bookId}/rating`, {
       rating
     });
+    
+    // Обновляем кэш рейтинга для этой книги
+    this.updateBookRatingCache(bookId, {
+      averageRating: response.data.averageRating,
+      ratingCount: response.data.ratingCount,
+      userRating: rating,
+      timestamp: Date.now()
+    });
+    
     return response.data;
   },
   
@@ -319,21 +435,126 @@ const bookService = {
     ratingCount: number,
     userRating: number | null
   }> {
+    // Проверяем кэш рейтингов
+    const cachedRating = ratingsCache.get(bookId);
+    if (cachedRating && isValidCache(cachedRating.timestamp, RATINGS_CACHE_TTL)) {
+      return {
+        averageRating: cachedRating.averageRating,
+        ratingCount: cachedRating.ratingCount,
+        userRating: cachedRating.userRating
+      };
+    }
+    
     try {
       const response = await API.get<{ 
         averageRating: number, 
         ratingCount: number,
         userRating: number | null
       }>(`/books/${bookId}/rating`);
-      return response.data;
+      
+      const responseData = response.data;
+      
+      // Проверяем localStorage на наличие сохраненного рейтинга
+      const localRating = getRatingFromLocalStorage(bookId);
+      if (localRating && isValidCache(localRating.timestamp) && responseData.userRating !== localRating.rating) {
+        console.log('Используем рейтинг из localStorage:', localRating.rating);
+        responseData.userRating = localRating.rating;
+      }
+      
+      // Сохраняем рейтинг в кэш
+      this.updateBookRatingCache(bookId, {
+        averageRating: responseData.averageRating,
+        ratingCount: responseData.ratingCount,
+        userRating: responseData.userRating,
+        timestamp: Date.now()
+      });
+      
+      return responseData;
     } catch (error) {
       console.error(`Ошибка при получении рейтинга для книги ${bookId}:`, error);
+      
+      // Проверяем localStorage даже при ошибке API
+      const localRating = getRatingFromLocalStorage(bookId);
+      if (localRating && isValidCache(localRating.timestamp)) {
+        // Используем локально сохраненный рейтинг
+        return {
+          averageRating: 0,
+          ratingCount: 0,
+          userRating: localRating.rating
+        };
+      }
+      
       return {
         averageRating: 0,
         ratingCount: 0,
         userRating: null
       };
     }
+  },
+  
+  // Получение рейтинга книги из кэша (без запроса к API)
+  getBookRatingFromCache(bookId: number): { 
+    averageRating: number, 
+    ratingCount: number,
+    userRating: number | null
+  } | null {
+    // Проверяем кэш рейтингов
+    const cachedRating = ratingsCache.get(bookId);
+    if (cachedRating && isValidCache(cachedRating.timestamp, RATINGS_CACHE_TTL)) {
+      return {
+        averageRating: cachedRating.averageRating,
+        ratingCount: cachedRating.ratingCount,
+        userRating: cachedRating.userRating
+      };
+    }
+    
+    // Проверяем localStorage
+    const localRating = getRatingFromLocalStorage(bookId);
+    if (localRating && isValidCache(localRating.timestamp)) {
+      return {
+        averageRating: 0, // Не знаем средний рейтинг
+        ratingCount: 0,   // Не знаем количество оценок
+        userRating: localRating.rating
+      };
+    }
+    
+    return null;
+  },
+  
+  // Обновление кэша рейтинга для одной книги
+  updateBookRatingCache(bookId: number, ratingData: RatingCacheItem): void {
+    ratingsCache.set(bookId, ratingData);
+    
+    // Отправляем событие об обновлении рейтинга
+    const ratingUpdateEvent = new CustomEvent('book-rating-updated', {
+      detail: {
+        bookId,
+        rating: ratingData.averageRating,
+        userRating: ratingData.userRating,
+        ratingCount: ratingData.ratingCount
+      },
+      bubbles: true
+    });
+    document.dispatchEvent(ratingUpdateEvent);
+  },
+  
+  // Обновление кэша рейтингов для списка книг
+  updateBooksRatingsCache(books: Book[]): void {
+    books.forEach(book => {
+      if (book.rating !== undefined) {
+        // Проверяем, есть ли уже этот рейтинг в кэше
+        const existingRating = ratingsCache.get(book.id);
+        if (!existingRating || !isValidCache(existingRating.timestamp, RATINGS_CACHE_TTL)) {
+          // Если рейтинга нет в кэше или он устарел, обновляем
+          this.updateBookRatingCache(book.id, {
+            averageRating: book.rating,
+            ratingCount: book.ratingsCount || 0,
+            userRating: existingRating?.userRating || null,
+            timestamp: Date.now()
+          });
+        }
+      }
+    });
   }
 };
 
