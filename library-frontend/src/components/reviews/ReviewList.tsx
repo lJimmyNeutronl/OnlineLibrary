@@ -62,7 +62,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
       const customEvent = event as CustomEvent;
       // Проверяем, что событие относится к текущей книге
       if (customEvent.detail && customEvent.detail.review && customEvent.detail.review.bookId === bookId) {
-        fetchReviews();
+      fetchReviews();
       }
     };
     

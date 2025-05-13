@@ -172,18 +172,23 @@ const BookDetailPage = () => {
   // Слушатель события обновления рейтинга
   useEffect(() => {
     // Обработчик события изменения рейтинга
-    const handleBookRatingUpdated = () => {
-      handleRatingUpdate();
+    const handleBookRatingUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.bookId === parsedBookId) {
+        handleRatingUpdate();
+      }
     };
     
-    // Регистрируем обработчик события
+    // Регистрируем обработчики событий
     document.addEventListener('book-rating-change', handleBookRatingUpdated);
+    document.addEventListener('book-rating-updated', handleBookRatingUpdated);
     
-    // Удаляем обработчик при размонтировании компонента
+    // Удаляем обработчики при размонтировании компонента
     return () => {
       document.removeEventListener('book-rating-change', handleBookRatingUpdated);
+      document.removeEventListener('book-rating-updated', handleBookRatingUpdated);
     };
-  }, [handleRatingUpdate]);
+  }, [handleRatingUpdate, parsedBookId]);
 
   // Слушатель события добавления/обновления отзыва
   useEffect(() => {

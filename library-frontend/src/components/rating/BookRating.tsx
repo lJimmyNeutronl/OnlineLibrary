@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import RatingStars from './RatingStars';
 import './BookRating.css';
 import api from '../../services/api';
+import bookService from '../../services/bookService';
 import { FaStar, FaStarHalfAlt, FaRegStar, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
@@ -39,34 +40,86 @@ const BookRating: React.FC<BookRatingProps> = ({
   const [ratingData, setRatingData] = useState<RatingData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'submitting' | 'success' | 'deleted' | 'error'>('idle');
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [expandedTooltip, setExpandedTooltip] = useState<boolean>(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const ratingRef = useRef<HTMLDivElement>(null);
+  const initialLoadRef = useRef<boolean>(true);
 
-  // Загрузка данных о рейтинге
+  // Загрузка данных о рейтинге - используем упрощенный подход как в BookCard
   useEffect(() => {
     const fetchRating = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/books/${bookId}/rating`);
         
-        // Мок распределения оценок для демонстрации
-        // В реальном приложении эти данные должны приходить с сервера
-        const mockDistribution = {
-          5: Math.floor(Math.random() * 300) + 200, // 5 звезд - больше всего
-          4: Math.floor(Math.random() * 100) + 20,
-          3: Math.floor(Math.random() * 20) + 5,
-          2: Math.floor(Math.random() * 10),
-          1: Math.floor(Math.random() * 5)
-        };
+        // При первой загрузке всегда делаем запрос к API с принудительным обновлением
+        if (initialLoadRef.current) {
+          initialLoadRef.current = false;
+          
+          // Делаем запрос к API с параметром refresh=true
+          const freshRatingData = await bookService.getBookRating(bookId, true);
+          
+          // Устанавливаем полученные данные
+          setRatingData({
+            bookId,
+            averageRating: freshRatingData.averageRating,
+            ratingCount: freshRatingData.ratingCount,
+            userRating: freshRatingData.userRating,
+            // Мок распределения оценок для демонстрации
+            ratingsDistribution: {
+              5: Math.floor(Math.random() * 300) + 200,
+              4: Math.floor(Math.random() * 100) + 20,
+              3: Math.floor(Math.random() * 20) + 5,
+              2: Math.floor(Math.random() * 10),
+              1: Math.floor(Math.random() * 5)
+            }
+          });
+          setError(null);
+          setLoading(false);
+          return;
+        }
         
-        setRatingData({
-          ...response.data,
-          ratingsDistribution: mockDistribution
-        });
-        setError(null);
+        // Для последующих обновлений сначала проверяем кэш
+        const cachedRating = bookService.getBookRatingFromCache(bookId);
+        if (cachedRating && cachedRating.averageRating >= 0) {
+          // Используем данные из кэша
+          setRatingData({
+            bookId,
+            averageRating: cachedRating.averageRating,
+            ratingCount: cachedRating.ratingCount,
+            userRating: cachedRating.userRating,
+            // Мок распределения оценок для демонстрации
+            ratingsDistribution: {
+              5: Math.floor(Math.random() * 300) + 200,
+              4: Math.floor(Math.random() * 100) + 20,
+              3: Math.floor(Math.random() * 20) + 5,
+              2: Math.floor(Math.random() * 10),
+              1: Math.floor(Math.random() * 5)
+            }
+          });
+          setError(null);
+        } else {
+          // Если в кэше нет данных, делаем запрос к API
+          const ratingData = await bookService.getBookRating(bookId);
+          
+          // Устанавливаем полученные данные
+          setRatingData({
+            bookId,
+            averageRating: ratingData.averageRating,
+            ratingCount: ratingData.ratingCount,
+            userRating: ratingData.userRating,
+            // Мок распределения оценок для демонстрации
+            ratingsDistribution: {
+              5: Math.floor(Math.random() * 300) + 200,
+              4: Math.floor(Math.random() * 100) + 20,
+              3: Math.floor(Math.random() * 20) + 5,
+              2: Math.floor(Math.random() * 10),
+              1: Math.floor(Math.random() * 5)
+            }
+          });
+          setError(null);
+        }
       } catch (err) {
         console.error('Ошибка при загрузке рейтинга:', err);
         setError('Не удалось загрузить рейтинг книги.');
@@ -76,7 +129,32 @@ const BookRating: React.FC<BookRatingProps> = ({
     };
 
     fetchRating();
-  }, [bookId]);
+    
+    // Добавляем слушатель события обновления рейтинга
+    const handleRatingUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.bookId === bookId) {
+        // Обрабатываем событие обновления рейтинга независимо от его типа (новая оценка или удаление)
+        setRatingData(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            averageRating: customEvent.detail.rating || 0,
+            ratingCount: customEvent.detail.ratingCount || prev.ratingCount,
+            userRating: customEvent.detail.userRating
+          };
+        });
+      }
+    };
+    
+    // Регистрируем обработчик события
+    document.addEventListener('book-rating-updated', handleRatingUpdate);
+    
+    // Удаляем обработчик при размонтировании компонента
+    return () => {
+      document.removeEventListener('book-rating-updated', handleRatingUpdate);
+    };
+  }, [bookId, isAuthenticated]);
 
   // Обработчик клика вне тултипа для его закрытия
   useEffect(() => {
@@ -106,124 +184,99 @@ const BookRating: React.FC<BookRatingProps> = ({
       if (newRating === null) {
         await api.delete(`/books/${bookId}/rating`);
         
-        // Обновляем локальные данные
+        // Сохраняем текущие данные о рейтинге
+        const currentRatingData = ratingData;
+        
+        // Обновляем локальный userRating на null
         setRatingData(prev => {
           if (!prev) return null;
-          
-          // Если у пользователя не было рейтинга, ничего не меняем
-          if (!prev.userRating) return prev;
-          
-          const userOldRating = prev.userRating;
-          const newCount = prev.ratingCount - 1;
-          
-          // Рассчитываем новый средний рейтинг без оценки пользователя
-          let newAverage = 0;
-          if (newCount > 0) {
-            // Убираем старую оценку пользователя из суммы
-            const totalBeforeRemoval = prev.averageRating * prev.ratingCount;
-            const totalAfterRemoval = totalBeforeRemoval - userOldRating;
-            newAverage = totalAfterRemoval / newCount;
-          }
-          
-          // Обновляем распределение оценок
-          const updatedDistribution = { ...prev.ratingsDistribution };
-          if (updatedDistribution && userOldRating) {
-            updatedDistribution[userOldRating] = Math.max(0, (updatedDistribution[userOldRating] || 0) - 1);
-          }
-          
           return {
             ...prev,
-            averageRating: newAverage,
-            ratingCount: newCount,
-            userRating: null,
-            ratingsDistribution: updatedDistribution
+            userRating: null
           };
         });
         
-        // Отправляем событие об удалении рейтинга
-        const ratingChangeEvent = new CustomEvent('book-rating-change', { 
-          detail: { rating: null, bookId },
-          bubbles: true
-        });
-        document.dispatchEvent(ratingChangeEvent);
+        // Удаляем рейтинг из localStorage и кэша, отправляем событие обновления
+        try {
+          // Используем метод bookService для удаления рейтинга
+          bookService.removeBookRating(bookId, false);
+          
+          // Дополнительно делаем принудительный запрос к API для получения обновленных данных
+          setTimeout(async () => {
+            try {
+              const refreshedData = await bookService.getBookRating(bookId, true);
+              bookService.updateBookRatingCache(bookId, {
+                averageRating: refreshedData.averageRating,
+                ratingCount: refreshedData.ratingCount,
+                userRating: null,
+                timestamp: Date.now()
+              });
+            } catch (error) {
+              console.error('Ошибка при обновлении рейтинга:', error);
+            }
+          }, 500);
+        } catch (e) {
+          console.error('Ошибка при удалении рейтинга:', e);
+        }
         
-        setSubmitStatus('success');
+        setSubmitStatus('deleted');
         setTimeout(() => {
           setSubmitStatus('idle');
         }, 2000);
         return;
       }
       
+      // Сохраняем текущие данные о рейтинге
+      const currentRatingData = ratingData;
+      
+      // Обновляем локальный userRating на новое значение
+      setRatingData(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          userRating: newRating
+        };
+      });
+      
       // Стандартный код для добавления/обновления рейтинга
       const response = await api.post(`/books/${bookId}/rating`, { rating: newRating });
       
-      // Обновляем локальные данные с сервера
+      // Обновляем данные рейтинга с учетом полученных от сервера значений
       setRatingData(prev => {
         if (!prev) return null;
-        
-        // Расчет нового среднего рейтинга
-        const totalBeforeUser = prev.averageRating * prev.ratingCount;
-        const userPreviousRating = prev.userRating || 0;
-        
-        // Если это первая оценка пользователя
-        if (!prev.userRating) {
-          const newCount = prev.ratingCount + 1;
-          const newAverage = (totalBeforeUser + newRating) / newCount;
-          
-          // Обновляем распределение оценок
-          const updatedDistribution = { ...prev.ratingsDistribution };
-          if (updatedDistribution) {
-            updatedDistribution[newRating] = (updatedDistribution[newRating] || 0) + 1;
-          }
-          
-          return {
-            ...prev,
-            averageRating: newAverage,
-            ratingCount: newCount,
-            userRating: newRating,
-            ratingsDistribution: updatedDistribution
-          };
-        } 
-        // Если пользователь меняет свою оценку
-        else {
-          const totalWithoutUser = totalBeforeUser - userPreviousRating;
-          const newAverage = (totalWithoutUser + newRating) / prev.ratingCount;
-          
-          // Обновляем распределение оценок
-          const updatedDistribution = { ...prev.ratingsDistribution };
-          if (updatedDistribution) {
-            updatedDistribution[userPreviousRating] = Math.max(0, (updatedDistribution[userPreviousRating] || 0) - 1);
-            updatedDistribution[newRating] = (updatedDistribution[newRating] || 0) + 1;
-          }
-          
-          return {
-            ...prev,
-            averageRating: newAverage,
-            userRating: newRating,
-            ratingsDistribution: updatedDistribution
-          };
-        }
+        return {
+          ...prev,
+          averageRating: response.data.averageRating,
+          ratingCount: response.data.ratingCount,
+          userRating: newRating
+        };
       });
+      
+      // Обновляем кэш рейтинга
+      bookService.updateBookRatingCache(bookId, {
+        averageRating: response.data.averageRating,
+        ratingCount: response.data.ratingCount,
+        userRating: newRating,
+        timestamp: Date.now()
+      });
+      
+      // Дополнительно делаем принудительный запрос к API для получения обновленных данных
+      // Это позволит точно обновить количество оценок во всех компонентах
+      setTimeout(async () => {
+        try {
+          const refreshedData = await bookService.getBookRating(bookId, true);
+          bookService.updateBookRatingCache(bookId, {
+            averageRating: refreshedData.averageRating,
+            ratingCount: refreshedData.ratingCount,
+            userRating: refreshedData.userRating,
+            timestamp: Date.now()
+          });
+        } catch (error) {
+          console.error('Ошибка при обновлении рейтинга:', error);
+        }
+      }, 500);
       
       setSubmitStatus('success');
-      
-      // Отправляем пользовательское событие для обновления формы отзыва и статистики рейтинга на странице
-      const ratingChangeEvent = new CustomEvent('book-rating-change', { 
-        detail: { rating: newRating, bookId },
-        bubbles: true
-      });
-      document.dispatchEvent(ratingChangeEvent);
-      
-      // Сохраняем рейтинг в локальное хранилище для восстановления после перезагрузки страницы
-      try {
-        const ratingKey = `book_${bookId}_rating`;
-        localStorage.setItem(ratingKey, JSON.stringify({
-          rating: newRating,
-          timestamp: Date.now()
-        }));
-      } catch (e) {
-        console.error('Ошибка при сохранении рейтинга в localStorage:', e);
-      }
       
       // Возвращаем статус в 'idle' через 2 секунды
       setTimeout(() => {
@@ -240,37 +293,6 @@ const BookRating: React.FC<BookRatingProps> = ({
       }, 2000);
     }
   };
-
-  // Проверяем наличие сохраненного рейтинга при монтировании компонента
-  useEffect(() => {
-    if (isAuthenticated && bookId) {
-      try {
-        const ratingKey = `book_${bookId}_rating`;
-        const savedRatingData = localStorage.getItem(ratingKey);
-        
-        if (savedRatingData) {
-          const { rating, timestamp } = JSON.parse(savedRatingData);
-          
-          // Проверяем, не устарел ли рейтинг (например, старше 24 часов)
-          const MAX_AGE = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
-          const now = Date.now();
-          
-          if (now - timestamp < MAX_AGE && rating) {
-            // Если рейтинг не устарел, устанавливаем его в состояние
-            setRatingData(prev => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                userRating: rating
-              };
-            });
-          }
-        }
-      } catch (e) {
-        console.error('Ошибка при чтении рейтинга из localStorage:', e);
-      }
-    }
-  }, [isAuthenticated, bookId]);
 
   // Получение максимального значения для распределения оценок
   const getMaxDistributionValue = () => {
@@ -308,6 +330,9 @@ const BookRating: React.FC<BookRatingProps> = ({
     }
     if (submitStatus === 'success') {
       return <div className="book-rating-status success">Ваша оценка сохранена!</div>;
+    }
+    if (submitStatus === 'deleted') {
+      return <div className="book-rating-status deleted">Ваша оценка удалена!</div>;
     }
     if (submitStatus === 'error') {
       return <div className="book-rating-status error">Ошибка при сохранении оценки</div>;

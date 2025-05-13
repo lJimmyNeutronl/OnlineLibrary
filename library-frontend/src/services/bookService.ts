@@ -91,15 +91,32 @@ const getRatingFromLocalStorage = (bookId: number): { rating: number, timestamp:
     
     if (savedRatingData) {
       const data = JSON.parse(savedRatingData);
-      return {
-        rating: data.rating,
-        timestamp: data.timestamp
-      };
+      // Проверяем, что данные имеют нужный формат
+      if (data && typeof data.rating === 'number' && typeof data.timestamp === 'number') {
+        return {
+          rating: data.rating,
+          timestamp: data.timestamp
+        };
+      }
     }
   } catch (e) {
     console.error('Ошибка при чтении рейтинга из localStorage:', e);
   }
   return null;
+};
+
+// Функция для сохранения рейтинга в localStorage
+const saveRatingToLocalStorage = (bookId: number, rating: number): void => {
+  try {
+    const ratingKey = `book_${bookId}_rating`;
+    const data = {
+      rating,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(ratingKey, JSON.stringify(data));
+  } catch (e) {
+    console.error('Ошибка при сохранении рейтинга в localStorage:', e);
+  }
 };
 
 const bookService = {
@@ -414,50 +431,92 @@ const bookService = {
   
   // Оценка книги (без отзыва)
   async rateBook(bookId: number, rating: number): Promise<{ averageRating: number, ratingCount: number }> {
-    const response = await API.post<{ averageRating: number, ratingCount: number }>(`/books/${bookId}/rating`, {
-      rating
-    });
-    
-    // Обновляем кэш рейтинга для этой книги
-    this.updateBookRatingCache(bookId, {
-      averageRating: response.data.averageRating,
-      ratingCount: response.data.ratingCount,
-      userRating: rating,
-      timestamp: Date.now()
-    });
-    
-    return response.data;
+    try {
+      const response = await API.post<{ averageRating: number, ratingCount: number }>(`/books/${bookId}/rating`, {
+        rating
+      });
+      
+      // Сохраняем рейтинг в localStorage независимо от кэширования
+      saveRatingToLocalStorage(bookId, rating);
+      
+      // Обновляем кэш рейтинга для этой книги
+      this.updateBookRatingCache(bookId, {
+        averageRating: response.data.averageRating,
+        ratingCount: response.data.ratingCount,
+        userRating: rating,
+        timestamp: Date.now()
+      });
+      
+      return response.data;
+    } catch (error) {
+      // Если API не доступен, все равно сохраняем рейтинг пользователя локально
+      console.error('Ошибка при оценке книги:', error);
+      saveRatingToLocalStorage(bookId, rating);
+      throw error;
+    }
   },
   
   // Получение рейтинга книги
-  async getBookRating(bookId: number): Promise<{ 
+  async getBookRating(bookId: number, refresh: boolean = false): Promise<{ 
     averageRating: number, 
     ratingCount: number,
     userRating: number | null
   }> {
-    // Проверяем кэш рейтингов
-    const cachedRating = ratingsCache.get(bookId);
-    if (cachedRating && isValidCache(cachedRating.timestamp, RATINGS_CACHE_TTL)) {
-      return {
-        averageRating: cachedRating.averageRating,
-        ratingCount: cachedRating.ratingCount,
-        userRating: cachedRating.userRating
-      };
+    // Получаем сохраненный пользовательский рейтинг из localStorage
+    const localRating = getRatingFromLocalStorage(bookId);
+    const hasLocalRating = localRating !== null;
+    
+    // Проверяем кэш рейтингов в памяти, если не требуется обновление
+    if (!refresh) {
+      const cachedRating = ratingsCache.get(bookId);
+      if (cachedRating && isValidCache(cachedRating.timestamp, RATINGS_CACHE_TTL)) {
+        // Если у нас есть рейтинг в localStorage, и он отличается от кэшированного
+        if (hasLocalRating && cachedRating.userRating !== localRating.rating) {
+          console.log('Используем рейтинг из localStorage вместо кэша:', localRating.rating);
+          return {
+            averageRating: cachedRating.averageRating,
+            ratingCount: cachedRating.ratingCount,
+            userRating: localRating.rating
+          };
+        }
+        
+        return {
+          averageRating: cachedRating.averageRating,
+          ratingCount: cachedRating.ratingCount,
+          userRating: cachedRating.userRating
+        };
+      }
     }
     
     try {
+      // Формируем URL с учетом необходимости принудительного обновления
+      const url = refresh ? 
+        `/books/${bookId}/rating?refresh=true` : 
+        `/books/${bookId}/rating`;
+        
       const response = await API.get<{ 
         averageRating: number, 
         ratingCount: number,
         userRating: number | null
-      }>(`/books/${bookId}/rating`);
+      }>(url);
       
       const responseData = response.data;
       
-      // Проверяем localStorage на наличие сохраненного рейтинга
-      const localRating = getRatingFromLocalStorage(bookId);
-      if (localRating && isValidCache(localRating.timestamp) && responseData.userRating !== localRating.rating) {
-        console.log('Используем рейтинг из localStorage:', localRating.rating);
+      // Если данные некорректны, пробуем запросить с refresh=true
+      if (!refresh && responseData.averageRating === 0 && responseData.ratingCount > 0) {
+        console.log('Обнаружено несоответствие данных. Запрашиваем с refresh=true');
+        return this.getBookRating(bookId, true);
+      }
+      
+      // Если есть сохраненный рейтинг в localStorage и он отличается от серверного,
+      // приоритет отдаем локальному, так как он был задан пользователем последним
+      if (hasLocalRating && responseData.userRating !== localRating.rating) {
+        console.log(`Используем рейтинг из localStorage (${localRating.rating}) вместо API (${responseData.userRating})`);
+        
+        // Асинхронно обновляем рейтинг на сервере, чтобы синхронизировать данные
+        this.syncRatingWithServer(bookId, localRating.rating);
+        
+        // Обновляем данные ответа локальным рейтингом
         responseData.userRating = localRating.rating;
       }
       
@@ -473,10 +532,9 @@ const bookService = {
     } catch (error) {
       console.error(`Ошибка при получении рейтинга для книги ${bookId}:`, error);
       
-      // Проверяем localStorage даже при ошибке API
-      const localRating = getRatingFromLocalStorage(bookId);
-      if (localRating && isValidCache(localRating.timestamp)) {
-        // Используем локально сохраненный рейтинг
+      // Если у нас есть локально сохраненный рейтинг, используем его
+      if (hasLocalRating) {
+        console.log('При ошибке API используем рейтинг из localStorage:', localRating.rating);
         return {
           averageRating: 0,
           ratingCount: 0,
@@ -484,11 +542,22 @@ const bookService = {
         };
       }
       
+      // Если нет ни кэша, ни локального рейтинга, возвращаем нули
       return {
         averageRating: 0,
         ratingCount: 0,
         userRating: null
       };
+    }
+  },
+  
+  // Метод для асинхронной синхронизации рейтинга с сервером
+  async syncRatingWithServer(bookId: number, rating: number): Promise<void> {
+    try {
+      await API.post(`/books/${bookId}/rating`, { rating });
+      console.log('Рейтинг успешно синхронизирован с сервером');
+    } catch (error) {
+      console.error('Ошибка при синхронизации рейтинга с сервером:', error);
     }
   },
   
@@ -522,10 +591,11 @@ const bookService = {
   },
   
   // Обновление кэша рейтинга для одной книги
-  updateBookRatingCache(bookId: number, ratingData: RatingCacheItem): void {
+  updateBookRatingCache(bookId: number, ratingData: RatingCacheItem, skipEvent: boolean = false): void {
     ratingsCache.set(bookId, ratingData);
     
-    // Отправляем событие об обновлении рейтинга
+    // Отправляем событие об обновлении рейтинга, независимо от флага skipEvent
+    // Это обеспечит обновление всех компонентов, отображающих рейтинг
     const ratingUpdateEvent = new CustomEvent('book-rating-updated', {
       detail: {
         bookId,
@@ -555,6 +625,32 @@ const bookService = {
         }
       }
     });
+  },
+  
+  // Удаление рейтинга книги из кэша
+  removeBookRating(bookId: number, skipEvent: boolean = false): void {
+    // Удаляем из localStorage
+    try {
+      const ratingKey = `book_${bookId}_rating`;
+      localStorage.removeItem(ratingKey);
+    } catch (e) {
+      console.error('Ошибка при удалении рейтинга из localStorage:', e);
+    }
+    
+    // Инвалидируем кэш в памяти
+    ratingsCache.delete(bookId);
+    
+    // Отправляем событие для всех компонентов, независимо от флага skipEvent
+    const ratingUpdateEvent = new CustomEvent('book-rating-updated', {
+      detail: {
+        bookId,
+        rating: 0,
+        userRating: null,
+        ratingCount: 0
+      },
+      bubbles: true
+    });
+    document.dispatchEvent(ratingUpdateEvent);
   }
 };
 

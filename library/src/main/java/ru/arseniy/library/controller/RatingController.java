@@ -41,6 +41,7 @@ public class RatingController {
     @GetMapping("/{bookId}/rating")
     public ResponseEntity<BookRatingDTO> getBookRating(
             @PathVariable Integer bookId,
+            @RequestParam(name = "refresh", required = false, defaultValue = "false") boolean refresh,
             Authentication authentication) {
         
         if (authentication != null && authentication.isAuthenticated()) {
@@ -48,10 +49,20 @@ public class RatingController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String username = userDetails.getUsername();
             User user = userService.getUserByEmail(username);
-            return ResponseEntity.ok(ratingService.getBookRatingInfoForUser(bookId, user.getId().intValue()));
+            
+            // Если запрошено обновление, используем метод с принудительным пересчетом
+            if (refresh) {
+                return ResponseEntity.ok(ratingService.refreshBookRatingInfoForUser(bookId, user.getId().intValue()));
+            } else {
+                return ResponseEntity.ok(ratingService.getBookRatingInfoForUser(bookId, user.getId().intValue()));
+            }
         } else {
             // Если пользователь не аутентифицирован, возвращаем общую информацию о рейтинге
-            return ResponseEntity.ok(ratingService.getBookRatingInfo(bookId));
+            if (refresh) {
+                return ResponseEntity.ok(ratingService.refreshBookRatingInfo(bookId));
+            } else {
+                return ResponseEntity.ok(ratingService.getBookRatingInfo(bookId));
+            }
         }
     }
 

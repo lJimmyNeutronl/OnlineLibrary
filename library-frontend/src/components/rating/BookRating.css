@@ -215,6 +215,18 @@
   color: #c62828;
 }
 
+.book-rating-status.deleted {
+  color: #52c41a;
+  background: rgba(82, 196, 26, 0.1);
+  border-color: #b7eb8f;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 8px;
+  border: 1px solid;
+  text-align: center;
+}
+
 .book-rating-loading {
   color: #888;
   font-style: italic;

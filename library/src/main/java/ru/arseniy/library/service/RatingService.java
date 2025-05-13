@@ -122,4 +122,39 @@ public class RatingService {
         
         return ratingInfo;
     }
+    
+    /**
+     * Принудительно обновить и получить агрегированную информацию о рейтингах книги
+     * Используется в случае несоответствия данных
+     */
+    public BookRatingDTO refreshBookRatingInfo(Integer bookId) {
+        // Получаем все рейтинги для книги и считаем среднее значение заново
+        List<Rating> ratings = ratingRepository.findAllByBookId(bookId);
+        
+        double sum = 0;
+        for (Rating rating : ratings) {
+            sum += rating.getRating();
+        }
+        
+        Double averageRating = ratings.isEmpty() ? 0 : sum / ratings.size();
+        Long ratingCount = (long) ratings.size();
+        
+        return new BookRatingDTO(bookId, averageRating, ratingCount);
+    }
+    
+    /**
+     * Принудительно обновить и получить агрегированную информацию о рейтингах книги для конкретного пользователя
+     * Используется в случае несоответствия данных
+     */
+    public BookRatingDTO refreshBookRatingInfoForUser(Integer bookId, Integer userId) {
+        BookRatingDTO ratingInfo = refreshBookRatingInfo(bookId);
+        
+        // Добавляем рейтинг пользователя, если он есть
+        if (userId != null) {
+            getUserRatingForBook(userId, bookId)
+                    .ifPresent(userRating -> ratingInfo.setUserRating(userRating.getRating()));
+        }
+        
+        return ratingInfo;
+    }
 } 
