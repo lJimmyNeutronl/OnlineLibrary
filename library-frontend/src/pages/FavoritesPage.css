@@ -1,0 +1,108 @@
+.favorites-page-container {
+  padding: 40px 0;
+}
+
+.favorites-page-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.favorites-page-header {
+  margin-bottom: 20px;
+}
+
+.favorites-page-title-row {
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.favorites-page-title {
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+}
+
+.favorites-page-title-icon {
+  margin-right: 12px;
+  color: #ff4d4f;
+  font-size: 28px;
+}
+
+.favorites-page-divider {
+  margin: 16px 0 24px;
+}
+
+.favorites-page-description {
+  font-size: 16px;
+  margin-bottom: 32px;
+  color: #555;
+  max-width: 800px;
+}
+
+/* Стили для контролов просмотра */
+.favorites-view-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.view-control-button {
+  margin-left: 8px;
+}
+
+/* Стили для контейнера загрузки */
+.favorites-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+/* Стили для пустого состояния */
+.favorites-empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  text-align: center;
+}
+
+.favorites-empty-button {
+  margin-top: 16px;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .favorites-page-container {
+    padding: 20px 0;
+  }
+  
+  .favorites-page-content {
+    padding: 16px;
+  }
+  
+  .favorites-page-title {
+    font-size: 24px !important;
+  }
+  
+  .favorites-page-title-icon {
+    font-size: 24px;
+  }
+  
+  .favorites-page-description {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  
+  .favorites-view-controls {
+    justify-content: center;
+  }
+} 

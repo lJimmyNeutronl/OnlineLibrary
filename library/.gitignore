@@ -34,4 +34,5 @@ build/
 
 ### Project Specific ###
 task_ai.md
-.env
+
+database_scheme.txt

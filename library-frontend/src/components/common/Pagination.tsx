@@ -1,154 +1,133 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 interface PaginationProps {
-  current?: number;
-  defaultCurrent?: number;
-  total: number;
-  pageSize?: number;
-  onChange?: (page: number) => void;
-  showSizeChanger?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
-  current,
-  defaultCurrent = 1,
-  total,
-  pageSize = 10,
-  onChange,
-  showSizeChanger = true,
-  className = '',
-  style = {}
+  currentPage, 
+  totalPages, 
+  onPageChange 
 }) => {
-  const [internalCurrent, setInternalCurrent] = useState<number>(defaultCurrent);
-  
-  // Определение значения текущей страницы
-  const pageNumber = current || internalCurrent;
-  
-  // Вычисление общего количества страниц
-  const totalPages = Math.ceil(total / pageSize);
-  
-  // Генерация массива страниц, которые нужно отобразить
-  const getPageNumbers = (): number[] => {
-    const pages: number[] = [];
+  // Функция для создания массива номеров страниц для отображения
+  const getPageNumbers = () => {
+    const pages = [];
     
-    // Показываем страницы в пределах 2 от текущей
-    const startPage = Math.max(1, pageNumber - 2);
-    const endPage = Math.min(totalPages, pageNumber + 2);
+    // Всегда показываем первую страницу
+    pages.push(1);
     
-    if (startPage > 1) {
-      pages.push(1);
+    // Определяем диапазон страниц вокруг текущей
+    let startPage = Math.max(2, currentPage - 1);
+    let endPage = Math.min(totalPages - 1, currentPage + 1);
+    
+    // Добавляем многоточие после первой страницы, если нужно
       if (startPage > 2) {
-        pages.push(-1); // -1 означает многоточие
-      }
+      pages.push('...');
     }
     
+    // Добавляем страницы из диапазона
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
     
-    if (endPage < totalPages) {
+    // Добавляем многоточие перед последней страницей, если нужно
       if (endPage < totalPages - 1) {
-        pages.push(-1); // -1 означает многоточие
+      pages.push('...');
       }
+    
+    // Добавляем последнюю страницу, если всего страниц больше 1
+    if (totalPages > 1) {
       pages.push(totalPages);
     }
     
     return pages;
   };
   
-  const handlePageClick = (page: number) => {
-    if (page === pageNumber || page < 1 || page > totalPages) return;
-    
-    if (!current) {
-      setInternalCurrent(page);
-    }
-    
-    if (onChange) {
-      onChange(page);
-    }
-  };
+  const pageNumbers = getPageNumbers();
   
   return (
-    <div 
-      className={`custom-pagination ${className}`}
-      style={{
+    <div style={{ 
         display: 'flex',
+      alignItems: 'center', 
         justifyContent: 'center',
-        alignItems: 'center',
-        ...style
-      }}
-    >
-      {/* Кнопка "Предыдущая" */}
+      gap: '5px'
+    }}>
+      {/* Кнопка "Предыдущая страница" */}
       <button
-        className={`pagination-item prev ${pageNumber === 1 ? 'disabled' : ''}`}
-        onClick={() => handlePageClick(pageNumber - 1)}
-        disabled={pageNumber === 1}
+        onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
         style={{
-          padding: '0 8px',
-          height: '32px',
-          cursor: pageNumber === 1 ? 'not-allowed' : 'pointer',
-          backgroundColor: 'white',
-          border: '1px solid #d9d9d9',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '36px',
+          height: '36px',
           borderRadius: '4px',
-          marginRight: '8px',
-          opacity: pageNumber === 1 ? 0.5 : 1
+          border: '1px solid #e0e0e0',
+          background: 'white',
+          cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+          opacity: currentPage === 1 ? 0.5 : 1,
         }}
       >
-        &lt;
+        <FaChevronLeft size={14} color="#666" />
       </button>
       
       {/* Номера страниц */}
-      {getPageNumbers().map((page, index) => (
-        page === -1 ? (
-          <span
-            key={`ellipsis-${index}`}
-            style={{
-              margin: '0 8px',
-              color: '#999'
-            }}
-          >
+      {pageNumbers.map((page, index) => (
+        <React.Fragment key={index}>
+          {page === '...' ? (
+            <span style={{ 
+              margin: '0 2px',
+              color: '#666' 
+            }}>
             ...
           </span>
         ) : (
           <button
-            key={page}
-            className={`pagination-item ${page === pageNumber ? 'active' : ''}`}
-            onClick={() => handlePageClick(page)}
+              onClick={() => typeof page === 'number' && onPageChange(page)}
             style={{
-              margin: '0 4px',
-              padding: '0 10px',
-              height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                borderRadius: '4px',
+                border: currentPage === page ? 'none' : '1px solid #e0e0e0',
+                background: currentPage === page 
+                  ? 'linear-gradient(135deg, #3769f5 0%, #8e54e9 100%)' 
+                  : 'white',
+                color: currentPage === page ? 'white' : '#333',
+                fontWeight: currentPage === page ? 'bold' : 'normal',
               cursor: 'pointer',
-              backgroundColor: page === pageNumber ? '#1890ff' : 'white',
-              color: page === pageNumber ? 'white' : 'rgba(0, 0, 0, 0.65)',
-              border: `1px solid ${page === pageNumber ? '#1890ff' : '#d9d9d9'}`,
-              borderRadius: '4px'
             }}
           >
             {page}
           </button>
-        )
+          )}
+        </React.Fragment>
       ))}
       
-      {/* Кнопка "Следующая" */}
+      {/* Кнопка "Следующая страница" */}
       <button
-        className={`pagination-item next ${pageNumber === totalPages ? 'disabled' : ''}`}
-        onClick={() => handlePageClick(pageNumber + 1)}
-        disabled={pageNumber === totalPages}
+        onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
         style={{
-          padding: '0 8px',
-          height: '32px',
-          cursor: pageNumber === totalPages ? 'not-allowed' : 'pointer',
-          backgroundColor: 'white',
-          border: '1px solid #d9d9d9',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '36px',
+          height: '36px',
           borderRadius: '4px',
-          marginLeft: '8px',
-          opacity: pageNumber === totalPages ? 0.5 : 1
+          border: '1px solid #e0e0e0',
+          background: 'white',
+          cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+          opacity: currentPage === totalPages ? 0.5 : 1,
         }}
       >
-        &gt;
+        <FaChevronRight size={14} color="#666" />
       </button>
     </div>
   );

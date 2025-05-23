@@ -33,6 +33,13 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     Page<Book> findByCategoryIdIn(@Param("categoryIds") List<Integer> categoryIds, Pageable pageable);
     
     /**
+     * Находит книги, принадлежащие к любой из указанных категорий (без дубликатов)
+     * Используется для поддержки глубокой иерархии категорий
+     */
+    @Query("SELECT DISTINCT b FROM Book b JOIN b.categories c WHERE c.id IN :categoryIds")
+    Page<Book> findDistinctByCategoryIdIn(@Param("categoryIds") List<Integer> categoryIds, Pageable pageable);
+    
+    /**
      * Находит книги только из указанной категории, без подкатегорий
      */
     @Query("SELECT DISTINCT b FROM Book b JOIN b.categories c WHERE c.id = :categoryId")

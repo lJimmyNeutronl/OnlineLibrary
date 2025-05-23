@@ -12,8 +12,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Form from '../components/common/Form';
 import message from '../components/common/message';
-import Breadcrumb from '../components/common/Breadcrumb';
-import BreadcrumbItem from '../components/common/BreadcrumbItem';
+import Breadcrumb, { BreadcrumbItem } from '../components/common/Breadcrumb';
 
 // Стили
 import '../App.css';

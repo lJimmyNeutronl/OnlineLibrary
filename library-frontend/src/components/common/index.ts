@@ -1,6 +1,6 @@
 // Экспорт всех компонентов для удобного импорта
 export { default as Avatar } from './Avatar';
-export { default as Breadcrumb } from './Breadcrumb';
+export { default as Breadcrumb } from './Breadcrumb/index';
 export { default as Button } from './Button';
 export { default as Card } from './Card';
 export { default as Col } from './Col';
@@ -14,6 +14,7 @@ export { default as Pagination } from './Pagination';
 export { default as Progress } from './Progress';
 export { default as Rate } from './Rate';
 export { default as Row } from './Row';
+export { default as SearchFilterPanel } from './SearchFilterPanel';
 export { default as Select, Option } from './Select';
 export { default as Space } from './Space';
 export { default as Spin } from './Spin';
@@ -21,4 +22,4 @@ export { default as Statistic } from './Statistic';
 export { default as Tabs, TabPane } from './Tabs';
 export { default as Tag } from './Tag';
 export { default as Typography } from './Typography';
-export { default as message } from './message'; 
+export { default as message } from './message';

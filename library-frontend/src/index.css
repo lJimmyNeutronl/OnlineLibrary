@@ -65,35 +65,6 @@ a:hover {
   background: #a8a8a8;
 }
 
-/* Анимации */
-.fade-in {
-  animation: fadeIn 0.5s ease-in;
-}
-
-.slide-up {
-  animation: slideUp 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* Стили для карточек */
-.card-hover {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
 /* Стили для кнопок */
 button {
   transition: all 0.3s ease;
@@ -110,32 +81,10 @@ button:active {
   width: 100%;
 }
 
-/* Глобальные стили макета */
-.ant-layout {
-  background: #fff !important;
-}
-
-.ant-layout-header {
-  line-height: 64px;
-  height: 64px;
-}
-
-/* Исправление верхнего меню */
-.ant-menu-horizontal {
-  line-height: 64px;
-  border-bottom: none !important;
-}
-
-.ant-menu-dark {
-  background: transparent !important;
-}
-
-.ant-menu-dark .ant-menu-item-selected {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-}
-
-.ant-divider-horizontal.ant-divider-with-text {
-  margin: 32px 0;
+/* Стили для карточек */
+.card {
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 /* Устранение отступов для мобильных экранов */
@@ -143,91 +92,6 @@ button:active {
   .hero-section {
     padding: 40px 0 20px !important;
   }
-  
-  .ant-layout-header {
-    padding: 0 !important;
-  }
-  
-  .ant-layout-header > div {
-    flex-direction: column;
-    padding: 0 10px !important;
-  }
-  
-  .logo {
-    margin-bottom: 8px;
-  }
-  
-  .ant-menu-horizontal {
-    width: 100%;
-    justify-content: center !important;
-  }
-  
-  .ant-layout-content {
-    margin-top: 120px !important;
-  }
 }
 
-/* Добавляем в конец файла новые стили для карточек книг */
 
-/* Стили для карточек книг */
-.card {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* Обертка для карточки книги */
-.book-card-wrapper {
-  padding-top: 10px;
-  padding-bottom: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Исправление выступающих уголков при наведении */
-.motion-container {
-  border-radius: 12px;
-  overflow: hidden;
-  transform-origin: center center;
-  will-change: transform;
-}
-
-/* Дополнительные стили для контейнера книг */
-.book-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px;
-  margin-bottom: 30px;
-}
-
-@media (max-width: 768px) {
-  .book-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
-  }
-}
-
-/* Эллипсис для текста */
-.text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.text-ellipsis-2lines {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
-}
-
-/* Улучшение стилей hover-эффектов для карточек */
-.card-hoverable:hover {
-  transform: none !important; /* Предотвращает двойную трансформацию */
-  box-shadow: none !important;
-}
-
-.motion-container:hover .card-hoverable {
-  transform: none !important; /* Предотвращает двойную трансформацию */
-}

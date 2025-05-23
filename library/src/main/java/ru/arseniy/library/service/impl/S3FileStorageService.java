@@ -141,15 +141,29 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public Optional<InputStream> getFile(String key) {
+        log.info("Запрос на получение файла по ключу: {}", key);
         try {
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(key)
                     .build();
 
-            return Optional.of(s3Client.getObject(getObjectRequest));
+            log.info("Отправка запроса в S3 для получения файла: bucket={}, key={}", bucketName, key);
+            InputStream fileStream = s3Client.getObject(getObjectRequest);
+            log.info("Файл успешно получен из S3: {}", key);
+            return Optional.of(fileStream);
+        } catch (NoSuchKeyException e) {
+            log.warn("Файл не найден в S3: bucket={}, key={}", bucketName, key);
+            return Optional.empty();
         } catch (S3Exception e) {
-            log.error("Ошибка при получении файла из S3: {}", e.getMessage(), e);
+            log.error("Ошибка при получении файла из S3: statusCode={}, errorCode={}, requestId={}, message={}",
+                    e.awsErrorDetails().sdkHttpResponse().statusCode(),
+                    e.awsErrorDetails().errorCode(),
+                    e.requestId(),
+                    e.getMessage(), e);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Неожиданная ошибка при получении файла из S3: {}", e.getMessage(), e);
             return Optional.empty();
         }
     }

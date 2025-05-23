@@ -1,59 +1,248 @@
-import { motion } from 'framer-motion';
-import Typography from '../components/common/Typography';
+import React, { useState, useEffect } from 'react';
+import { FilterParams } from '../components/catalog/CatalogFilters';
+import CatalogFilters from '../components/catalog/CatalogFilters';
+import CatalogStats from '../components/catalog/CatalogStats';
+import BookList from '../components/book-card/BookList';
+import bookService from '../services/bookService';
+import './BooksPage.css';
 
-const { Title, Paragraph } = Typography;
+const BooksPage: React.FC = () => {
+  const [loading, setLoading] = useState<boolean>(true);
+  const [books, setBooks] = useState<any[]>([]);
+  const [totalBooks, setTotalBooks] = useState<number>(0);
+  const [totalAuthors, setTotalAuthors] = useState<number>(0);
+  const [totalGenres, setTotalGenres] = useState<number>(0);
+  const [readCount, setReadCount] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(12);
+  const [totalItems, setTotalItems] = useState<number>(0);
+  const [filters, setFilters] = useState<FilterParams>({});
+  const [pageSizeOptions] = useState<number[]>([6, 12, 24, 48]);
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.8 } }
-};
+  // Загрузка книг согласно фильтрам и пагинации
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setLoading(true);
+      try {
+        const response = await bookService.getBooks({
+          ...filters,
+          page: currentPage - 1,
+          size: pageSize
+        });
+        
+        setBooks(response.content);
+        setTotalItems(response.totalElements);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+        setBooks([]);
+        setTotalItems(0);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-const slideUp = {
-  hidden: { y: 50, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { duration: 0.6 } }
-};
+    fetchBooks();
+  }, [filters, currentPage, pageSize]);
 
-const BooksPage = () => {
-  return (
-    <div style={{ 
-      backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      minHeight: 'calc(100vh - 64px)',
-      width: '100%',
-      padding: '40px 0'
-    }}>
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeIn}
-        style={{ 
-          width: '100%', 
-          maxWidth: '1200px', 
-          margin: '0 auto', 
-          padding: '0 16px' 
-        }}
+  // Загрузка статистических данных
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Запрос для получения статистики
+        const stats = await bookService.getStats();
+        setTotalBooks(stats.totalBooks || 0);
+        setTotalAuthors(stats.totalAuthors || 0);
+        setTotalGenres(stats.totalGenres || 0);
+        setReadCount(stats.readCount || 0);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        setTotalBooks(0);
+        setTotalAuthors(0);
+        setTotalGenres(0);
+        setReadCount(0);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Обработчик изменения фильтров
+  const handleApplyFilters = (newFilters: FilterParams) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Сбрасываем на первую страницу при изменении фильтров
+  };
+
+  // Обработчик изменения страницы
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
+  // Обработчик изменения размера страницы
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPageSize(Number(e.target.value));
+    setCurrentPage(1); // Сбрасываем страницу при изменении количества элементов
+  };
+
+  // Генерация пагинации
+  const renderPagination = () => {
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const buttons = [];
+    
+    // Кнопка "Предыдущая"
+    buttons.push(
+      <button 
+        key="prev" 
+        className={`pagination-button ${currentPage === 1 ? 'disabled' : ''}`}
+        onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
       >
-        <motion.div variants={slideUp}>
-          <Title level={1} style={{ textAlign: 'center', marginBottom: '40px' }}>
-            Каталог книг
-          </Title>
-          
-          <div style={{ 
-            background: 'white', 
-            borderRadius: '12px', 
-            padding: '32px', 
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            marginBottom: '40px'
-          }}>
-            <Title level={2} style={{ marginBottom: '20px' }}>
-              Страница находится в разработке
-            </Title>
-            <Paragraph>
-              Здесь будет отображаться список всех доступных книг в библиотеке с возможностью поиска, 
-              фильтрации по жанрам, авторам и другим параметрам.
-            </Paragraph>
+        &laquo; Предыдущая
+      </button>
+    );
+    
+    // Определяем диапазон страниц для отображения
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+    
+    // Кнопка для первой страницы
+    if (startPage > 1) {
+      buttons.push(
+        <button 
+          key={1} 
+          className={`pagination-button ${currentPage === 1 ? 'active' : ''}`} 
+          onClick={() => handlePageChange(1)}
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        buttons.push(<span key="ellipsis1" className="pagination-ellipsis">...</span>);
+      }
+    }
+    
+    // Генерируем кнопки для страниц
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button 
+          key={i} 
+          className={`pagination-button ${currentPage === i ? 'active' : ''}`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+    
+    // Кнопка для последней страницы
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        buttons.push(<span key="ellipsis2" className="pagination-ellipsis">...</span>);
+      }
+      buttons.push(
+        <button 
+          key={totalPages} 
+          className={`pagination-button ${currentPage === totalPages ? 'active' : ''}`}
+          onClick={() => handlePageChange(totalPages)}
+        >
+          {totalPages}
+        </button>
+      );
+    }
+    
+    // Кнопка "Следующая"
+    buttons.push(
+      <button 
+        key="next" 
+        className={`pagination-button ${currentPage === totalPages ? 'disabled' : ''}`}
+        onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        Следующая &raquo;
+      </button>
+    );
+    
+    return (
+      <div className="pagination-container">
+        <div className="pagination-info">
+          Всего {totalItems} книг
+        </div>
+        <div className="pagination-buttons">
+          {buttons}
+        </div>
+        <div className="pagination-size">
+          <select 
+            className="page-size-select"
+            value={pageSize}
+            onChange={handlePageSizeChange}
+          >
+            {pageSizeOptions.map(size => (
+              <option key={size} value={size}>
+                {size} / страница
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="books-page-container">
+      <div className="books-page-content">
+        <div className="books-page-header">
+          <h1 className="books-page-title">Каталог книг</h1>
+          <p className="books-page-description">
+            Исследуйте нашу обширную коллекцию книг. Используйте фильтры для поиска книг по жанрам, авторам и другим параметрам, чтобы найти именно то, что вы ищете.
+          </p>
+        </div>
+
+        {/* Статистика */}
+        <div className="books-content-section">
+          <CatalogStats
+            totalBooks={totalBooks}
+            totalAuthors={totalAuthors}
+            totalGenres={totalGenres}
+            readCount={readCount}
+          />
+        </div>
+
+        <div className="books-page-row">
+          {/* Фильтры */}
+          <div className="books-page-sidebar">
+            <CatalogFilters
+              onApplyFilters={handleApplyFilters}
+              loading={loading}
+            />
           </div>
-        </motion.div>
-      </motion.div>
+          
+          {/* Список книг */}
+          <div className="books-page-main">
+            <div className="books-content-section">
+              {loading ? (
+                <div className="books-loading">
+                  <div className="loader"></div>
+                </div>
+              ) : books.length > 0 ? (
+                <div className="books-grid">
+                  <BookList books={books} viewMode="grid" />
+                </div>
+              ) : (
+                <div className="books-empty">
+                  <div className="empty-icon">📚</div>
+                  <p className="empty-message">К сожалению, книги не найдены. Попробуйте изменить параметры поиска.</p>
+                </div>
+              )}
+              
+              {/* Пагинация */}
+              {!loading && totalItems > 0 && renderPagination()}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.arseniy.library.service.FileStorageService;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.io.InputStream;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import java.util.Optional;
 /**
  * Контроллер для доступа к локально сохраненным файлам
  */
+@CrossOrigin(origins = "http://localhost:5173", maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor

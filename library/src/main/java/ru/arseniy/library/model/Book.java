@@ -52,6 +52,12 @@ public class Book {
     @Column(name = "upload_date", nullable = false)
     private LocalDateTime uploadDate;
 
+    @Transient
+    private Double rating;
+    
+    @Transient
+    private Integer ratingsCount;
+
     @ManyToMany
     @JoinTable(
             name = "book_categories",
@@ -171,6 +177,22 @@ public class Book {
     
     public void setUploadDate(LocalDateTime uploadDate) {
         this.uploadDate = uploadDate;
+    }
+    
+    public Double getRating() {
+        return rating;
+    }
+    
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+    
+    public Integer getRatingsCount() {
+        return ratingsCount;
+    }
+    
+    public void setRatingsCount(Integer ratingsCount) {
+        this.ratingsCount = ratingsCount;
     }
     
     public Set<Category> getCategories() {

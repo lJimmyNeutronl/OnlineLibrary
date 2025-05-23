@@ -1,3 +1,6 @@
+/* Импорт общих стилей */
+@import './styles/common.css';
+
 #root {
   width: 100%;
   height: 100%;
@@ -505,61 +508,7 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* Стили для карточек книг */
-.ant-card {
-  transition: all 0.3s ease;
-}
-
-.ant-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-}
-
-.ant-card:hover .ant-card-cover img {
-  transform: scale(1.05);
-}
-
-.ant-card:hover .ant-card-cover div {
-  opacity: 1;
-}
-
-/* Стили для кнопок категорий */
-.ant-btn {
-  transition: all 0.3s ease;
-}
-
-.ant-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(55, 105, 245, 0.2);
-}
-
-/* Добавляем стили для hover эффекта обложек книг */
-.book-cover-container {
-  position: relative;
-  overflow: hidden;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.book-cover-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.01), rgba(0,0,0,0.5));
-  opacity: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: 10px;
-  transition: all 0.3s ease;
-  color: white;
-}
-
-.book-item:hover .book-cover-overlay {
-  opacity: 1;
-}
+/* Стили для карточек книг перенесены в компонент BookCard.css */
 
 /* Стили для страницы профиля */
 .profile-page-wrapper {
@@ -879,3 +828,51 @@ body {
     margin-bottom: 16px;
   }
 }
+
+/* Стили для профиля пользователя */
+.profile-favorites-carousel {
+  margin: 24px 0;
+  padding: 10px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.view-all-favorites-button {
+  padding: 8px 20px;
+  font-size: 14px;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(55, 105, 245, 0.15);
+  transition: all 0.3s ease;
+}
+
+.view-all-favorites-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(55, 105, 245, 0.25);
+}
+
+.favorites-empty-container {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.favorites-empty-button {
+  margin-top: 20px;
+  padding: 8px 20px;
+  font-size: 14px;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(55, 105, 245, 0.15);
+  transition: all 0.3s ease;
+}
+
+.favorites-empty-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(55, 105, 245, 0.25);
+}
+
+/* Конец стилей для профиля пользователя */

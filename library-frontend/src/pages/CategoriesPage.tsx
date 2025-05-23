@@ -536,18 +536,7 @@ const CategoriesPage = () => {
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             marginBottom: '40px'
           }}>
-            <Paragraph style={{ 
-              marginBottom: '30px',
-              padding: '16px',
-              background: 'rgba(55, 105, 245, 0.04)',
-              borderRadius: '8px',
-              borderLeft: '4px solid #3769f5',
-              fontSize: '16px',
-              lineHeight: '1.6',
-              color: '#444',
-              textAlign: 'center',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
-            }}>
+            <Paragraph className="info-paragraph">
               Выберите интересующую вас категорию, чтобы увидеть соответствующие книги.
               Навигация по категориям поможет вам быстро найти нужную литературу.
             </Paragraph>

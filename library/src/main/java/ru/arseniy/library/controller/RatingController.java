@@ -19,6 +19,7 @@ import java.util.Map;
 /**
  * Контроллер для работы с рейтингами книг
  */
+@CrossOrigin(origins = "http://localhost:5173", maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor

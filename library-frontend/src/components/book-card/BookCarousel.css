@@ -1,0 +1,104 @@
+.book-carousel {
+  width: 100%;
+  margin: 20px 0;
+  position: relative;
+}
+
+.book-carousel-title {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.book-carousel-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.carousel-items-container {
+  width: 100%;
+  overflow: hidden;
+  padding: 10px 0;
+}
+
+.carousel-items {
+  display: flex;
+  width: 100%;
+  will-change: transform;
+}
+
+.carousel-item {
+  flex-shrink: 0;
+  padding: 0 10px;
+  height: 100%;
+  min-height: 400px;
+}
+
+.carousel-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  position: absolute;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.carousel-control:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+
+.carousel-control.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: scale(1);
+}
+
+.carousel-control.prev {
+  left: -20px;
+}
+
+.carousel-control.next {
+  right: -20px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .carousel-control {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .carousel-control.prev {
+    left: -10px;
+  }
+  
+  .carousel-control.next {
+    right: -10px;
+  }
+  
+  .carousel-item {
+    min-height: 350px;
+  }
+}
+
+@media (max-width: 576px) {
+  .carousel-control {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .carousel-item {
+    padding: 0 5px;
+    min-height: 300px;
+  }
+} 

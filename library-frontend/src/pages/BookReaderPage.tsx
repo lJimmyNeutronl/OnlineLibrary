@@ -1,21 +1,46 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Typography from '../components/common/Typography';
-import Button from '../components/common/Button';
-import { AiOutlineArrowLeft, AiOutlineFullscreen, AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineHeart } from 'react-icons/ai';
+import { AiOutlineArrowLeft, AiOutlineBook, AiOutlineInfoCircle, AiOutlineHeart } from 'react-icons/ai';
 import { useAppSelector } from '../hooks/reduxHooks';
+import ReaderSelector from '../components/readers/ReaderSelector';
+import Button from '../components/common/Button';
+import bookService from '../services/bookService';
+import { getFavoritesFromStorage, saveFavoritesToStorage } from '../mocks/booksMock';
+import './BookReaderPage.css';
 
-const { Title, Paragraph } = Typography;
+// Проверка, есть ли методы работы с избранным, иначе используем моки
+if (!bookService.getUserFavoriteBooks) {
+  bookService.getUserFavoriteBooks = async function() {
+    // Моковая имплементация для тестирования
+    const favoriteIds = getFavoritesFromStorage();
+    return favoriteIds.map(id => ({ id })) as any[];
+  };
+}
+
+if (!bookService.addToFavorites) {
+  bookService.addToFavorites = async function(bookId: number) {
+    // Моковая имплементация для тестирования
+    const favoriteIds = getFavoritesFromStorage();
+    if (!favoriteIds.includes(bookId)) {
+      favoriteIds.push(bookId);
+      saveFavoritesToStorage(favoriteIds);
+    }
+  };
+}
+
+if (!bookService.removeFromFavorites) {
+  bookService.removeFromFavorites = async function(bookId: number) {
+    // Моковая имплементация для тестирования
+    const favoriteIds = getFavoritesFromStorage();
+    const updatedFavorites = favoriteIds.filter(id => id !== bookId);
+    saveFavoritesToStorage(updatedFavorites);
+  };
+}
 
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.8 } }
-};
-
-const slideUp = {
-  hidden: { y: 50, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { duration: 0.6 } }
+  visible: { opacity: 1, transition: { duration: 0.6 } }
 };
 
 const BookReaderPage = () => {
@@ -23,123 +48,132 @@ const BookReaderPage = () => {
   const navigate = useNavigate();
   const { token } = useAppSelector(state => state.auth);
   const isAuthenticated = !!token;
+  const [bookTitle, setBookTitle] = useState<string>('');
+  const [isAddingToFavorites, setIsAddingToFavorites] = useState<boolean>(false);
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
   
+  // Проверка аутентификации и загрузка информации о книге
   useEffect(() => {
     // Проверка аутентификации
     if (!isAuthenticated) {
-      // В реальном приложении здесь будет уведомление пользователя
-      navigate('/login');
+      navigate('/login', { state: { redirectTo: `/books/${bookId}/read` } });
+      return;
     }
-  }, [isAuthenticated, navigate]);
+    
+    // Загрузка информации о книге
+    const loadBookInfo = async () => {
+      try {
+        if (!bookId) return;
+        
+        const book = await bookService.getBookById(parseInt(bookId));
+        setBookTitle(book.title);
+        
+        // Проверка, добавлена ли книга в избранное
+        try {
+          const favorites = await bookService.getUserFavoriteBooks();
+          setIsFavorite(favorites.some(favBook => favBook.id === parseInt(bookId)));
+        } catch (error) {
+          console.error('Ошибка при получении избранных книг:', error);
+          // Используем локальное хранилище если API недоступно
+          const favoriteIds = getFavoritesFromStorage();
+          setIsFavorite(favoriteIds.includes(parseInt(bookId)));
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке информации о книге:', error);
+      }
+    };
+    
+    loadBookInfo();
+  }, [isAuthenticated, bookId, navigate]);
+  
+  // Добавление/удаление книги из избранного
+  const handleToggleFavorite = async () => {
+    if (!bookId) return;
+    
+    try {
+      setIsAddingToFavorites(true);
+      
+      if (isFavorite) {
+        // Удаление из избранного
+        try {
+          await bookService.removeFromFavorites(parseInt(bookId));
+        } catch (error) {
+          // Если API недоступно, используем локальное хранилище
+          console.error('Ошибка при удалении из избранного, используем локальное хранилище:', error);
+          const favoriteIds = getFavoritesFromStorage();
+          const updatedFavorites = favoriteIds.filter(id => id !== parseInt(bookId));
+          saveFavoritesToStorage(updatedFavorites);
+        }
+      } else {
+        // Добавление в избранное
+        try {
+          await bookService.addToFavorites(parseInt(bookId));
+        } catch (error) {
+          // Если API недоступно, используем локальное хранилище
+          console.error('Ошибка при добавлении в избранное, используем локальное хранилище:', error);
+          const favoriteIds = getFavoritesFromStorage();
+          if (!favoriteIds.includes(parseInt(bookId))) {
+            favoriteIds.push(parseInt(bookId));
+            saveFavoritesToStorage(favoriteIds);
+          }
+        }
+      }
+      
+      setIsFavorite(!isFavorite);
+    } catch (error) {
+      console.error('Ошибка при изменении статуса избранного:', error);
+    } finally {
+      setIsAddingToFavorites(false);
+    }
+  };
 
   return (
-    <div style={{ 
-      backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      minHeight: 'calc(100vh - 64px)',
-      width: '100%',
-      padding: '40px 0'
-    }}>
-      <div style={{ 
-        background: 'white', 
-        padding: '16px 24px', 
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        marginBottom: '20px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="book-reader-page"
+    >
+      <div className="book-reader-header">
+        <div className="book-reader-nav">
           <Button 
             type="text" 
             onClick={() => navigate(`/books/${bookId}`)}
-            style={{ marginRight: '16px' }}
+            className="nav-button"
           >
-            <AiOutlineArrowLeft size={18} /> Назад
+            <AiOutlineArrowLeft /> Вернуться к книге
           </Button>
-          <h2 style={{ margin: 0 }}>Просмотр книги {bookId}</h2>
+          <h2 className="book-title">
+            {bookTitle || `Книга #${bookId}`}
+          </h2>
         </div>
-        <div>
-          <Button type="text" style={{ marginRight: '8px' }}>
-            <AiOutlineZoomIn size={18} />
+        <div className="book-reader-actions">
+          <Button 
+            type="text" 
+            onClick={() => navigate(`/books/${bookId}`)} 
+            className="action-button"
+          >
+            <AiOutlineInfoCircle />
+            <span className="button-text">Информация</span>
           </Button>
-          <Button type="text" style={{ marginRight: '8px' }}>
-            <AiOutlineZoomOut size={18} />
-          </Button>
-          <Button type="text" style={{ marginRight: '8px' }}>
-            <AiOutlineFullscreen size={18} />
-          </Button>
-          <Button type="text">
-            <AiOutlineHeart size={18} />
+          <Button 
+            type="text" 
+            onClick={handleToggleFavorite} 
+            className={`action-button ${isFavorite ? 'favorite-active' : ''}`}
+            disabled={isAddingToFavorites}
+          >
+            <AiOutlineHeart />
+            <span className="button-text">{isFavorite ? 'В избранном' : 'В избранное'}</span>
           </Button>
         </div>
       </div>
 
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeIn}
-        style={{ 
-          width: '100%', 
-          maxWidth: '1200px', 
-          margin: '0 auto', 
-          padding: '0 16px' 
-        }}
-      >
-        <motion.div variants={slideUp}>
-          <div style={{ 
-            background: 'white', 
-            borderRadius: '12px', 
-            padding: '32px', 
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            marginBottom: '40px'
-          }}>
-            <Title style={{ marginBottom: '20px', textAlign: 'center' }}>
-              Функционал чтения в разработке
-            </Title>
-
-            <div style={{ 
-              border: '1px solid #eee', 
-              borderRadius: '8px', 
-              padding: '30px', 
-              minHeight: '500px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              background: '#f9f9f9'
-            }}>
-              <Paragraph style={{ marginBottom: '20px', textAlign: 'center' }}>
-                Для просмотра полной версии PDF-документа необходимо авторизоваться и перейти к полной версии страницы.
-              </Paragraph>
-
-              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-                <Button type="primary" onClick={() => navigate(`/books/${bookId}`)}>
-                  Вернуться к информации о книге
-                </Button>
-              </div>
-            </div>
-
-            <div style={{ 
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginTop: '20px',
-              borderTop: '1px solid #eee',
-              paddingTop: '20px'
-            }}>
-              <Button type="default" onClick={() => {}}>
-                Предыдущая страница
-              </Button>
-              <div>
-                Страница 1 из 10
-              </div>
-              <Button type="default" onClick={() => {}}>
-                Следующая страница
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </div>
+      <div className="book-reader-content">
+        {bookId && (
+          <ReaderSelector bookId={parseInt(bookId)} />
+        )}
+      </div>
+    </motion.div>
   );
 };
 

@@ -113,7 +113,7 @@ public class UserService {
     }
     
     @Transactional
-    public ReadingHistory updateReadingHistory(Integer userId, Integer bookId, Boolean isCompleted) {
+    public ReadingHistory updateReadingHistory(Integer userId, Integer bookId, Boolean isCompleted, Integer lastReadPage) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
         
@@ -127,6 +127,11 @@ public class UserService {
         readingHistory.setBook(book);
         readingHistory.setLastReadDate(LocalDateTime.now());
         readingHistory.setIsCompleted(isCompleted);
+        
+        // Устанавливаем номер последней прочитанной страницы
+        if (lastReadPage != null) {
+            readingHistory.setLastReadPage(lastReadPage);
+        }
         
         return readingHistoryRepository.save(readingHistory);
     }

@@ -8,8 +8,10 @@ import {
   FiGrid, 
   FiUser, 
   FiLogIn, 
-  FiLogOut 
+  FiLogOut,
+  FiHeart
 } from 'react-icons/fi';
+import { AiFillHeart } from 'react-icons/ai';
 import logoImg from '../../assets/images/image.png';
 
 const AppHeader = () => {
@@ -121,6 +123,30 @@ const AppHeader = () => {
         <div className="auth-buttons" style={{ display: 'flex', gap: '12px' }}>
           {isAuthenticated ? (
             <>
+              <button 
+                className="btn-header"
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '8px 12px',
+                  fontSize: '16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                onClick={() => navigate('/favorites')}
+              >
+                <AiFillHeart style={{ ...iconStyle, marginRight: 0, color: '#ff4d4f', fontSize: '22px' }} />
+              </button>
               <button 
                 className="btn-header"
                 style={{ 

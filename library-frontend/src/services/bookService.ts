@@ -1,5 +1,6 @@
 import API from './api';
 import { mockBooks, getBooksByCategory, searchBooksByQuery, createPagedResponse } from '../mocks/booksData';
+import { BookFormat, ReadingProgress } from '../types';
 
 // Интерфейсы
 export interface Category {
@@ -596,16 +597,16 @@ const bookService = {
     
     // Отправляем событие об обновлении рейтинга, независимо от флага skipEvent
     // Это обеспечит обновление всех компонентов, отображающих рейтинг
-    const ratingUpdateEvent = new CustomEvent('book-rating-updated', {
-      detail: {
-        bookId,
-        rating: ratingData.averageRating,
-        userRating: ratingData.userRating,
-        ratingCount: ratingData.ratingCount
-      },
-      bubbles: true
-    });
-    document.dispatchEvent(ratingUpdateEvent);
+      const ratingUpdateEvent = new CustomEvent('book-rating-updated', {
+        detail: {
+          bookId,
+          rating: ratingData.averageRating,
+          userRating: ratingData.userRating,
+          ratingCount: ratingData.ratingCount
+        },
+        bubbles: true
+      });
+      document.dispatchEvent(ratingUpdateEvent);
   },
   
   // Обновление кэша рейтингов для списка книг
@@ -641,17 +642,334 @@ const bookService = {
     ratingsCache.delete(bookId);
     
     // Отправляем событие для всех компонентов, независимо от флага skipEvent
-    const ratingUpdateEvent = new CustomEvent('book-rating-updated', {
-      detail: {
-        bookId,
-        rating: 0,
-        userRating: null,
-        ratingCount: 0
-      },
-      bubbles: true
-    });
-    document.dispatchEvent(ratingUpdateEvent);
-  }
+      const ratingUpdateEvent = new CustomEvent('book-rating-updated', {
+        detail: {
+          bookId,
+          rating: 0,
+          userRating: null,
+          ratingCount: 0
+        },
+        bubbles: true
+      });
+      document.dispatchEvent(ratingUpdateEvent);
+  },
+  
+  // Получение подсказок для поиска
+  async getSearchSuggestions(query: string, limit: number = 5): Promise<string[]> {
+    if (!query || query.trim().length < 2) {
+      return [];
+    }
+    
+    try {
+      // API-запрос может быть слишком тяжелым для подсказок, поэтому используем имитацию
+      // в реальном проекте здесь должен быть запрос к API
+      const params = new URLSearchParams();
+      params.append('query', query);
+      params.append('page', '0');
+      params.append('size', limit.toString());
+      
+      const response = await API.get<PagedResponse<Book>>(`/books/search?${params.toString()}`);
+      
+      // Извлекаем только заголовки и авторов для подсказок
+      const suggestions = response.data.content.map(book => book.title);
+      const authorSuggestions = response.data.content
+        .map(book => book.author)
+        .filter((author, index, self) => self.indexOf(author) === index); // Убираем дубликаты
+      
+      // Объединяем подсказки по заголовкам и авторам
+      return [...suggestions, ...authorSuggestions].slice(0, limit);
+    } catch (error) {
+      console.error('Ошибка при получении подсказок для поиска:', error);
+      // Используем мок-данные при ошибке
+      return mockBooks
+        .filter(book => 
+          book.title.toLowerCase().includes(query.toLowerCase()) || 
+          book.author.toLowerCase().includes(query.toLowerCase())
+        )
+        .map(book => book.title)
+        .slice(0, limit);
+    }
+  },
+  
+  // Получение статистики
+  async getStats(): Promise<{ totalBooks: number; totalAuthors: number; totalGenres: number; readCount: number }> {
+    try {
+      const response = await API.get<{ totalBooks: number; totalAuthors: number; totalGenres: number; readCount: number }>('/books/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при получении статистики, возвращаем моковые данные:', error);
+      // Импортируем мок статистики из catalog-data.ts
+      const { mockCatalogStats } = await import('../mocks/catalog-data');
+      return mockCatalogStats;
+    }
+  },
+  
+  // Получение файла книги по URL - для локального просмотра
+  async getBookFileUrl(bookId: number): Promise<string> {
+    try {
+      // Пытаемся использовать новый endpoint для получения URL файла
+      try {
+        // Определяем расширение файла для передачи на сервер
+        let extension = '';
+        
+        // Пытаемся получить расширение из информации о книге
+        try {
+          const book = await this.getBookById(bookId);
+          if (book && book.fileUrl) {
+            const ext = this.getFileExtension(book.fileUrl);
+            if (ext) {
+              extension = ext;
+              // Также сохраняем формат в localStorage, чтобы использовать его в дальнейшем
+              this.saveBookFormatToLocalStorage(bookId, this.extensionToFormat(extension));
+            }
+          }
+        } catch (e) {
+          console.warn('Не удалось получить информацию о книге для определения расширения:', e);
+        }
+        
+        // Используем новый endpoint для получения URL
+        const response = await API.get<string>(`/books/${bookId}/file-url${extension ? `?ext=${extension}` : ''}`);
+        
+        if (response.data) {
+          // Возвращаем абсолютный URL, добавляя baseURL если нужно
+          const fileUrl = response.data;
+          
+          // Если URL уже полный, возвращаем как есть
+          if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+            return fileUrl;
+          } 
+          
+          // Иначе добавляем baseURL без дублирования /api
+          const baseURL = API.defaults.baseURL || '';
+          // Убираем завершающий / из baseURL если он есть
+          const cleanBaseURL = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
+          
+          // Если fileUrl начинается с /api/, убираем этот префикс чтобы избежать дублирования
+          const cleanFileUrl = fileUrl.startsWith('/api/') ? fileUrl.substring(4) : 
+                             fileUrl.startsWith('api/') ? fileUrl.substring(3) : 
+                             fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+                             
+          return `${cleanBaseURL}${cleanFileUrl}`;
+        }
+      } catch (apiError) {
+        console.warn('Не удалось получить URL файла книги через API, используем прямой URL:', apiError);
+      }
+      
+      // Формируем URL напрямую, как запасной вариант
+      let baseUrl = API.defaults.baseURL || '';
+      // Убираем завершающий / из baseUrl если он есть
+      baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      
+      // Убираем дублирование /api в пути
+      let url;
+      if (baseUrl.endsWith('/api')) {
+        url = `${baseUrl}/books/${bookId}/file`;
+      } else {
+        url = `${baseUrl}/api/books/${bookId}/file`;
+      }
+      
+      // Пытаемся получить информацию о книге для добавления расширения
+      try {
+        const book = await this.getBookById(bookId);
+        if (book && book.fileUrl) {
+          const extension = this.getFileExtension(book.fileUrl);
+          if (extension) {
+            // Сохраняем формат в localStorage
+            this.saveBookFormatToLocalStorage(bookId, this.extensionToFormat(extension));
+            url += `?ext=${extension}`;
+          }
+        }
+      } catch (e) {
+        console.warn('Не удалось получить информацию о книге для определения расширения:', e);
+      }
+      
+      return url;
+    } catch (error) {
+      console.error(`Ошибка при получении URL файла книги ${bookId}:`, error);
+      throw new Error(`Не удалось получить URL файла книги с ID ${bookId}`);
+    }
+  },
+  
+  // Преобразование расширения файла в формат книги
+  extensionToFormat(extension: string): BookFormat {
+    const ext = extension.toLowerCase();
+    if (ext === 'pdf') return BookFormat.PDF;
+    if (ext === 'epub') return BookFormat.EPUB;
+    if (ext === 'fb2') return BookFormat.FB2;
+    return BookFormat.UNKNOWN;
+  },
+  
+  // Сохранение формата книги в localStorage
+  saveBookFormatToLocalStorage(bookId: number, format: BookFormat): void {
+    try {
+      if (format !== BookFormat.UNKNOWN) {
+        localStorage.setItem(`book_${bookId}_format`, format);
+      }
+    } catch (e) {
+      console.error('Ошибка при сохранении формата книги в localStorage:', e);
+    }
+  },
+  
+  // Получение формата книги из localStorage
+  getBookFormatFromLocalStorage(bookId: number): BookFormat | null {
+    try {
+      const format = localStorage.getItem(`book_${bookId}_format`);
+      if (format) {
+        return format as BookFormat;
+      }
+    } catch (e) {
+      console.error('Ошибка при получении формата книги из localStorage:', e);
+    }
+    return null;
+  },
+  
+  // Сохранение прогресса чтения книги в localStorage
+  saveReadingProgress(progress: ReadingProgress): void {
+    try {
+      const { bookId } = progress;
+      const progressKey = `reading_progress_${bookId}`;
+      localStorage.setItem(progressKey, JSON.stringify({
+        ...progress,
+        lastReadDate: new Date().toISOString()
+      }));
+      
+      // Отправка прогресса на сервер, если пользователь авторизован
+      this.syncReadingProgress(progress).catch(error => {
+        console.error('Ошибка синхронизации прогресса чтения:', error);
+      });
+    } catch (error) {
+      console.error('Ошибка при сохранении прогресса чтения:', error);
+    }
+  },
+  
+  // Получение прогресса чтения из localStorage
+  getReadingProgress(bookId: number): ReadingProgress | null {
+    try {
+      const progressKey = `reading_progress_${bookId}`;
+      const savedProgress = localStorage.getItem(progressKey);
+      
+      if (savedProgress) {
+        return JSON.parse(savedProgress);
+      }
+    } catch (error) {
+      console.error('Ошибка при получении прогресса чтения:', error);
+    }
+    return null;
+  },
+  
+  // Синхронизация прогресса чтения с сервером
+  async syncReadingProgress(progress: ReadingProgress): Promise<void> {
+    const token = localStorage.getItem('token');
+    
+    // Синхронизируем только для авторизованных пользователей
+    if (token) {
+      try {
+        await API.post(`/users/reading-history/${progress.bookId}`, null, {
+          params: {
+          lastReadPage: progress.currentPage,
+          isCompleted: progress.currentPage >= progress.totalPages
+          }
+        });
+      } catch (error) {
+        console.error('Ошибка синхронизации прогресса с сервером:', error);
+      }
+    }
+  },
+
+  // Метод для получения избранных книг пользователя
+  async getUserFavoriteBooks(): Promise<Book[]> {
+    try {
+      const response = await API.get<Book[]>('/users/favorites');
+      return response.data;
+    } catch (error) {
+      console.error('Ошибка при получении избранных книг:', error);
+      return [];
+    }
+  },
+
+  // Метод для добавления книги в избранное
+  async addToFavorites(bookId: number): Promise<void> {
+    try {
+      await API.post(`/users/favorites/${bookId}`);
+    } catch (error) {
+      console.error(`Ошибка при добавлении книги ${bookId} в избранное:`, error);
+      throw new Error('Не удалось добавить книгу в избранное');
+    }
+  },
+
+  // Метод для удаления книги из избранного
+  async removeFromFavorites(bookId: number): Promise<void> {
+    try {
+      await API.delete(`/users/favorites/${bookId}`);
+    } catch (error) {
+      console.error(`Ошибка при удалении книги ${bookId} из избранного:`, error);
+      throw new Error('Не удалось удалить книгу из избранного');
+    }
+  },
+
+  // Проверка, находится ли книга в избранном
+  async isBookInFavorites(bookId: number): Promise<boolean> {
+    try {
+      const favorites = await this.getUserFavoriteBooks();
+      return favorites.some(book => book.id === bookId);
+    } catch (error) {
+      console.error(`Ошибка при проверке статуса избранного для книги ${bookId}:`, error);
+      return false;
+    }
+  },
+
+  // Определение формата книги по расширению файла или Content-Type
+  getBookFormat(fileUrl: string | undefined): BookFormat {
+    if (!fileUrl) return BookFormat.UNKNOWN;
+    
+    const lowerUrl = fileUrl.toLowerCase();
+    
+    // Определение по расширению в URL
+    if (lowerUrl.endsWith('.pdf')) {
+      return BookFormat.PDF;
+    } else if (lowerUrl.endsWith('.epub')) {
+      return BookFormat.EPUB;
+    } else if (lowerUrl.endsWith('.fb2') || lowerUrl.endsWith('.fb2.zip')) {
+      return BookFormat.FB2;
+    }
+    
+    // Проверка на наличие маркеров в URL
+    if (lowerUrl.includes('pdf')) {
+      return BookFormat.PDF;
+    } else if (lowerUrl.includes('epub')) {
+      return BookFormat.EPUB;
+    } else if (lowerUrl.includes('fb2') || lowerUrl.includes('xml')) {
+      return BookFormat.FB2;
+    }
+    
+    // Проверка параметра ext в URL
+    try {
+      const urlObj = new URL(lowerUrl, window.location.origin);
+      const ext = urlObj.searchParams.get('ext');
+      if (ext) {
+        return this.extensionToFormat(ext);
+      }
+      
+      // Проверка на наличие параметра format в URL
+      const format = urlObj.searchParams.get('format');
+      if (format) {
+        return this.extensionToFormat(format);
+      }
+    } catch (e) {
+      console.error('Ошибка при парсинге URL:', e);
+    }
+    
+    // Если не удалось определить по URL, будем загружать заголовки файла
+    // при использовании в ReaderSelector
+    return BookFormat.UNKNOWN;
+  },
+
+  // Получение расширения файла из URL
+  getFileExtension(url: string): string | null {
+    if (!url) return null;
+    const match = url.toLowerCase().match(/\.([a-z0-9]+)(\?|$)/);
+    return match ? match[1] : null;
+  },
 };
 
 export default bookService; 

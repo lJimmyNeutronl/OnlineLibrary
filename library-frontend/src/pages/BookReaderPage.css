@@ -1,0 +1,99 @@
+.book-reader-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+  background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.book-reader-header {
+  background-color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.book-reader-nav {
+  display: flex;
+  align-items: center;
+}
+
+.nav-button {
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.book-reader-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s;
+}
+
+.action-button.favorite-active {
+  color: #ff4757;
+}
+
+.button-text {
+  display: inline-block;
+}
+
+.book-reader-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  min-height: calc(100vh - 120px);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .book-title {
+    max-width: 200px;
+    font-size: 16px;
+  }
+  
+  .button-text {
+    display: none;
+  }
+  
+  .nav-button {
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-reader-header {
+    padding: 12px 16px;
+  }
+  
+  .book-title {
+    max-width: 120px;
+    font-size: 14px;
+  }
+  
+  .action-button {
+    padding: 6px 8px;
+  }
+} 

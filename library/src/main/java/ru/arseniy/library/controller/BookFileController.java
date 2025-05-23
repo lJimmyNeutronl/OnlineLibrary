@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import ru.arseniy.library.dto.MessageResponse;
 import ru.arseniy.library.exception.ResourceNotFoundException;
@@ -22,6 +23,10 @@ import java.util.Optional;
 /**
  * Контроллер для работы с файлами книг
  */
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true", 
+             allowedHeaders = {"Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"}, 
+             exposedHeaders = {"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Access-Control-Allow-Methods"},
+             methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS, RequestMethod.HEAD, RequestMethod.PUT, RequestMethod.DELETE})
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
@@ -82,33 +87,75 @@ public class BookFileController {
      * Получает файл книги
      *
      * @param id идентификатор книги
+     * @param ext расширение файла (pdf, epub, fb2 и т.д.)
      * @return файл книги
      */
     @GetMapping("/{id}/file")
-    public ResponseEntity<?> getBookFile(@PathVariable Integer id) {
+    public ResponseEntity<?> getBookFile(@PathVariable Integer id, @RequestParam(required = false) String ext) {
         try {
+            // Сначала получаем информацию о книге для определения прямого URL
+            Book book = bookService.getBookById(id);
+            
+            // Проверяем, есть ли прямой URL в книге
+            if (book.getFileUrl() != null && !book.getFileUrl().isEmpty() && 
+                (book.getFileUrl().startsWith("http://") || book.getFileUrl().startsWith("https://"))) {
+                
+                log.info("Книга с ID {} имеет прямой URL к файлу: {}", id, book.getFileUrl());
+                
+                // Если URL уже полный и внешний, выполняем редирект на него
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header(HttpHeaders.LOCATION, book.getFileUrl())
+                        .build();
+            }
+            
+            // Иначе пытаемся получить файл через сервис
             Optional<InputStream> fileStream = bookService.getBookFile(id);
             if (fileStream.isPresent()) {
-                // Получаем информацию о книге для определения типа контента
-                Book book = bookService.getBookById(id);
-                String contentType = determineContentType(book.getFileUrl());
+                log.info("Файл для книги с ID {} успешно найден", id);
+                
+                // Определяем Content-Type на основе расширения файла или URL
+                String contentType;
+                if (ext != null && !ext.isEmpty()) {
+                    contentType = determineContentTypeByExtension(ext);
+                } else {
+                    contentType = determineContentType(book.getFileUrl());
+                }
                 
                 // Подготавливаем заголовки ответа
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.parseMediaType(contentType));
-                headers.setContentDispositionFormData("attachment", getFileName(book.getFileUrl()));
+                
+                // Определяем, должен ли файл скачиваться или просматриваться в браузере
+                boolean isViewable = contentType.equals("application/pdf") || 
+                                     contentType.equals("application/epub+zip") ||
+                                     contentType.startsWith("image/");
+                
+                if (!isViewable) {
+                    headers.setContentDispositionFormData("attachment", getFileName(book.getFileUrl()));
+                }
                 
                 // Возвращаем файл
                 byte[] fileBytes = IOUtils.toByteArray(fileStream.get());
                 return new ResponseEntity<>(fileBytes, headers, HttpStatus.OK);
             } else {
+                log.warn("Файл для книги с ID {} не найден в локальном хранилище", id);
+                
+                // Проверяем, можно ли использовать внешний URL
+                if (book.getFileUrl() != null && !book.getFileUrl().isEmpty()) {
+                    log.info("Пытаемся выполнить редирект на внешний URL: {}", book.getFileUrl());
+                    return ResponseEntity.status(HttpStatus.FOUND)
+                            .header(HttpHeaders.LOCATION, book.getFileUrl())
+                            .build();
+                }
+                
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new MessageResponse("Файл книги не найден"));
             }
         } catch (ResourceNotFoundException e) {
+            log.error("Книга с ID {} не найдена: {}", id, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse(e.getMessage()));
         } catch (IOException e) {
-            log.error("Ошибка при получении файла книги: {}", e.getMessage(), e);
+            log.error("Ошибка при получении файла книги с ID {}: {}", id, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ошибка при получении файла книги: " + e.getMessage()));
         }
@@ -146,6 +193,80 @@ public class BookFileController {
             log.error("Ошибка при получении обложки книги: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Ошибка при получении обложки книги: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Получает URL файла книги для фронтенда
+     *
+     * @param id идентификатор книги
+     * @param ext расширение файла (pdf, epub и т.д.)
+     * @return URL файла книги
+     */
+    @GetMapping("/{id}/file-url")
+    public ResponseEntity<?> getBookFileUrl(@PathVariable Integer id, @RequestParam(required = false) String ext) {
+        try {
+            Book book = bookService.getBookById(id);
+            
+            // Проверяем, есть ли прямой URL к файлу
+            if (book.getFileUrl() != null && !book.getFileUrl().isEmpty()) {
+                log.info("Книга с ID {} имеет прямой URL: {}", id, book.getFileUrl());
+                
+                // Если URL внешний (начинается с http:// или https://), возвращаем его напрямую
+                if (book.getFileUrl().startsWith("http://") || book.getFileUrl().startsWith("https://")) {
+                    log.info("Возвращаем прямой внешний URL для книги ID {}: {}", id, book.getFileUrl());
+                    return ResponseEntity.ok(book.getFileUrl());
+                }
+            } else {
+                log.warn("URL файла для книги с ID {} не найден в базе данных", id);
+            }
+            
+            // Формируем URL для доступа к файлу через наш API
+            String fileUrl = "/api/books/" + id + "/file";
+            if (ext != null && !ext.isEmpty()) {
+                fileUrl += "?ext=" + ext;
+            }
+            
+            log.info("Сформирован API URL для книги с ID {}: {}", id, fileUrl);
+            return ResponseEntity.ok(fileUrl);
+        } catch (ResourceNotFoundException e) {
+            log.error("Книга с ID {} не найдена: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Ошибка при получении URL файла книги с ID {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Ошибка при получении URL файла книги: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Определяет тип контента по расширению файла
+     *
+     * @param extension расширение файла
+     * @return тип контента
+     */
+    private String determineContentTypeByExtension(String extension) {
+        String ext = extension.toLowerCase();
+        switch (ext) {
+            case "pdf":
+                return "application/pdf";
+            case "epub":
+                return "application/epub+zip";
+            case "fb2":
+                return "application/xml";
+            case "txt":
+                return "text/plain";
+            case "jpg":
+            case "jpeg":
+                return "image/jpeg";
+            case "png":
+                return "image/png";
+            case "gif":
+                return "image/gif";
+            case "webp":
+                return "image/webp";
+            default:
+                return MediaType.APPLICATION_OCTET_STREAM_VALUE;
         }
     }
 

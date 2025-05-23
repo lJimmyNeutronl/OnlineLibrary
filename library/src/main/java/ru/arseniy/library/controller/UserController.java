@@ -22,7 +22,7 @@ import ru.arseniy.library.service.UserService;
 
 import java.util.Set;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "http://localhost:5173", maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -102,11 +102,12 @@ public class UserController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ReadingHistory> updateReadingHistory(
             @PathVariable Integer bookId,
-            @RequestParam(defaultValue = "false") Boolean isCompleted) {
+            @RequestParam(defaultValue = "false") Boolean isCompleted,
+            @RequestParam(required = false) Integer lastReadPage) {
         
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        ReadingHistory readingHistory = userService.updateReadingHistory(userDetails.getId(), bookId, isCompleted);
+        ReadingHistory readingHistory = userService.updateReadingHistory(userDetails.getId(), bookId, isCompleted, lastReadPage);
         return ResponseEntity.ok(readingHistory);
     }
     

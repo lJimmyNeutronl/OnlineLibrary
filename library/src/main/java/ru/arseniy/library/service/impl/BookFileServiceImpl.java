@@ -78,25 +78,43 @@ public class BookFileServiceImpl implements BookFileService {
 
     @Override
     public Optional<InputStream> getBookFile(Integer bookId) {
+        log.info("Получение файла книги с ID: {}", bookId);
+        
+        // Проверяем, существует ли книга
+        String bookTitle = getBookTitle(bookId);
+        if (bookTitle == null) {
+            log.warn("Книга с ID {} не найдена", bookId);
+            return Optional.empty();
+        }
+        
+        log.info("Книга найдена: '{}', ID: {}", bookTitle, bookId);
+        
         // Пытаемся найти файл с разными расширениями
         for (String contentType : FileConstants.ALLOWED_BOOK_CONTENT_TYPES) {
             String key = generateBookFileKey(bookId, contentType);
+            log.debug("Проверяем файл по ключу: {}", key);
+            
             Optional<InputStream> file = fileStorageService.getFile(key);
             if (file.isPresent()) {
+                log.info("Файл найден по ключу: {}", key);
                 return file;
             }
             
             // Если не нашли по прямому пути, пробуем искать в папке с названием книги
-            String bookTitle = getBookTitle(bookId);
             if (bookTitle != null && !bookTitle.isEmpty()) {
                 String safeBookTitle = bookTitle.replaceAll("[^a-zA-Z0-9_\\-\\.]", "_");
                 String bookFolderKey = "books/" + safeBookTitle + "/" + FileConstants.BOOKS_PREFIX + bookId + "." + getExtensionFromContentType(contentType);
+                log.debug("Проверяем файл по альтернативному ключу: {}", bookFolderKey);
+                
                 Optional<InputStream> fileInFolder = fileStorageService.getFile(bookFolderKey);
                 if (fileInFolder.isPresent()) {
+                    log.info("Файл найден по альтернативному ключу: {}", bookFolderKey);
                     return fileInFolder;
                 }
             }
         }
+        
+        log.warn("Файл книги с ID {} не найден в хранилище", bookId);
         return Optional.empty();
     }
 

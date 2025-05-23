@@ -1,28 +1,26 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Typography from '../components/common/Typography';
-import Row from '../components/common/Row';
-import Col from '../components/common/Col';
-import Card from '../components/common/Card';
+
 import Divider from '../components/common/Divider';
 import Spin from '../components/common/Spin';
 import Empty from '../components/common/Empty';
 import Breadcrumb from '../components/common/Breadcrumb';
 import Button from '../components/common/Button';
 import Tag from '../components/common/Tag';
-import Space from '../components/common/Space';
 import message from '../components/common/message';
 import { FiArrowLeft, FiUser, FiHeart, FiBookOpen, FiCalendar, FiBook, FiFlag, FiHash } from 'react-icons/fi';
 import { AiFillHeart } from 'react-icons/ai';
 import { motion } from 'framer-motion';
-import { useAppSelector } from '../hooks/reduxHooks';
+import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
 import bookService, { Book } from '../services/bookService';
 import { FaBookOpen, FaGraduationCap, FaInfoCircle, FaComments, FaBookmark } from 'react-icons/fa';
 import BookRating from '../components/rating/BookRating';
 import ReviewList from '../components/reviews/ReviewList';
-import ReviewForm from '../components/reviews/ReviewForm';
-import BookCard from '../components/books/BookCard';
+import BookCard from '../components/book-card/BookCard';
 import '../styles/bookDetail.css';
+import userService from '../services/userService';
+import { addToFavorites, removeFromFavorites, fetchFavorites } from '../store/slices/favoritesSlice';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -72,6 +70,8 @@ const BookDetailPage = () => {
   const navigate = useNavigate();
   const { token } = useAppSelector(state => state.auth);
   const isAuthenticated = !!token;
+  const dispatch = useAppDispatch();
+  const { books: favorites } = useAppSelector(state => state.favorites);
   
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -270,17 +270,49 @@ const BookDetailPage = () => {
     }
   }, [parsedBookId, handleRatingUpdate]);
 
+  // Проверяем, находится ли книга в избранном при загрузке страницы
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (!isAuthenticated || !parsedBookId) return;
+      
+      try {
+        await dispatch(fetchFavorites()).unwrap();
+        const isBookInFavorites = favorites.some(book => book.id === parsedBookId);
+        setIsFavorite(isBookInFavorites);
+      } catch (error) {
+        console.error('Ошибка при проверке статуса избранного:', error);
+      }
+    };
+    
+    checkFavoriteStatus();
+  }, [isAuthenticated, parsedBookId, dispatch, favorites]);
+
   // Мемоизируем обработчики событий, чтобы избежать лишних ререндеров
-  const toggleFavorite = useCallback(() => {
+  const toggleFavorite = useCallback(async () => {
     if (!isAuthenticated) {
       message.warning('Для добавления книги в избранное необходимо авторизоваться');
       return;
     }
     
-    // В реальном приложении здесь будет API-запрос для добавления/удаления из избранного
-    setIsFavorite(!isFavorite);
-    message.success(isFavorite ? 'Книга удалена из избранного' : 'Книга добавлена в избранное');
-  }, [isAuthenticated, isFavorite]);
+    if (!parsedBookId) return;
+    
+    try {
+      if (isFavorite) {
+        // Удаляем из избранного
+        await dispatch(removeFromFavorites(parsedBookId)).unwrap();
+        setIsFavorite(false);
+        message.success('Книга удалена из избранного');
+      } else {
+        // Добавляем в избранное
+        await dispatch(addToFavorites(parsedBookId)).unwrap();
+        setIsFavorite(true);
+        message.success('Книга добавлена в избранное');
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении избранного:', error);
+      message.error('Не удалось обновить избранное');
+    }
+  }, [isAuthenticated, isFavorite, parsedBookId, dispatch]);
 
   const startReading = useCallback(() => {
     if (!isAuthenticated) {
@@ -511,6 +543,37 @@ const BookDetailPage = () => {
     setImageError(true);
   }, []);
 
+  // Загружаем кнопки действий с книгой
+  const renderBookActions = () => {
+    if (!book) return null;
+    
+    return (
+      <div className="book-actions">
+        <Button 
+          type="primary" 
+          className="read-button" 
+          onClick={() => navigate(`/books/${book.id}/read`)}
+          icon={<FaBookOpen />}
+          size="large"
+        >
+          Читать книгу
+        </Button>
+        
+        {isAuthenticated && (
+          <Button
+            type={isFavorite ? "default" : "primary"}
+            className={`favorite-button ${isFavorite ? 'favorite-active' : ''}`}
+            onClick={toggleFavorite}
+            icon={isFavorite ? <AiFillHeart /> : <FiHeart />}
+            size="large"
+          >
+            {isFavorite ? 'В избранном' : 'В избранное'}
+          </Button>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '100px 0' }}>
@@ -556,21 +619,21 @@ const BookDetailPage = () => {
           variants={fadeIn}
         >
           {/* Хлебные крошки */}
-          <Breadcrumb className="book-breadcrumb">
+          <Breadcrumb>
             <Breadcrumb.Item>
-              <Link to="/" style={{ color: '#3769f5', fontWeight: 500 }}>Главная</Link>
+              <Link to="/">Главная</Link>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
-              <Link to="/books" style={{ color: '#3769f5', fontWeight: 500 }}>Книги</Link>
+              <Link to="/books">Книги</Link>
             </Breadcrumb.Item>
             {book.categories && book.categories.length > 0 && (
               <Breadcrumb.Item>
-                <Link to={`/categories/${book.categories[0].id}`} style={{ color: '#3769f5', fontWeight: 500 }}>
+                <Link to={`/categories/${book.categories[0].id}`}>
                   {book.categories[0].name}
                 </Link>
               </Breadcrumb.Item>
             )}
-            <Breadcrumb.Item style={{ color: '#333', fontWeight: 600 }}>
+            <Breadcrumb.Item>
               {book.title.length > 40 ? `${book.title.substring(0, 40)}...` : book.title}
             </Breadcrumb.Item>
           </Breadcrumb>
@@ -901,6 +964,11 @@ const BookDetailPage = () => {
           backgroundBlendMode: 'overlay',
         }}
       />
+
+      {/* Добавляем блок кнопок действий для книги */}
+      <div className="book-detail-actions">
+        {renderBookActions()}
+      </div>
     </div>
   );
 };

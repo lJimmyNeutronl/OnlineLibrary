@@ -16,7 +16,7 @@ import ru.arseniy.library.service.BookService;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "http://localhost:5173", maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
@@ -54,6 +54,16 @@ public class BookController {
     public ResponseEntity<BookDTO> getBookById(@PathVariable Integer id) {
         Book book = bookService.getBookById(id);
         return ResponseEntity.ok(BookDTO.fromEntity(book));
+    }
+    
+    @GetMapping("/popular")
+    public ResponseEntity<List<BookDTO>> getPopularBooks(
+            @RequestParam(defaultValue = "10") int limit) {
+        List<Book> popularBooks = bookService.getPopularBooks(limit);
+        List<BookDTO> bookDTOs = popularBooks.stream()
+                .map(BookDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(bookDTOs);
     }
     
     @GetMapping("/search")

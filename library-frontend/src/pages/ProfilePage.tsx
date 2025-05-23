@@ -1,30 +1,23 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiUser, FiBook, FiHeart, FiClock, FiSettings, FiLogOut, FiEdit, FiActivity, FiCalendar } from 'react-icons/fi';
 import { FaBook, FaBookOpen, FaBookReader, FaPencilAlt, FaGraduationCap, FaFeatherAlt, FaUserEdit, FaKey, FaSignOutAlt } from 'react-icons/fa';
 import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
 import { logout } from '../store/slices/authSlice';
-import userService, { FavoriteBook as FavoriteBookType, ReadingHistoryItem as ReadingHistoryItemType, UserActivity as UserActivityType } from '../services/userService';
+import userService, { FavoriteBook as FavoriteBookType, ReadingHistoryItem as ReadingHistoryItemType, UserActivity as UserActivityType, UserActivityEntry as UserActivityEntryType } from '../services/userService';
+import BookCarousel from '../components/book-card/BookCarousel';
 
 // Импортируем наши пользовательские компоненты
 import Typography from '../components/common/Typography';
 import Row from '../components/common/Row';
 import Col from '../components/common/Col';
-import Card from '../components/common/Card';
 import Avatar from '../components/common/Avatar';
-import Tabs, { TabPane } from '../components/common/Tabs';
-import List from '../components/common/List';
-import Tag from '../components/common/Tag';
-import Divider from '../components/common/Divider';
-import Breadcrumb from '../components/common/Breadcrumb';
 import Button from '../components/common/Button';
 import Empty from '../components/common/Empty';
 import Spin from '../components/common/Spin';
 import message from '../components/common/message';
-import Statistic from '../components/common/Statistic';
-import Progress from '../components/common/Progress';
-
+import AnimatedBackground from '../components/common/AnimatedBackground';
 // Импортируем стили
 import '../App.css';
 
@@ -40,6 +33,7 @@ interface Category {
 type FavoriteBook = FavoriteBookType;
 type ReadingHistoryItem = ReadingHistoryItemType;
 type UserActivity = UserActivityType;
+type UserActivityEntry = UserActivityEntryType;
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -60,78 +54,6 @@ const getLastNDays = (n: number) => {
   return result;
 };
 
-// Стили для анимаций фоновых элементов - как на главной странице
-const floatAnimation = {
-  initial: { y: 0, rotate: 0 },
-  animate: {
-    y: [0, -15, 0],
-    rotate: [0, 5, 0],
-    transition: {
-      duration: 6,
-      repeat: Infinity,
-      repeatType: "reverse" as const,
-      ease: "easeInOut"
-    }
-  }
-};
-
-const rotateAnimation = {
-  initial: { rotate: 0 },
-  animate: {
-    rotate: 360,
-    transition: {
-      duration: 60,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  }
-};
-
-const pulseAnimation = {
-  initial: { scale: 1, opacity: 0.05 },
-  animate: {
-    scale: [1, 1.05, 1],
-    opacity: [0.05, 0.08, 0.05],
-    transition: {
-      duration: 4,
-      repeat: Infinity,
-      repeatType: "reverse" as const,
-      ease: "easeInOut"
-    }
-  }
-};
-
-// Анимация для значков на фоне
-const iconVariants = {
-  animate: {
-    y: [0, -10, 0],
-    opacity: [0.3, 0.6, 0.3],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      repeatType: 'reverse' as const,
-    }
-  }
-};
-
-// Определение типа для иконки фона
-interface BackgroundIcon {
-  icon: React.ReactNode;
-  top: string;
-  left: string;
-  delay: number;
-}
-
-// Массив иконок для фона
-const backgroundIcons: BackgroundIcon[] = [
-  { icon: <FiBook size={24} />, top: '15%', left: '10%', delay: 0 },
-  { icon: <FiHeart size={24} />, top: '25%', left: '85%', delay: 0.5 },
-  { icon: <FiUser size={24} />, top: '75%', left: '15%', delay: 1 },
-  { icon: <FiClock size={24} />, top: '65%', left: '80%', delay: 1.5 },
-  { icon: <FiBook size={24} />, top: '45%', left: '5%', delay: 2 },
-  { icon: <FiHeart size={24} />, top: '35%', left: '92%', delay: 2.5 },
-  { icon: <FiClock size={24} />, top: '85%', left: '50%', delay: 3 },
-];
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -248,45 +170,23 @@ const ProfilePage = () => {
       const data = await userService.getReadingHistory();
       // Проверяем формат данных и устанавливаем соответствующим образом
       if (Array.isArray(data)) {
-        setReadingHistory(data); // Если сервер вернул массив
-      } else if (data && typeof data === 'object' && 'content' in data && Array.isArray(data.content)) {
-        // @ts-ignore - игнорируем ошибку типа, так как мы проверяем существование поля content
-        setReadingHistory(data.content); // Если сервер вернул объект с полем content
+        setReadingHistory(data);
+      } else if (data && typeof data === 'object' && 'content' in data) {
+        const content = (data as { content: ReadingHistoryItem[] }).content;
+        if (Array.isArray(content)) {
+          setReadingHistory(content);
+        } else {
+          console.error('Неверный формат данных истории чтения:', data);
+          setReadingHistory([]);
+        }
       } else {
         console.error('Неверный формат данных истории чтения:', data);
-        setReadingHistory([]); // Устанавливаем пустой массив в случае ошибки
+        setReadingHistory([]);
       }
     } catch (error) {
-      console.error('Ошибка загрузки истории чтения:', error);
+      console.error('Ошибка при загрузке истории чтения:', error);
       message.error('Не удалось загрузить историю чтения');
-      
-      // Фиктивные данные для демонстрации
-      setReadingHistory([
-        {
-          id: 1,
-          book: {
-            id: 1,
-            title: 'Великий Гэтсби',
-            author: 'Ф. Скотт Фитцджеральд',
-            coverImageUrl: 'https://m.media-amazon.com/images/I/71FTb9X6wsL._AC_UF1000,1000_QL80_.jpg',
-          },
-          lastReadDate: new Date().toISOString(),
-          lastReadPage: 120,
-          isCompleted: false
-        },
-        {
-          id: 2,
-          book: {
-            id: 2,
-            title: 'Убить пересмешника',
-            author: 'Харпер Ли',
-            coverImageUrl: 'https://m.media-amazon.com/images/I/71FxgtFKcQL._AC_UF1000,1000_QL80_.jpg',
-          },
-          lastReadDate: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 дня назад
-          lastReadPage: 336,
-          isCompleted: true
-        }
-      ]);
+      setReadingHistory([]);
     } finally {
       setLoadingHistory(false);
     }
@@ -304,7 +204,7 @@ const ProfilePage = () => {
       const days = getLastNDays(7);
       const mockActivities: UserActivity[] = days.map(date => {
         const actionCount = Math.floor(Math.random() * 6);
-        const actions = [];
+        const entries: UserActivityEntry[] = [];
         
         for (let i = 0; i < actionCount; i++) {
           const actionTypes = ['read', 'favorite', 'login', 'other'];
@@ -315,7 +215,7 @@ const ProfilePage = () => {
           const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
           const timestamp = `${date}T${timeStr}:00`;
           
-          let description = '';
+          let action = '';
           let bookTitle;
           let bookId;
           
@@ -329,7 +229,7 @@ const ProfilePage = () => {
             const book = books[Math.floor(Math.random() * books.length)];
             bookTitle = book.title;
             bookId = book.id;
-            description = `Чтение книги "${bookTitle}"`;
+            action = `Чтение книги "${bookTitle}"`;
           } else if (type === 'favorite') {
             const books = [
               { id: 5, title: 'Гарри Поттер' },
@@ -339,27 +239,24 @@ const ProfilePage = () => {
             const book = books[Math.floor(Math.random() * books.length)];
             bookTitle = book.title;
             bookId = book.id;
-            description = `Добавление книги "${bookTitle}" в избранное`;
+            action = `Добавление книги "${bookTitle}" в избранное`;
           } else if (type === 'login') {
-            description = 'Вход в систему';
+            action = 'Вход в систему';
           } else {
-            description = 'Другое действие в системе';
+            action = 'Другое действие в системе';
           }
           
-          actions.push({
-            id: i + 1,
-            type,
-            bookId,
-            bookTitle,
+          entries.push({
+            action,
             timestamp,
-            description
+            bookId,
+            bookTitle
           });
         }
         
         return {
           date,
-          count: actionCount,
-          actions: actions.sort((a, b) => 
+          entries: entries.sort((a, b) => 
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           )
         };
@@ -423,16 +320,15 @@ const ProfilePage = () => {
   };
 
   // Рендеринг активности
-  const renderActivityIcon = (type: string) => {
-    switch (type) {
-      case 'read':
-        return <FiBook style={{ color: '#1890ff' }} />;
-      case 'favorite':
-        return <FiHeart style={{ color: '#ff4d4f' }} />;
-      case 'login':
-        return <FiUser style={{ color: '#52c41a' }} />;
-      default:
-        return <FiActivity style={{ color: '#faad14' }} />;
+  const renderActivityIcon = (action: string) => {
+    if (action.includes('Чтение')) {
+      return <FiBook style={{ color: '#1890ff' }} />;
+    } else if (action.includes('избранное')) {
+      return <FiHeart style={{ color: '#ff4d4f' }} />;
+    } else if (action.includes('Вход')) {
+      return <FiUser style={{ color: '#52c41a' }} />;
+    } else {
+      return <FiActivity style={{ color: '#faad14' }} />;
     }
   };
 
@@ -455,105 +351,16 @@ const ProfilePage = () => {
   const favoritesCount = favorites.length;
 
   return (
-    <div className="profile-page-wrapper" style={{ 
-      backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      minHeight: 'calc(100vh - 64px)',
-      width: '100%',
-      overflow: 'hidden',
-      position: 'relative'
-    }}>
-      {/* Декоративные элементы, как на главной странице */}
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={floatAnimation}
-        style={{
-          position: 'absolute',
-          width: '400px',
-          height: '400px',
-          top: '-150px',
-          right: '-100px',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.08,
-          transform: 'rotate(15deg)',
-        }}
+    <AnimatedBackground>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="profile-container"
       >
-        <FaBookOpen size={300} color="#3769f5" />
-      </motion.div>
-      
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={rotateAnimation}
-        style={{
-          position: 'absolute',
-          width: '300px',
-          height: '300px',
-          bottom: '-100px',
-          left: '-100px',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.06,
-        }}
-      >
-        <FaGraduationCap size={250} color="#3769f5" />
-      </motion.div>
-      
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={pulseAnimation}
-        style={{
-          position: 'absolute',
-          width: '200px',
-          height: '200px',
-          top: '30%',
-          right: '10%',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <FaPencilAlt size={150} color="#3769f5" />
-      </motion.div>
-      
-      {/* Новый декоративный элемент в левом углу */}
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={floatAnimation}
-        style={{
-          position: 'absolute',
-          width: '180px',
-          height: '180px',
-          top: '15%',
-          left: '5%',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.07,
-          transform: 'rotate(-10deg)',
-        }}
-      >
-        <FaFeatherAlt size={120} color="#8e54e9" />
-      </motion.div>
-      
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={fadeIn}
-      className="profile-container"
-      >
-      <Row gutter={[32, 32]}>
+        <Row gutter={[32, 32]}>
           {/* Левая колонка - профиль пользователя */}
-        <Col xs={24} md={8}>
+          <Col xs={24} md={8}>
             <div className="profile-user-section">
               <Avatar size={150} icon={<FiUser />} style={{ backgroundColor: '#6c5ce7', color: '#fff' }} />
               <Title level={2} className="profile-username">
@@ -656,11 +463,8 @@ const ProfilePage = () => {
                   height: '1px',
                   background: 'linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
                 }}></div>
-                <Title level={3} style={{ 
-                  margin: '0 20px', 
-                  background: 'linear-gradient(135deg, #6c5ce7 0%, #8e54e9 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                <Title level={3} className="gradient-text-purple" style={{ 
+                  margin: '0 20px',
                   fontWeight: 'bold',
                   letterSpacing: '0.5px'
                 }}>
@@ -671,95 +475,95 @@ const ProfilePage = () => {
                   height: '1px',
                   background: 'linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
                 }}></div>
-                </div>
+              </div>
               
-                  {loadingFavorites ? (
+              {loadingFavorites ? (
                 <div className="loading-container">
-                      <Spin size="large" />
-                    </div>
-                  ) : favorites.length === 0 ? (
-                <div className="empty-favorites">
-                    <Empty 
-                      description="У вас пока нет избранных книг" 
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  <Spin size="large" />
+                </div>
+              ) : favorites.length === 0 ? (
+                <div className="favorites-empty-container">
+                  <Empty 
+                    description="У вас пока нет избранных книг" 
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
                   />
                   <Button 
                     type="primary" 
                     onClick={() => navigate('/books')}
-                    className="profile-btn profile-btn-primary"
-                    style={{ marginTop: '24px' }}
-                    icon={<FiBook style={{ marginRight: '8px' }} />}
+                    className="favorites-empty-button"
+                    icon={<FiBook />}
                   >
-                        Перейти к каталогу книг
-                      </Button>
+                    Перейти к каталогу книг
+                  </Button>
                 </div>
               ) : (
-                <>
-                  <Row gutter={[16, 24]}>
-                    {favorites.map(book => (
-                      <Col key={book.id} xs={12} sm={8} md={6}>
-                        <motion.div 
-                          className="book-item"
-                          onClick={() => navigate(`/books/${book.id}`)}
-                          whileHover={{ 
-                            y: -10,
-                            boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
-                          }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <div className="book-cover-container">
-                            <img 
-                              src={book.coverImageUrl || ''} 
-                              alt={book.title} 
-                              className="book-cover-image"
-                            />
-                            <div className="book-cover-overlay">
-                              <FiHeart size={24} />
+                <BookCarousel 
+                  books={favorites}
+                  className="profile-favorites-carousel"
+                />
+              )}
+
+              {favorites.length > 0 && (
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                  <Button 
+                    type="primary" 
+                    onClick={() => navigate('/favorites')}
+                    className="view-all-favorites-button"
+                  >
+                    Посмотреть все избранные книги
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Секция активности */}
+            {activeTab === 'activity' && (
+              <div className="profile-activity-section">
+                <Title level={3} style={{ marginBottom: '24px' }}>
+                  <FiActivity style={{ marginRight: '8px' }} />
+                  Активность
+                </Title>
+                
+                {loadingActivities ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                    <Spin size="large" />
+                  </div>
+                ) : activities.length === 0 ? (
+                  <Empty description="Нет данных об активности" />
+                ) : (
+                  <div className="activity-timeline">
+                    {activities.map((dayActivity, index) => (
+                      <div key={dayActivity.date} className="activity-day">
+                        <div className="activity-date">
+                          <FiCalendar style={{ marginRight: '8px' }} />
+                          {getDayOfWeekName(dayActivity.date)}, {getShortDate(dayActivity.date)}
+                        </div>
+                        
+                        <div className="activity-entries">
+                          {dayActivity.entries.map((entry, entryIndex) => (
+                            <div key={`${entry.timestamp}-${entryIndex}`} className="activity-entry">
+                              <div className="activity-icon">
+                                {renderActivityIcon(entry.action)}
+                              </div>
+                              <div className="activity-content">
+                                <div className="activity-action">{entry.action}</div>
+                                <div className="activity-time">
+                                  {getTimeFromTimestamp(entry.timestamp)}
                                 </div>
                               </div>
-                          <div className="book-title">
-                            {book.title.length > 20 ? book.title.substring(0, 18) + '...' : book.title}
-                          </div>
-                          <div className="book-author">
-                            {book.author}
-                </div>
-                        </motion.div>
-                      </Col>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     ))}
-                  </Row>
-                  
-                  {favorites.length > 0 && (
-                    <div className="catalog-button-container">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                            <Button 
-                              type="primary"
-                          onClick={() => navigate('/books')}
-                          className="profile-btn-primary"
-                          style={{ 
-                            borderRadius: '50px',
-                            padding: '0 25px',
-                            height: '44px',
-                            background: 'linear-gradient(135deg, #6c5ce7 0%, #8e54e9 100%)',
-                            boxShadow: '0 4px 15px rgba(108, 92, 231, 0.3)',
-                            border: 'none'
-                          }}
-                          icon={<FiBook style={{ marginRight: '8px' }} />}
-                        >
-                          Перейти к каталогу книг
-                        </Button>
-                      </motion.div>
-                              </div>
-                      )}
-                </>
-                  )}
-                </div>
-        </Col>
-      </Row>
-    </motion.div>
-    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Col>
+        </Row>
+      </motion.div>
+    </AnimatedBackground>
   );
 };
 

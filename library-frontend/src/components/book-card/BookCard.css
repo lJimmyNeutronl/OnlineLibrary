@@ -1,0 +1,128 @@
+/* Стили для карточек книг */
+
+.book-card-wrapper {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.motion-container {
+  border-radius: 12px;
+  overflow: hidden;
+  transform-origin: center center;
+  will-change: transform;
+  height: 100%;
+  margin-bottom: 10px;
+}
+
+.book-card {
+  width: 100%;
+  height: 100%;
+  box-shadow: none;
+  border: none;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.book-image-container {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.book-image {
+  height: 180px;
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.book-title-container {
+  height: 42px;
+  margin-bottom: 12px;
+}
+
+.book-title {
+  margin-top: 0;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.book-author {
+  color: #666;
+  display: block;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.book-year {
+  color: #999;
+  font-size: 12px;
+}
+
+.book-rating-container {
+  margin-top: 8px;
+}
+
+.rating-badge {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.rating-icon {
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-ellipsis-2lines {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+.card-hoverable:hover {
+  transform: none !important; 
+  box-shadow: none !important;
+}
+
+.motion-container:hover .card-hoverable {
+  transform: none !important; 
+}
+
+.book-link {
+  text-decoration: none;
+  display: block;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  .book-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
+} 

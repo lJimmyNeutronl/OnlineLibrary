@@ -6,11 +6,10 @@ import { AppDispatch, RootState } from '../store';
 import { motion } from 'framer-motion';
 import Button from '../components/common/Button';
 import { AiOutlineUser, AiOutlineLock, AiOutlineMail, AiOutlineIdcard, AiOutlineArrowRight } from 'react-icons/ai';
-import { FaBookOpen, FaGraduationCap, FaPencilAlt, FaFeatherAlt, FaBook } from 'react-icons/fa';
+import AnimatedBackground from '../components/common/AnimatedBackground';
 
 // Импортируем стили из нашего модуля стилей
 import {
-  formPageContainerStyle,
   formContainerStyle,
   formTitleStyle,
   inputContainerStyle,
@@ -22,14 +21,7 @@ import {
   backButtonStyle,
   fadeIn,
   slideUp,
-  slideRight,
-  floatAnimation,
-  rotateAnimation,
-  pulseAnimation,
-  topRightDecorativeStyle,
-  bottomLeftDecorativeStyle,
-  bottomRightDecorativeStyle,
-  decorativeColors
+  slideRight
 } from '../styles';
 
 interface RegisterFormValues {
@@ -243,35 +235,14 @@ const RegisterPage = () => {
   };
 
   return (
-    <div style={formPageContainerStyle}>
-      {/* Декоративные элементы, связанные с книгами */}
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={floatAnimation}
-        style={topRightDecorativeStyle}
-      >
-        <FaBookOpen size={250} color={decorativeColors.primary} />
-      </motion.div>
-      
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={rotateAnimation}
-        style={bottomLeftDecorativeStyle}
-      >
-        <FaGraduationCap size={200} color={decorativeColors.primary} />
-      </motion.div>
-      
-      <motion.div
-        initial="initial"
-        animate="animate"
-        variants={pulseAnimation}
-        style={bottomRightDecorativeStyle}
-      >
-        <FaBook size={130} color={decorativeColors.primary} />
-      </motion.div>
-
+    <AnimatedBackground>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: 'calc(100vh - 64px)',
+        width: '100%'
+      }}>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -552,6 +523,7 @@ const RegisterPage = () => {
         </motion.div>
       </motion.div>
     </div>
+    </AnimatedBackground>
   );
 };
 

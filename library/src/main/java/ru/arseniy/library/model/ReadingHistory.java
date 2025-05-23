@@ -29,6 +29,9 @@ public class ReadingHistory {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
     
+    @Column(name = "last_read_page")
+    private Integer lastReadPage;
+    
     @Column(name = "last_read_date", nullable = false)
     private LocalDateTime lastReadDate;
     
@@ -57,6 +60,14 @@ public class ReadingHistory {
     
     public void setBook(Book book) {
         this.book = book;
+    }
+    
+    public Integer getLastReadPage() {
+        return lastReadPage;
+    }
+    
+    public void setLastReadPage(Integer lastReadPage) {
+        this.lastReadPage = lastReadPage;
     }
     
     public LocalDateTime getLastReadDate() {

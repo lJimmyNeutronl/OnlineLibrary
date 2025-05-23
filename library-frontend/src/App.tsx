@@ -11,7 +11,9 @@ import BookDetailPage from './pages/BookDetailPage';
 import BookReaderPage from './pages/BookReaderPage';
 import CategoriesPage from './pages/CategoriesPage';
 import CategoryBooksPage from './pages/CategoryBooksPage';
+import SearchResultsPage from './pages/SearchResultsPage';
 import ProfilePage from './pages/ProfilePage';
+import FavoritesPage from './pages/FavoritesPage';
 import EditProfilePage from './pages/EditProfilePage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -44,9 +46,15 @@ const App = () => {
           <Route path="books/:bookId/read" element={<BookReaderPage />} />
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="categories/:categoryId" element={<CategoryBooksPage />} />
+          <Route path="search" element={<SearchResultsPage />} />
           <Route path="profile" element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="favorites" element={
+            <ProtectedRoute>
+              <FavoritesPage />
             </ProtectedRoute>
           } />
           <Route path="profile/edit" element={

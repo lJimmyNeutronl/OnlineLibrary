@@ -51,3 +51,20 @@ export interface BookSearchParams {
   query?: string;
   includeSubcategories?: boolean;
 } 
+
+// Перечисление поддерживаемых форматов книг
+export enum BookFormat {
+  PDF = 'pdf',
+  EPUB = 'epub',
+  FB2 = 'fb2',
+  UNKNOWN = 'unknown'
+}
+
+// Интерфейс для прогресса чтения
+export interface ReadingProgress {
+  bookId: number;
+  currentPage: number;
+  totalPages: number;
+  lastReadDate: string;
+  format: BookFormat;
+} 

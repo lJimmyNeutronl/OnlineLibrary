@@ -12,8 +12,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Form from '../components/common/Form';
 import message from '../components/common/message';
-import Breadcrumb from '../components/common/Breadcrumb';
-import BreadcrumbItem from '../components/common/BreadcrumbItem';
+import Breadcrumb, { BreadcrumbItem } from '../components/common/Breadcrumb';
 
 // Стили
 import '../App.css';
@@ -259,20 +258,12 @@ const ChangePasswordPage = () => {
             </div>
             
             {/* Информационное сообщение о требованиях к паролю */}
-            <div className="password-requirements" style={{
-              marginBottom: '24px',
-              padding: '16px',
-              backgroundColor: 'rgba(55, 105, 245, 0.05)',
-              borderRadius: '8px',
-              borderLeft: '4px solid #3769f5',
-              fontSize: '14px',
-              color: '#666'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', color: '#3769f5' }}>
+            <div className="password-requirements requirements-block">
+              <div className="requirements-title">
                 <FaInfoCircle style={{ marginRight: '8px' }} /> 
                 <strong>Требования к паролю:</strong>
               </div>
-              <ul style={{ marginLeft: '24px', padding: 0 }}>
+              <ul className="requirements-list">
                 <li>Минимум 6 символов</li>
                 <li>Использование только латинских букв (a-z, A-Z)</li>
                 <li>Допускаются цифры и специальные символы</li>

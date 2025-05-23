@@ -12,15 +12,18 @@ import ru.arseniy.library.model.Book;
 import ru.arseniy.library.model.Category;
 import ru.arseniy.library.repository.BookRepository;
 import ru.arseniy.library.repository.CategoryRepository;
+import ru.arseniy.library.repository.RatingRepository;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class BookService {
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
     private final BookFileService bookFileService;
+    private final RatingRepository ratingRepository;
     
     public Page<Book> getAllBooks(Pageable pageable) {
         return bookRepository.findAll(pageable);
@@ -41,6 +45,44 @@ public class BookService {
     
     public Page<Book> searchBooks(String query, Pageable pageable) {
         return bookRepository.searchBooks(query, pageable);
+    }
+    
+    /**
+     * Получает популярные книги, отсортированные по рейтингу
+     *
+     * @param limit максимальное количество книг для возврата
+     * @return список популярных книг
+     */
+    public List<Book> getPopularBooks(int limit) {
+        // Получаем все книги
+        List<Book> allBooks = bookRepository.findAll();
+        
+        // Обогащаем книги информацией о рейтинге
+        for (Book book : allBooks) {
+            Double averageRating = ratingRepository.getAverageRatingByBookId(book.getId());
+            Long ratingCount = ratingRepository.countRatingsByBookId(book.getId());
+            
+            if (averageRating != null) {
+                book.setRating(averageRating);
+            } else {
+                book.setRating(0.0);
+            }
+            
+            if (ratingCount != null) {
+                book.setRatingsCount(ratingCount.intValue());
+            } else {
+                book.setRatingsCount(0);
+            }
+        }
+        
+        // Сортируем книги по рейтингу (от высокого к низкому)
+        List<Book> sortedBooks = allBooks.stream()
+                .sorted(Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                        .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder()))
+                .limit(limit)
+                .collect(Collectors.toList());
+        
+        return sortedBooks;
     }
     
     /**
