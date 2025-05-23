@@ -41,4 +41,4 @@ build/
 .env
 
 ### Cursor ###
-.cursor/
+.cursor/upload_test.html
