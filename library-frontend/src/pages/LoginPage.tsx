@@ -5,7 +5,7 @@ import { login } from '../store/slices/authSlice';
 import { AppDispatch, RootState } from '../store';
 import { motion } from 'framer-motion';
 import Button from '../components/common/Button';
-import { AiOutlineUser, AiOutlineLock, AiOutlineMail } from 'react-icons/ai';
+import {AiOutlineLock, AiOutlineMail } from 'react-icons/ai';
 import AnimatedBackground from '../components/common/AnimatedBackground';
 
 // Импортируем стили из нашего модуля стилей
@@ -16,7 +16,6 @@ import {
   inputStyle,
   errorMessageStyle,
   labelStyle,
-  primaryButtonStyle,
   fadeIn,
   slideUp
 } from '../styles';
@@ -80,56 +79,23 @@ const LoginPage = () => {
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
-    let isValid = true;
     
-    // Валидация email
     if (!formValues.email) {
       newErrors.email = 'Email обязателен';
-      isValid = false;
     } else if (!/\S+@\S+\.\S+/.test(formValues.email)) {
       newErrors.email = 'Некорректный email';
-      isValid = false;
     }
     
-    // Валидация пароля
     if (!formValues.password) {
       newErrors.password = 'Пароль обязателен';
-      isValid = false;
     }
     
     setErrors(newErrors);
-    return isValid;
+    return Object.keys(newErrors).length === 0;
   };
 
-  // Функция для перехода на главную страницу
-  const navigateToHome = () => {
-    console.log('Выполняем переход на главную страницу');
-    
-    // Сначала пробуем через React Router
-    try {
-      navigate('/', { replace: true });
-      console.log('Переход через React Router успешен');
-    } catch (error) {
-      console.error('Ошибка при переходе через React Router:', error);
-      
-      // Если не получилось, пробуем напрямую через window.location
-      try {
-        window.location.href = '/';
-        console.log('Переход через window.location успешен');
-      } catch (redirectError) {
-        console.error('Ошибка при переходе через window.location:', redirectError);
-      }
-    }
-  };
-
-  // Обновляем обработчик логина
   const handleSubmit = async (e: React.FormEvent) => {
-    // Предотвращаем стандартное поведение формы
-    if (e && e.preventDefault) {
-      e.preventDefault();
-    }
-    
-    console.log('Форма отправлена, предотвращаем стандартное поведение');
+    e.preventDefault();
     
     // Очищаем предыдущие ошибки
     setFormError('');
@@ -137,33 +103,24 @@ const LoginPage = () => {
     
     // Проверяем правильность заполнения формы
     if (!validateForm()) {
-      console.log('Валидация формы не пройдена');
       return;
     }
     
     try {
-      console.log('Попытка входа для пользователя:', formValues.email);
-      
       // Отправляем запрос на авторизацию через Redux
       const result = await dispatch(login({ 
         email: formValues.email, 
         password: formValues.password 
       })).unwrap();
       
-      console.log('Успешный вход, переход на главную страницу');
-      
       // Проверяем наличие пользователя и токена
       if (result.user && result.token) {
         // Переходим на главную страницу
-        navigateToHome();
+        navigate('/');
       } else {
-        // Если по какой-то причине не получили данные пользователя
-        console.error('Нет данных пользователя в ответе после входа');
         setFormError('Ошибка входа: не получены данные пользователя');
       }
     } catch (error: any) {
-      console.error('Ошибка при входе:', error);
-      
       // Устанавливаем сообщение об ошибке
       if (typeof error === 'string') {
         setFormError(error);
@@ -171,39 +128,6 @@ const LoginPage = () => {
         setFormError(error.message);
       } else {
         setFormError('Произошла ошибка при входе. Пожалуйста, попробуйте еще раз.');
-      }
-    }
-  };
-
-  // Обработчик кнопки входа
-  const handleLoginClick = (e: React.MouseEvent) => {
-    console.log('1. Кнопка входа нажата');
-    
-    try {
-      // Пробуем вызвать handleSubmit напрямую
-      handleSubmit(e as unknown as React.FormEvent);
-    } catch (error) {
-      console.error('Ошибка при вызове handleSubmit из кнопки:', error);
-      
-      // Пробуем отправить форму другим способом
-      try {
-        const form = document.querySelector('form');
-        if (form) {
-          console.log('Попытка вызвать form.submit()');
-          // @ts-ignore
-          form.submit();
-        } else {
-          console.error('Форма не найдена для отправки');
-          
-          // Если все способы не работают, пробуем выполнить вход напрямую
-          console.log('Прямой вызов login через Redux');
-          dispatch(login({
-            email: formValues.email,
-            password: formValues.password
-          }));
-        }
-      } catch (submitError) {
-        console.error('Ошибка при попытке отправить форму:', submitError);
       }
     }
   };
@@ -227,7 +151,6 @@ const LoginPage = () => {
           <div style={formContainerStyle}>
             <h2 style={formTitleStyle}>Вход</h2>
 
-            {/* Форма входа */}
             <form id="loginForm" onSubmit={handleSubmit}>
               {formError && (
                 <div style={{ 
@@ -295,11 +218,9 @@ const LoginPage = () => {
                   )}
                 </div>
 
-                {/* Стандартная кнопка HTML вместо компонента */}
                 <button 
                   type="submit"
                   disabled={isLoading}
-                  onClick={handleLoginClick}
                   style={{
                     width: '100%',
                     backgroundColor: '#3769f5',
