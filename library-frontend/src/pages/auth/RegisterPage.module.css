@@ -1,0 +1,77 @@
+.registerContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+}
+
+.registerFormWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  z-index: 1;
+}
+
+.errorMessage {
+  margin-bottom: 16px;
+  padding: 10px;
+  color: #f5222d;
+  background-color: #fff1f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+}
+
+.successMessage {
+  text-align: center;
+  padding: 20px;
+}
+
+.successTitle {
+  color: #52c41a;
+  margin-bottom: 16px;
+}
+
+.successText {
+  margin-bottom: 24px;
+}
+
+.passwordRequirements {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: rgba(55, 105, 245, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #3769f5;
+  font-size: 14px;
+  color: #666;
+}
+
+.passwordRequirementsHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #3769f5;
+}
+
+.passwordRequirementsList {
+  margin-left: 24px;
+  padding: 0;
+}
+
+.backButtonContainer {
+  margin-top: 16px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nameFieldsContainer {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.nameField {
+  flex: 1;
+} 
