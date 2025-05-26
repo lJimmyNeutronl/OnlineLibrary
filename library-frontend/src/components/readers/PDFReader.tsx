@@ -8,26 +8,10 @@ import Button from '../common/Button';
 import { AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineFullscreen } from 'react-icons/ai';
 import './Reader.css';
 
-// Проверка инициализации воркера
+// Проверка инициализации воркера (для диагностики)
 console.log('PDF.js используется версия:', pdfjs.version);
-console.log('PDF.js worker path:', pdfjs.GlobalWorkerOptions.workerSrc);
-
-// Проверяем доступность worker по указанному пути 
-try {
-  fetch(pdfjs.GlobalWorkerOptions.workerSrc)
-    .then(response => {
-      if (response.ok) {
-        console.log('PDF.js worker успешно загружен');
-      } else {
-        console.error('PDF.js worker не найден по пути:', pdfjs.GlobalWorkerOptions.workerSrc);
-      }
-    })
-    .catch(err => {
-      console.error('Ошибка при проверке доступности worker:', err);
-    });
-} catch (e) {
-  console.warn('Не удалось проверить доступность PDF.js worker:', e);
-}
+console.log('PDF.js GlobalWorkerOptions доступен:', Boolean(pdfjs.GlobalWorkerOptions));
+console.log('PDF.js worker path:', pdfjs.GlobalWorkerOptions?.workerSrc || 'не установлен');
 
 interface PDFReaderProps {
   fileUrl: string;

@@ -6,17 +6,30 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     include: ['react-pdf'],
-    exclude: ['pdfjs-dist']
+    exclude: []
   },
   build: {
     commonjsOptions: {
       include: [/node_modules/],
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pdfjs: ['pdfjs-dist'],
+        },
+      },
     },
   },
   server: {
     fs: {
       // Разрешить доступ к файлам вне корневой директории проекта
       allow: ['..']
+    }
+  },
+  resolve: {
+    alias: {
+      // Убедитесь, что 'web-worker:' импорты работают правильно
+      'worker-loader!pdfjs-dist/build/pdf.worker': 'pdfjs-dist/build/pdf.worker'
     }
   }
 })
