@@ -95,7 +95,7 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+      e.preventDefault();
     
     // Очищаем предыдущие ошибки
     setFormError('');
