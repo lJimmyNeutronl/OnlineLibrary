@@ -1,0 +1,121 @@
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.sectionDividerLeft {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3));
+}
+
+.sectionDividerRight {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3));
+}
+
+.sectionTitle {
+  margin: 0 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  font-family: inherit;
+}
+
+.userAvatar {
+  background: linear-gradient(135deg, #6c5ce7 0%, #8e54e9 100%);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(108, 92, 231, 0.25);
+}
+
+.actionIconWarning {
+  background-color: rgba(255, 118, 117, 0.15);
+  color: #ff7675;
+}
+
+.actionIconNeutral {
+  background-color: rgba(99, 110, 114, 0.1);
+  color: #636e72;
+}
+
+.statsCard {
+  background-color: #f8f9fa;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(55, 105, 245, 0.1);
+}
+
+.statsIcon {
+  background: #3769f5;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.statsIconWarning {
+  background: #ff7675;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.statsIconPurple {
+  background: #8e54e9;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.statsNumber {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 5px 0;
+  color: #3769f5;
+}
+
+.statsLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #636e72;
+}
+
+.favoritesEmptyContainer {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.viewAllButton {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+} 

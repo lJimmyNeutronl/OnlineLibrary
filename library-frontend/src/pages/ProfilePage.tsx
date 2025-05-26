@@ -24,6 +24,7 @@ import {
 } from '@components/common';
 import AnimatedBackground from '@components/common/AnimatedBackground';
 import { fadeIn } from '@styles/animations';
+import styles from './ProfilePage.module.css';
 
 const { Title, Text } = Typography;
 
@@ -42,7 +43,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="loading-container">
+      <div className={styles.loadingContainer}>
         <Spin size="large" />
       </div>
     );
@@ -50,29 +51,12 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
 
   return (
     <div className="profile-section">
-      <div style={{ 
-        display: 'flex',
-        alignItems: 'center',
-        margin: '20px 0',
-        textAlign: 'center'
-      }}>
-        <div style={{ 
-          flex: 1, 
-          height: '1px',
-          background: 'linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
-        }}></div>
-        <Title level={3} className="gradient-text-purple" style={{ 
-          margin: '0 20px',
-          fontWeight: 'bold',
-          letterSpacing: '0.5px'
-        }}>
+      <div className={styles.sectionHeader}>
+        <div className={styles.sectionDividerLeft}></div>
+        <Title level={3} className={styles.sectionTitle}>
           {title}
         </Title>
-        <div style={{ 
-          flex: 1, 
-          height: '1px',
-          background: 'linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3))'
-        }}></div>
+        <div className={styles.sectionDividerRight}></div>
       </div>
       
       {children}
@@ -165,7 +149,7 @@ const ProfilePage = () => {
           {/* Левая колонка - профиль пользователя */}
           <Col xs={24} md={8}>
             <div className="profile-user-section">
-              <Avatar size={150} icon={<FiUser />} style={{ backgroundColor: '#6c5ce7', color: '#fff' }} />
+              <Avatar size={150} icon={<FiUser />} className={styles.userAvatar} />
               <Title level={2} className="profile-username">
                 {user.firstName} {user.lastName}
               </Title>
@@ -190,7 +174,7 @@ const ProfilePage = () => {
                   transition={{ duration: 0.3 }}
                   onClick={() => navigate('/profile/change-password')}
                 >
-                  <div className="profile-action-icon" style={{ backgroundColor: 'rgba(255, 118, 117, 0.15)', color: '#ff7675' }}>
+                  <div className={`profile-action-icon ${styles.actionIconWarning}`}>
                     <FaKey size={22} />
                   </div>
                   <div className="profile-action-text">Сменить пароль</div>
@@ -202,7 +186,7 @@ const ProfilePage = () => {
                   transition={{ duration: 0.3 }}
                   onClick={handleLogout}
                 >
-                  <div className="profile-action-icon" style={{ backgroundColor: 'rgba(99, 110, 114, 0.1)', color: '#636e72' }}>
+                  <div className={`profile-action-icon ${styles.actionIconNeutral}`}>
                     <FaSignOutAlt size={22} />
                   </div>
                   <div className="profile-action-text">Выйти</div>
@@ -214,17 +198,17 @@ const ProfilePage = () => {
           {/* Правая колонка - статистика и избранные книги */}
           <Col xs={24} md={16}>
             {/* Статистика */}
-            <Row className="stats-card">
+            <Row className={styles.statsCard}>
               <Col span={8} className="stats-item">
                 <motion.div 
                   whileHover={{ translateY: -5 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="stats-icon">
+                  <div className={styles.statsIcon}>
                     <FaBookReader size={24} />
                   </div>
-                  <h2 className="stats-number">{stats.readBooksCount}</h2>
-                  <div className="stats-label">ПРОЧИТАНО</div>
+                  <h2 className={styles.statsNumber}>{stats.readBooksCount}</h2>
+                  <div className={styles.statsLabel}>ПРОЧИТАНО</div>
                 </motion.div>
               </Col>
               <Col span={8} className="stats-item">
@@ -232,11 +216,11 @@ const ProfilePage = () => {
                   whileHover={{ translateY: -5 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="stats-icon" style={{ backgroundColor: 'rgba(255, 118, 117, 0.12)', color: '#ff7675' }}>
+                  <div className={styles.statsIconWarning}>
                     <FaBookOpen size={24} />
                   </div>
-                  <h2 className="stats-number">{stats.inProgressCount}</h2>
-                  <div className="stats-label">В ПРОЦЕССЕ</div>
+                  <h2 className={styles.statsNumber}>{stats.inProgressCount}</h2>
+                  <div className={styles.statsLabel}>В ПРОЦЕССЕ</div>
                 </motion.div>
               </Col>
               <Col span={8} className="stats-item">
@@ -244,11 +228,11 @@ const ProfilePage = () => {
                   whileHover={{ translateY: -5 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="stats-icon" style={{ backgroundColor: 'rgba(142, 84, 233, 0.12)', color: '#8e54e9' }}>
+                  <div className={styles.statsIconPurple}>
                     <FiHeart size={24} />
                   </div>
-                  <h2 className="stats-number">{stats.favoritesCount}</h2>
-                  <div className="stats-label">ИЗБРАННОЕ</div>
+                  <h2 className={styles.statsNumber}>{stats.favoritesCount}</h2>
+                  <div className={styles.statsLabel}>ИЗБРАННОЕ</div>
                 </motion.div>
               </Col>
             </Row>
@@ -260,7 +244,7 @@ const ProfilePage = () => {
               emptyText="У вас пока нет избранных книг"
             >
               {profileData.favorites.length === 0 ? (
-                <div className="favorites-empty-container">
+                <div className={styles.favoritesEmptyContainer}>
                   <Empty 
                     description="У вас пока нет избранных книг" 
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -280,7 +264,7 @@ const ProfilePage = () => {
                     books={profileData.favorites}
                     className="profile-favorites-carousel"
                   />
-                  <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                  <div className={styles.viewAllButton}>
                     <Button 
                       type="primary" 
                       onClick={() => navigate('/favorites')}
