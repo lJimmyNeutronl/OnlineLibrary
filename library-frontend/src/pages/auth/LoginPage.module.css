@@ -1,0 +1,36 @@
+.loginContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+}
+
+.loginFormWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  z-index: 1;
+}
+
+.errorMessage {
+  margin-bottom: 16px;
+  padding: 10px;
+  color: #f5222d;
+  background-color: #fff1f0;
+  border: 1px solid #ffccc7;
+  border-radius: 8px;
+}
+
+.inputWrapper {
+  margin-bottom: 16px;
+}
+
+.passwordWrapper {
+  margin-bottom: 24px;
+}
+
+.registerLink {
+  margin-top: 16px;
+  text-align: center;
+} 

@@ -54,4 +54,18 @@ export const linkButtonStyle: CSSProperties = {
   color: '#3769f5',
   padding: 0,
   height: 'auto',
-}; 
+};
+
+export const loginButtonStyle = {
+  width: '100%',
+  backgroundColor: '#3769f5',
+  color: 'white',
+  padding: '12px 20px',
+  borderRadius: '6px',
+  border: 'none',
+  fontSize: '16px',
+  fontWeight: 600,
+  cursor: 'pointer',
+  boxShadow: '0 2px 10px rgba(55, 105, 245, 0.2)',
+  transition: 'all 0.2s ease'
+} as const; 
