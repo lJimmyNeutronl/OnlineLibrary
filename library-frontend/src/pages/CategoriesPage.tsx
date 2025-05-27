@@ -1,78 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { motion } from 'framer-motion';
 import Typography from '../components/common/Typography';
 import Button from '../components/common/Button';
 import { AiOutlineBook, AiOutlineFolder, AiOutlineFolderOpen } from 'react-icons/ai';
 import { MdExpandMore, MdChevronRight } from 'react-icons/md';
-import { FaBook, FaBookOpen, FaBookReader, FaPencilAlt, FaGraduationCap, FaFeatherAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import categoryService, { Category, CategoryWithSubcategories, CategoryWithCount } from '../services/categoryService';
-import Divider from '../components/common/Divider';
+import categoryService, { Category } from '../services/categoryService';
 import Spin from '../components/common/Spin';
 import Empty from '../components/common/Empty';
+import AnimatedBackground from '../components/common/AnimatedBackground';
 
 const { Title, Paragraph, Text } = Typography;
-
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.8 } }
-};
-
-const slideUp = {
-  hidden: { y: 50, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { duration: 0.6 } }
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-// Стили для анимаций фоновых элементов
-const floatAnimation = {
-  initial: { y: 0, rotate: 0 },
-  animate: {
-    y: [0, -15, 0],
-    rotate: [0, 5, 0],
-    transition: {
-      duration: 6,
-      repeat: Infinity,
-      repeatType: "reverse" as const,
-      ease: "easeInOut"
-    }
-  }
-};
-
-const rotateAnimation = {
-  initial: { rotate: 0 },
-  animate: {
-    rotate: 360,
-    transition: {
-      duration: 60,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  }
-};
-
-const pulseAnimation = {
-  initial: { scale: 1, opacity: 0.05 },
-  animate: {
-    scale: [1, 1.05, 1],
-    opacity: [0.05, 0.08, 0.05],
-    transition: {
-      duration: 4,
-      repeat: Infinity,
-      repeatType: "reverse" as const,
-      ease: "easeInOut"
-    }
-  }
-};
 
 interface CategoryWithBookCount extends Category {
   bookCount: number;
@@ -83,11 +20,7 @@ interface CategoryWithBookCount extends Category {
 // Создаем мемоизированный компонент для отображения подкатегории
 const SubcategoryItem = memo(({ subcategory, onNavigate }: { subcategory: CategoryWithBookCount, onNavigate: (id: number) => void }) => {
   return (
-    <motion.div
-      key={subcategory.id}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+    <div
       style={{ 
         background: 'rgba(142, 84, 233, 0.05)',
         borderRadius: '8px',
@@ -98,8 +31,6 @@ const SubcategoryItem = memo(({ subcategory, onNavigate }: { subcategory: Catego
         transition: 'all 0.2s ease'
       }}
       onClick={() => onNavigate(subcategory.id)}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -147,7 +78,7 @@ const SubcategoryItem = memo(({ subcategory, onNavigate }: { subcategory: Catego
           Перейти
         </Button>
       </div>
-    </motion.div>
+    </div>
   );
 });
 
@@ -158,10 +89,7 @@ const CategoryItem = memo(({ category, onToggle, onNavigate }: {
   onNavigate: (id: number) => void 
 }) => {
   return (
-    <motion.div 
-      key={category.id}
-      variants={slideUp}
-    >
+    <div>
       {/* Корневая категория */}
       <div 
         style={{ 
@@ -272,7 +200,7 @@ const CategoryItem = memo(({ category, onToggle, onNavigate }: {
           ))}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 });
 
@@ -386,8 +314,7 @@ const CategoriesPage = () => {
     }
     
     return (
-      <motion.div
-        variants={staggerContainer}
+      <div
         style={{ 
           display: 'flex',
           flexDirection: 'column',
@@ -402,123 +329,23 @@ const CategoriesPage = () => {
             onNavigate={navigateToCategory} 
           />
         ))}
-      </motion.div>
+      </div>
     );
   }, [categories, hasCategories, loading, error, toggleCategory, navigateToCategory]);
 
   return (
-    <div style={{ 
-      backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      minHeight: 'calc(100vh - 64px)',
-      width: '100%',
-      padding: '40px 0',
-      overflow: 'hidden',
-      position: 'relative'
-    }}>
-      {/* Декоративные элементы, связанные с книгами */}
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={floatAnimation}
-        style={{
-          position: 'absolute',
-          width: '400px',
-          height: '400px',
-          top: '-150px',
-          right: '-100px',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.08,
-          transform: 'rotate(15deg)',
-        }}
-      >
-        <FaBookOpen size={300} color="#3769f5" />
-      </motion.div>
-      
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={rotateAnimation}
-        style={{
-          position: 'absolute',
-          width: '300px',
-          height: '300px',
-          bottom: '-100px',
-          left: '-100px',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.06,
-        }}
-      >
-        <FaGraduationCap size={250} color="#3769f5" />
-      </motion.div>
-      
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={pulseAnimation}
-        style={{
-          position: 'absolute',
-          width: '200px',
-          height: '200px',
-          top: '30%',
-          right: '10%',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <FaPencilAlt size={150} color="#3769f5" />
-      </motion.div>
-
-      {/* Новый элемент в левом верхнем углу */}
-      <motion.div 
-        initial={{ rotate: -15, x: 0 }}
-        animate={{
-          rotate: [-15, -10, -15],
-          x: [0, 10, 0],
-          transition: {
-            duration: 5,
-            repeat: Infinity,
-            repeatType: "reverse" as const,
-            ease: "easeInOut"
-          }
-        }}
-        style={{
-          position: 'absolute',
-          width: '250px',
-          height: '250px',
-          top: '10%',
-          left: '5%',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.07,
-        }}
-      >
-        <FaFeatherAlt size={200} color="#3769f5" />
-      </motion.div>
-      
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeIn}
+    <AnimatedBackground>
+      <div
         style={{ 
           width: '100%', 
           maxWidth: '1200px', 
           margin: '0 auto', 
-          padding: '0 16px',
+          padding: '40px 16px',
           position: 'relative',
           zIndex: 2 
         }}
       >
-        <motion.div variants={slideUp}>
+        <div>
           <Title style={{ 
             textAlign: 'center', 
             marginBottom: '40px',
@@ -543,9 +370,9 @@ const CategoriesPage = () => {
             
             {categoriesContent}
           </div>
-        </motion.div>
-      </motion.div>
-    </div>
+        </div>
+      </div>
+    </AnimatedBackground>
   );
 };
 

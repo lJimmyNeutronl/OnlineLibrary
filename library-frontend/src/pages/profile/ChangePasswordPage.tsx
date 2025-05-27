@@ -1,21 +1,20 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaKey, FaArrowLeft, FaSave, FaLock, FaEye, FaEyeSlash, FaInfoCircle } from 'react-icons/fa';
-import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
-import userService, { PasswordChangeData } from '../services/userService';
-import { logout } from '../store/slices/authSlice';
+import { useAppSelector, useAppDispatch } from '@hooks/reduxHooks';
+import userService, { PasswordChangeData } from '@services/userService';
+import { logout } from '@store/slices/authSlice';
+import { validatePasswordChange } from '@utils/validation';
 
-// Импортируем наши пользовательские компоненты
-import Typography from '../components/common/Typography';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
-import Form from '../components/common/Form';
-import message from '../components/common/message';
-import Breadcrumb, { BreadcrumbItem } from '../components/common/Breadcrumb';
+// Импортируем наши пользовательские компоненты и утилиты
+import { Typography, Button, Input, message } from '@components/common';
+import Breadcrumb, { BreadcrumbItem } from '@components/common/Breadcrumb';
+import Form from '@components/common/Form';
+import AnimatedBackground from '@components/common/AnimatedBackground';
 
-// Стили
-import '../App.css';
+// Импортируем CSS-модуль
+import styles from './ChangePasswordPage.module.css';
 
 const { Title, Paragraph } = Typography;
 
@@ -36,54 +35,32 @@ const ChangePasswordPage = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
   // Состояния для показа/скрытия паролей
-  const [showCurrentPassword, setShowCurrentPassword] = useState<boolean>(false);
-  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
   
   // Состояния для валидации
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  // Функция для проверки на наличие кириллических символов
-  const containsCyrillic = (text: string): boolean => {
-    return /[а-яА-ЯёЁ]/.test(text);
-  };
-  
-  // Функция для проверки на допустимые символы (буквы латинского алфавита, цифры и спецсимволы)
-  const hasValidChars = (text: string): boolean => {
-    // Разрешены латинские буквы, цифры и специальные символы
-    return /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(text);
-  };
+  // Проверка, был ли изменен хотя бы один пароль
+  const isFormTouched = currentPassword || newPassword || confirmPassword;
   
   // Проверка введенных данных перед отправкой
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const validationErrors = validatePasswordChange({
+      currentPassword,
+      newPassword,
+      confirmPassword
+    });
     
-    if (!currentPassword) {
-      newErrors.currentPassword = 'Введите текущий пароль';
-    }
-    
-    if (!newPassword) {
-      newErrors.newPassword = 'Введите новый пароль';
-    } else if (newPassword.length < 6) {
-      newErrors.newPassword = 'Пароль должен содержать не менее 6 символов';
-    } else if (containsCyrillic(newPassword)) {
-      newErrors.newPassword = 'Пароль не должен содержать кириллические символы';
-    } else if (!hasValidChars(newPassword)) {
-      newErrors.newPassword = 'Пароль должен содержать только латинские буквы, цифры и специальные символы';
-    }
-    
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Подтвердите новый пароль';
-    } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Пароли не совпадают';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
   };
   
   // Обработчик отправки формы
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -150,7 +127,7 @@ const ChangePasswordPage = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [currentPassword, newPassword, confirmPassword, dispatch, navigate, errors]);
   
   // Если пользователь не авторизован, то перенаправляем его
   if (!user) {
@@ -158,51 +135,12 @@ const ChangePasswordPage = () => {
   }
   
   return (
-    <div className="profile-page-wrapper" style={{ 
-      backgroundImage: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      minHeight: 'calc(100vh - 64px)',
-      width: '100%',
-      overflow: 'hidden',
-      position: 'relative'
-    }}>
-      {/* Декоративные элементы, как на странице профиля */}
-      <motion.div 
-        initial="initial"
-        animate="animate"
-        variants={{
-          initial: { y: 0, rotate: 0 },
-          animate: {
-            y: [0, -15, 0],
-            rotate: [0, 5, 0],
-            transition: {
-              duration: 6,
-              repeat: Infinity,
-              repeatType: "reverse" as const,
-              ease: "easeInOut"
-            }
-          }
-        }}
-        style={{
-          position: 'absolute',
-          width: '300px',
-          height: '300px',
-          top: '10%',
-          right: '-50px',
-          zIndex: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: 0.07,
-        }}
-      >
-        <FaKey size={250} color="#ff7675" />
-      </motion.div>
-      
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={fadeIn}
-        className="profile-container"
+    <AnimatedBackground>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className={styles.container}
       >
         {/* Хлебные крошки */}
         <Breadcrumb style={{ margin: '16px 0' }}>
@@ -213,57 +151,28 @@ const ChangePasswordPage = () => {
             Профиль
           </BreadcrumbItem>
           <BreadcrumbItem>Смена пароля</BreadcrumbItem>
-      </Breadcrumb>
+        </Breadcrumb>
       
         {/* Основной контент */}
-        <div className="change-password-section">
-          <Title level={2} style={{ 
-            background: 'linear-gradient(135deg, #ff7675 0%, #d63031 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 'bold',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
+        <div className={styles.changePasswordSection}>
+          <Title level={2} className={styles.title}>
             <FaKey /> Смена пароля
-              </Title>
+          </Title>
           
-          <div className="password-form-container" style={{
-            background: 'white',
-            padding: '32px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            maxWidth: '600px',
-            margin: '0 auto'
-          }}>
-            <div className="key-icon-container" style={{
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: '24px'
-            }}>
-              <div className="key-icon-circle" style={{
-                width: '120px',
-                height: '120px',
-                borderRadius: '50%',
-                backgroundColor: '#ff7675',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                color: 'white'
-              }}>
+          <div className={styles.formContainer}>
+            <div className={styles.keyIconContainer}>
+              <div className={styles.keyIconCircle}>
                 <FaLock size={48} />
               </div>
             </div>
             
             {/* Информационное сообщение о требованиях к паролю */}
-            <div className="password-requirements requirements-block">
-              <div className="requirements-title">
+            <div className={styles.requirementsBlock}>
+              <div className={styles.requirementsTitle}>
                 <FaInfoCircle style={{ marginRight: '8px' }} /> 
                 <strong>Требования к паролю:</strong>
               </div>
-              <ul className="requirements-list">
+              <ul className={styles.requirementsList}>
                 <li>Минимум 6 символов</li>
                 <li>Использование только латинских букв (a-z, A-Z)</li>
                 <li>Допускаются цифры и специальные символы</li>
@@ -279,19 +188,19 @@ const ChangePasswordPage = () => {
                 help={errors.currentPassword}
               >
                 <Input
-                  type={showCurrentPassword ? 'text' : 'password'}
+                  type={showPassword.current ? 'text' : 'password'}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Введите текущий пароль"
                   suffix={
-                    showCurrentPassword ? (
+                    showPassword.current ? (
                       <FaEyeSlash 
-                        onClick={() => setShowCurrentPassword(false)} 
+                        onClick={() => setShowPassword(prev => ({ ...prev, current: false }))} 
                         style={{ cursor: 'pointer' }}
                       />
                     ) : (
                       <FaEye 
-                        onClick={() => setShowCurrentPassword(true)} 
+                        onClick={() => setShowPassword(prev => ({ ...prev, current: true }))} 
                         style={{ cursor: 'pointer' }}
                       />
                     )
@@ -306,7 +215,7 @@ const ChangePasswordPage = () => {
                 help={errors.newPassword}
               >
                 <Input
-                  type={showNewPassword ? 'text' : 'password'}
+                  type={showPassword.new ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => {
                     setNewPassword(e.target.value);
@@ -317,14 +226,14 @@ const ChangePasswordPage = () => {
                   }}
                   placeholder="Введите новый пароль"
                   suffix={
-                    showNewPassword ? (
+                    showPassword.new ? (
                       <FaEyeSlash 
-                        onClick={() => setShowNewPassword(false)} 
+                        onClick={() => setShowPassword(prev => ({ ...prev, new: false }))} 
                         style={{ cursor: 'pointer' }}
                       />
                     ) : (
                       <FaEye 
-                        onClick={() => setShowNewPassword(true)} 
+                        onClick={() => setShowPassword(prev => ({ ...prev, new: true }))} 
                         style={{ cursor: 'pointer' }}
                       />
                     )
@@ -339,7 +248,7 @@ const ChangePasswordPage = () => {
                 help={errors.confirmPassword}
               >
                 <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showPassword.confirm ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
@@ -350,14 +259,14 @@ const ChangePasswordPage = () => {
                   }}
                   placeholder="Подтвердите новый пароль"
                   suffix={
-                    showConfirmPassword ? (
+                    showPassword.confirm ? (
                       <FaEyeSlash 
-                        onClick={() => setShowConfirmPassword(false)} 
+                        onClick={() => setShowPassword(prev => ({ ...prev, confirm: false }))} 
                         style={{ cursor: 'pointer' }}
-                />
+                      />
                     ) : (
                       <FaEye 
-                        onClick={() => setShowConfirmPassword(true)} 
+                        onClick={() => setShowPassword(prev => ({ ...prev, confirm: true }))} 
                         style={{ cursor: 'pointer' }}
                       />
                     )
@@ -365,11 +274,7 @@ const ChangePasswordPage = () => {
                 />
               </Form.Item>
               
-              <div className="form-actions" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: '32px'
-              }}>
+              <div className={styles.formActions}>
                 <Button
                   type="default"
                   onClick={() => navigate('/profile')}
@@ -381,7 +286,7 @@ const ChangePasswordPage = () => {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isFormTouched}
                   icon={<FaSave />}
                   style={{
                     backgroundColor: '#ff7675',
@@ -394,8 +299,8 @@ const ChangePasswordPage = () => {
             </Form>
           </div>
         </div>
-    </motion.div>
-    </div>
+      </motion.div>
+    </AnimatedBackground>
   );
 };
 

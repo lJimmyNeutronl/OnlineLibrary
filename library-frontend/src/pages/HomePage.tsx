@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../components/common/Button';
-import Card from '../components/common/Card';
 import Typography from '../components/common/Typography';
-import Divider from '../components/common/Divider';
-import { Row, Col } from '../components/common/Grid';
-import Icon from '../components/common/Icon';
 import { Spin } from '../components/common';
 import { AiOutlineSearch } from 'react-icons/ai';
 import { BsArrowRight } from 'react-icons/bs';
