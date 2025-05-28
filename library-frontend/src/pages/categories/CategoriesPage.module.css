@@ -1,0 +1,85 @@
+/* Основной контейнер страницы */
+.pageContainer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 16px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Контейнер заголовка */
+.titleContainer {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+/* Основной контент */
+.contentContainer {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+}
+
+/* Контейнер для состояния загрузки */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 0;
+}
+
+/* Контейнер для ошибки */
+.errorContainer {
+  text-align: center;
+  padding: 30px;
+  color: #ff4d4f;
+}
+
+/* Контейнер для списка категорий */
+.categoriesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Контейнер для элементов категории и подкатегории */
+.categoryItemsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Контейнер для иконки и описания категории */
+.categoryContentContainer {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+}
+
+/* Контейнер для кнопок управления категорией */
+.categoryActionsContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Стили для кнопки "Перейти" в подкатегории */
+.subcategoryButton {
+  background: rgba(142, 84, 233, 0.15);
+  border-color: rgba(142, 84, 233, 0.3);
+  color: #8e54e9;
+}
+
+/* Отступ для кнопки "Просмотреть" */
+.viewButton {
+  margin-right: 8px;
+}
+
+/* Отступ сверху для кнопки "Попробовать снова" */
+.retryButton {
+  margin-top: 20px;
+} 

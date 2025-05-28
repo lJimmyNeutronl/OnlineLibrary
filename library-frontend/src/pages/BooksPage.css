@@ -16,16 +16,6 @@
   text-align: center;
 }
 
-.books-page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;
-}
-
 .books-page-description {
   max-width: 700px;
   margin: 0 auto 32px;
@@ -201,10 +191,6 @@
 }
 
 @media (max-width: 768px) {
-  .books-page-title {
-    font-size: 2rem;
-  }
-  
   .books-page-description {
     font-size: 1rem;
   }
@@ -213,10 +199,6 @@
 @media (max-width: 480px) {
   .books-page-content {
     padding: 20px 12px;
-  }
-  
-  .books-page-title {
-    font-size: 1.8rem;
   }
   
   .books-content-section {

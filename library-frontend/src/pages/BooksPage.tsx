@@ -5,6 +5,7 @@ import CatalogStats from '../components/catalog/CatalogStats';
 import BookList from '../components/book-card/BookList';
 import bookService from '../services/bookService';
 import './BooksPage.css';
+import '../styles/common.css';
 
 const BooksPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -194,7 +195,11 @@ const BooksPage: React.FC = () => {
     <div className="books-page-container">
       <div className="books-page-content">
         <div className="books-page-header">
-          <h1 className="books-page-title">Каталог книг</h1>
+          <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+            <h1 className="page-title">
+              Каталог книг
+            </h1>
+          </div>
           <p className="books-page-description">
             Исследуйте нашу обширную коллекцию книг. Используйте фильтры для поиска книг по жанрам, авторам и другим параметрам, чтобы найти именно то, что вы ищете.
           </p>

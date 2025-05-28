@@ -7,7 +7,7 @@ import userService, { PasswordChangeData } from '@services/userService';
 import { logout } from '@store/slices/authSlice';
 import { validatePasswordChange } from '@utils/validation';
 
-// Импортируем наши пользовательские компоненты и утилиты
+// Импортируем пользовательские компоненты и утилиты
 import { Typography, Button, Input, message } from '@components/common';
 import Breadcrumb, { BreadcrumbItem } from '@components/common/Breadcrumb';
 import Form from '@components/common/Form';

@@ -8,22 +8,29 @@ export interface User {
   roles: string[];
 }
 
+// Импортируем типы категорий из отдельного файла
+export type { Category, CategoryWithCount, CategoryWithSubcategories } from './category';
+import type { Category } from './category';
+
 export interface Book {
   id: number;
   title: string;
   author: string;
   description: string;
-  coverImageUrl: string;
-  fileUrl: string;
+  isbn?: string;
+  publicationYear?: number;
+  publisher?: string;
+  language?: string;
+  pageCount?: number;
+  fileUrl?: string;
+  coverImageUrl?: string;
+  uploadDate?: string;
   categories: Category[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Category {
-  id: number;
-  name: string;
-  description: string;
+  reviewsCount?: number;
+  rating?: number;
+  ratingsCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ReadingHistory {

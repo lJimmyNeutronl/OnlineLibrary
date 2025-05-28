@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Typography } from '../common';
 import BookCard from './BookCard';
-import { Book } from '../../services/bookService';
+import { Book } from '@/types';
 import './BookList.css';
 
 const { Text, Paragraph } = Typography;
@@ -29,13 +29,15 @@ interface BookListProps {
   viewMode: 'grid' | 'list';
   loading?: boolean;
   emptyText?: string;
+  onRemoveFromFavorites?: (bookId: number) => void;
 }
 
 const BookList: React.FC<BookListProps> = ({ 
   books, 
   viewMode, 
   loading = false,
-  emptyText = 'Книги не найдены'
+  emptyText = 'Книги не найдены',
+  onRemoveFromFavorites
 }) => {
   if (loading) {
     return null; // Загрузка обрабатывается на уровне родительского компонента

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Button from '../components/common/Button';
 import Typography from '../components/common/Typography';
@@ -11,12 +11,21 @@ import {
   FaBookReader, 
   FaPencilAlt, 
   FaGraduationCap, 
-  FaFeatherAlt
+  FaFeatherAlt,
+  FaSearch, 
+  FaUsers, 
+  FaArrowRight,
+  FaChevronRight,
+  FaChevronDown,
+  FaChevronUp,
+  FaHeart,
+  FaEye
 } from 'react-icons/fa';
 import { MdClear } from 'react-icons/md';
 import BookCard from '../components/book-card/BookCard';
 import bookService, { Book } from '../services/bookService';
-import categoryService, { CategoryWithCount } from '../services/categoryService';
+import categoryService from '../services/categoryService';
+import type { CategoryWithCount } from '../types/category';
 import { Link, useNavigate } from 'react-router-dom';
 import AnimatedBackground from '../components/common/AnimatedBackground';
 
@@ -49,7 +58,7 @@ const HomePage = () => {
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState<boolean>(false);
-  const suggestionsTimeoutRef = useRef<number | null>(null);
+  const suggestionsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const navigate = useNavigate();
   const [popularBooks, setPopularBooks] = useState<Book[]>([]);
