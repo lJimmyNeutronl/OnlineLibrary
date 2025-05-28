@@ -153,12 +153,11 @@ const Select: SelectComponent = ({
     justifyContent: 'space-between',
     minHeight: '32px',
     padding: '4px 11px',
-    border: `1px solid ${isOpen ? '#3769f5' : '#d9d9d9'}`,
+    border: '1px solid #d9d9d9',
     borderRadius: '4px',
     backgroundColor: disabled ? '#f5f5f5' : '#fff',
     cursor: disabled ? 'not-allowed' : 'pointer',
     transition: 'all 0.3s',
-    boxShadow: isOpen ? '0 0 0 2px rgba(55, 105, 245, 0.2)' : 'none',
   };
 
   // Стили для дропдауна

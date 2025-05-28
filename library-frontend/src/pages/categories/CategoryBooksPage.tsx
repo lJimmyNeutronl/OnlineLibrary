@@ -15,9 +15,10 @@ import { BookList } from '@/components/book-card';
 import bookService from '@/services/bookService';
 import { Book } from '@/types';
 import AnimatedBackground from '@/components/common/AnimatedBackground';
-import type { ViewMode, SortOption } from '@/components/common/SearchFilterPanel';
+import type { ViewMode, SortOption, SortDirection } from '@/components/common/SearchFilterPanel';
 import { useCategoryDetails } from '@/hooks/useCategoryDetails';
 import { fadeIn } from '@/styles/animations';
+import styles from '@/components/common/SearchFilterPanel/SearchFilterPanel.module.css';
 import '@/styles/common.css';
 
 
@@ -31,7 +32,8 @@ const CategoryBooksPage = () => {
   const [totalBooks, setTotalBooks] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortBy, setSortBy] = useState<SortOption>('relevance');
+  const [sortBy, setSortBy] = useState<SortOption>('rating');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const pageSize = 15;
@@ -43,11 +45,32 @@ const CategoryBooksPage = () => {
     
     setLoading(true);
     try {
+      // Определяем параметры сортировки
+      let sortByParam: string | undefined;
+      let directionParam: 'asc' | 'desc' = sortDirection;
+      
+      switch (sortBy) {
+        case 'year':
+          sortByParam = 'publicationYear';
+          break;
+        case 'rating':
+          sortByParam = 'rating';
+          break;
+        case 'uploadDate':
+          sortByParam = 'uploadDate';
+          break;
+        case 'relevance':
+        default:
+          // По умолчанию сортируем по рейтингу, если нет специальной сортировки
+          sortByParam = 'rating';
+          break;
+      }
+      
       const response = await bookService.getBooksByCategory(Number(categoryId), {
         page: currentPage - 1,
         size: pageSize,
-        sortBy: sortBy !== 'relevance' ? sortBy : undefined,
-        direction: sortBy === 'year' ? 'desc' : 'asc'
+        sortBy: sortByParam,
+        direction: directionParam
       });
       
       setBooks(response.content);
@@ -61,13 +84,13 @@ const CategoryBooksPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [categoryId, page, sortBy, pageSize]);
+  }, [categoryId, page, sortBy, sortDirection, pageSize]);
 
   useEffect(() => {
     fetchBooks();
   }, [fetchBooks]);
 
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
     window.scrollTo(0, 0);
     
@@ -75,16 +98,26 @@ const CategoryBooksPage = () => {
     if (filteredBooks.length === 0) {
       fetchBooks(newPage);
     }
-  };
+  }, [filteredBooks.length, fetchBooks]);
 
-  const handleSortChange = (value: SortOption) => {
+  const handleSortChange = useCallback((value: SortOption, direction: SortDirection) => {
     setSortBy(value);
+    setSortDirection(direction);
     setPage(1);
-  };
+  }, []);
 
-  const handleResetPage = () => {
+  const handleResetPage = useCallback(() => {
     setPage(1);
-  };
+  }, []);
+
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode);
+  }, []);
+
+  const handleFilteredDataChange = useCallback((filtered: Book[]) => {
+    setFilteredBooks(filtered);
+    setPage(1); // Сбрасываем страницу при фильтрации
+  }, []);
 
   // Определяем, активна ли фильтрация
   const isFilteringActive = filteredBooks.length > 0;
@@ -95,27 +128,14 @@ const CategoryBooksPage = () => {
     ? displayBooks.slice((page - 1) * pageSize, page * pageSize)
     : displayBooks;
 
-  // Конфигурация для SearchFilterPanel
-  const searchPanelProps = {
-    data: books,
-    onFilteredDataChange: setFilteredBooks,
-    onSortChange: handleSortChange,
-    onViewModeChange: setViewMode,
-    searchQuery,
-    sortBy,
-    viewMode,
-    totalItems: totalBooks,
-    onResetPage: handleResetPage
-  };
-
   return (
     <AnimatedBackground>
-      <div className="category-page-container">
+      <div className={styles.categoryPageContainer}>
         <motion.div 
           initial="hidden"
           animate="visible"
           variants={fadeIn}
-          className="category-page-content"
+          className={styles.categoryPageContent}
         >
           <Breadcrumb style={{ marginBottom: '16px' }}>
             <Breadcrumb.Item>
@@ -160,8 +180,20 @@ const CategoryBooksPage = () => {
             Выберите интересующую вас книгу для просмотра подробной информации.
           </Paragraph>
 
-          {/* Панель поиска и фильтров */}
-          <SearchFilterPanel {...searchPanelProps} />
+          {/* Панель поиска и фильтров в локальном режиме */}
+          <SearchFilterPanel
+            data={books}
+            onFilteredDataChange={handleFilteredDataChange}
+            onSortChange={handleSortChange}
+            onViewModeChange={handleViewModeChange}
+            searchQuery={searchQuery}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            viewMode={viewMode}
+            totalItems={isFilteringActive ? filteredBooks.length : totalBooks}
+            onResetPage={handleResetPage}
+            searchMode="local"
+          />
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>

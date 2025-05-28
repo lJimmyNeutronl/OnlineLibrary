@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiHeart } from 'react-icons/fi';
+import { FiArrowLeft, FiHeart, FiGrid, FiList } from 'react-icons/fi';
 import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
 import { fetchFavorites, removeFromFavorites } from '../store/slices/favoritesSlice';
 import { Typography, Breadcrumb, Button, Row, Col, Divider, Spin, Empty } from '../components/common';
@@ -92,20 +92,20 @@ const FavoritesPage = () => {
     return (
       <>
         <div className="favorites-view-controls">
-          <Button 
-            type={viewMode === 'grid' ? 'primary' : 'default'} 
-            onClick={() => setViewMode('grid')}
-            className="view-control-button"
-          >
-            Сетка
-          </Button>
-          <Button 
-            type={viewMode === 'list' ? 'primary' : 'default'} 
-            onClick={() => setViewMode('list')}
-            className="view-control-button"
-          >
-            Список
-          </Button>
+          <div className="view-mode-section">
+            <Button 
+              icon={<FiGrid />} 
+              onClick={() => setViewMode('grid')}
+              type={viewMode === 'grid' ? 'primary' : 'default'}
+              className="view-mode-button"
+            />
+            <Button 
+              icon={<FiList />} 
+              onClick={() => setViewMode('list')}
+              type={viewMode === 'list' ? 'primary' : 'default'}
+              className="view-mode-button"
+            />
+          </div>
         </div>
         
         {/* Используем FavoritesBookList вместо BookList для поддержки удаления из избранного */}

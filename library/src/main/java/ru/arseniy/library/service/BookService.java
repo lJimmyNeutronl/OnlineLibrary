@@ -2,8 +2,9 @@ package ru.arseniy.library.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,13 +18,9 @@ import ru.arseniy.library.repository.RatingRepository;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 @Service
 @RequiredArgsConstructor
@@ -93,7 +90,9 @@ public class BookService {
      * @return страницу книг
      */
     public Page<Book> getBooksByCategory(Integer categoryId, Pageable pageable) {
-        return bookRepository.findByExactCategoryId(categoryId, pageable);
+        Page<Book> page = bookRepository.findByExactCategoryId(categoryId, pageable);
+        enrichBooksWithRatings(page.getContent());
+        return page;
     }
     
     /**
@@ -115,7 +114,9 @@ public class BookService {
         getAllSubcategoryIds(category, allCategoryIds);
         
         // Используем специальный запрос, который исключает дубликаты на уровне SQL
-        return bookRepository.findDistinctByCategoryIdIn(new ArrayList<>(allCategoryIds), pageable);
+        Page<Book> page = bookRepository.findDistinctByCategoryIdIn(new ArrayList<>(allCategoryIds), pageable);
+        enrichBooksWithRatings(page.getContent());
+        return page;
     }
     
     /**
@@ -252,5 +253,130 @@ public class BookService {
         getBookById(id);
         
         return bookFileService.getBookCover(id);
+    }
+    
+    /**
+     * Получает книги по категории с сортировкой по рейтингу
+     *
+     * @param categoryId ID категории
+     * @param page номер страницы
+     * @param size размер страницы
+     * @param direction направление сортировки (asc/desc)
+     * @param includeSubcategories включать ли подкатегории
+     * @return страницу книг, отсортированных по рейтингу
+     */
+    public Page<Book> getBooksByCategoryWithRatingSort(Integer categoryId, int page, int size, String direction, boolean includeSubcategories) {
+        List<Book> allBooks;
+        
+        if (includeSubcategories) {
+            // Получаем все книги категории с подкатегориями без пагинации
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Категория с ID " + categoryId + " не найдена"));
+            
+            Set<Integer> allCategoryIds = new HashSet<>();
+            allCategoryIds.add(categoryId);
+            getAllSubcategoryIds(category, allCategoryIds);
+            
+            allBooks = bookRepository.findByCategoryIdInAsList(new ArrayList<>(allCategoryIds));
+        } else {
+            // Получаем книги только из указанной категории
+            allBooks = bookRepository.findByExactCategoryIdAsList(categoryId);
+        }
+        
+        // Обогащаем книги информацией о рейтинге
+        enrichBooksWithRatings(allBooks);
+        
+        // Сортируем книги по рейтингу
+        Comparator<Book> ratingComparator;
+        if ("desc".equalsIgnoreCase(direction)) {
+            // Сортировка по убыванию: высокие рейтинги первыми
+            ratingComparator = Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder());
+        } else {
+            // Сортировка по возрастанию: низкие рейтинги первыми
+            ratingComparator = Comparator.comparing(Book::getRating)
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0);
+        }
+        
+        List<Book> sortedBooks = allBooks.stream()
+                .sorted(ratingComparator)
+                .collect(Collectors.toList());
+        
+        // Применяем пагинацию вручную
+        int totalElements = sortedBooks.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Book> paginatedBooks = sortedBooks.subList(startIndex, endIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Обогащает книги информацией о рейтингах
+     *
+     * @param books список книг для обогащения
+     */
+    private void enrichBooksWithRatings(List<Book> books) {
+        for (Book book : books) {
+            Double averageRating = ratingRepository.getAverageRatingByBookId(book.getId());
+            Long ratingCount = ratingRepository.countRatingsByBookId(book.getId());
+            
+            if (averageRating != null) {
+                book.setRating(averageRating);
+            } else {
+                book.setRating(0.0);
+            }
+            
+            if (ratingCount != null) {
+                book.setRatingsCount(ratingCount.intValue());
+            } else {
+                book.setRatingsCount(0);
+            }
+        }
+    }
+    
+    /**
+     * Поиск книг с сортировкой по рейтингу
+     *
+     * @param query поисковый запрос
+     * @param page номер страницы
+     * @param size размер страницы
+     * @param direction направление сортировки
+     * @return страница книг, отсортированных по рейтингу
+     */
+    public Page<Book> searchBooksWithRatingSort(String query, int page, int size, String direction) {
+        // Получаем все книги по поисковому запросу без пагинации
+        List<Book> allBooks = bookRepository.searchBooksAsList(query);
+        
+        // Обогащаем книги информацией о рейтинге
+        enrichBooksWithRatings(allBooks);
+        
+        // Сортируем книги по рейтингу
+        Comparator<Book> ratingComparator;
+        if ("desc".equalsIgnoreCase(direction)) {
+            // Сортировка по убыванию: высокие рейтинги первыми
+            ratingComparator = Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder());
+        } else {
+            // Сортировка по возрастанию: низкие рейтинги первыми
+            ratingComparator = Comparator.comparing(Book::getRating)
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0);
+        }
+        
+        List<Book> sortedBooks = allBooks.stream()
+                .sorted(ratingComparator)
+                .collect(Collectors.toList());
+        
+        // Применяем пагинацию вручную
+        int totalElements = sortedBooks.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Book> paginatedBooks = sortedBooks.subList(startIndex, endIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
     }
 }

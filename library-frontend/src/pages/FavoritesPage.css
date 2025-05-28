@@ -53,8 +53,33 @@
   margin-bottom: 20px;
 }
 
-.view-control-button {
-  margin-left: 8px;
+.view-mode-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(55, 105, 245, 0.05) 0%, rgba(142, 84, 233, 0.03) 100%);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(55, 105, 245, 0.1);
+}
+
+.view-mode-button {
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  transition: all 0.3s ease;
+  font-size: 16px;
+}
+
+.view-mode-button[data-type="default"] {
+  background: transparent !important;
+  color: #718096 !important;
+}
+
+.view-mode-button[data-type="primary"] {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(55, 105, 245, 0.3);
 }
 
 /* Стили для контейнера загрузки */
@@ -104,5 +129,10 @@
   
   .favorites-view-controls {
     justify-content: center;
+  }
+
+  .view-mode-button {
+    padding: 8px 10px !important;
+    font-size: 14px;
   }
 } 

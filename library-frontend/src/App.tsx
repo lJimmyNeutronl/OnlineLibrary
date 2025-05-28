@@ -16,7 +16,6 @@ import ProfilePage from './pages/profile/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';
 import EditProfilePage from './pages/profile/EditProfilePage';
 import ChangePasswordPage from '@pages/profile/ChangePasswordPage';
-import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -67,7 +66,7 @@ const App = () => {
               <ChangePasswordPage />
             </ProtectedRoute>
           } />
-          <Route path="*" element={<NotFoundPage />} />
+          
         </Route>
       </Routes>
     </Router>

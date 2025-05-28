@@ -70,10 +70,22 @@ public class BookController {
     public ResponseEntity<Page<BookDTO>> searchBooks(
             @RequestParam String query,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "title") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
         
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Book> books = bookService.searchBooks(query, pageable);
+        Page<Book> books;
+        Pageable pageable;
+        
+        // Если сортировка по рейтингу, обрабатываем отдельно
+        if ("rating".equals(sortBy)) {
+            books = bookService.searchBooksWithRatingSort(query, page, size, direction);
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+            books = bookService.searchBooks(query, pageable);
+        }
         
         // Преобразуем Page<Book> в Page<BookDTO>
         List<BookDTO> bookDTOs = books.getContent().stream()
@@ -94,18 +106,28 @@ public class BookController {
             @PathVariable Integer categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "title") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction,
             @RequestParam(defaultValue = "true") boolean includeSubcategories) {
         
-        Pageable pageable = PageRequest.of(page, size);
         Page<Book> books;
+        Pageable pageable;
+        
+        // Если сортировка по рейтингу, обрабатываем отдельно
+        if ("rating".equals(sortBy)) {
+            books = bookService.getBooksByCategoryWithRatingSort(categoryId, page, size, direction, includeSubcategories);
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         
         if (includeSubcategories) {
             // Получаем книги с учетом всей иерархии категорий
             books = bookService.getBooksByCategoryWithHierarchy(categoryId, pageable);
         } else {
             // Получаем книги только из указанной категории без подкатегорий
-            // Для этого используем прямой запрос через репозиторий с JOIN без подкатегорий
             books = bookService.getBooksByCategory(categoryId, pageable);
+            }
         }
         
         // Преобразуем Page<Book> в Page<BookDTO>
