@@ -1,244 +1,362 @@
-import React, { useState, useEffect } from 'react';
-import { FiFilter, FiSearch, FiRefreshCw } from 'react-icons/fi';
-import genreService from '../../services/genreService';
-import authorService from '../../services/authorService';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FiFilter, 
+  FiSearch, 
+  FiRefreshCw, 
+  FiChevronDown,
+  FiX,
+  FiStar,
+  FiBook,
+  FiGrid,
+  FiList
+} from 'react-icons/fi';
+import { Button, Input, Select, Rate } from '../common';
+import { useCategories } from '../../hooks/useCategories';
+import { CatalogFilters } from '../../hooks/useCatalogFilters';
 import './CatalogFilters.css';
 
-export interface FilterParams {
-  search?: string;
-  genres?: number[];
-  authors?: number[];
-  yearFrom?: number;
-  yearTo?: number;
-  onlyAvailable?: boolean;
-  sortBy?: string;
-}
-
 interface CatalogFiltersProps {
-  onApplyFilters: (filters: FilterParams) => void;
+  filters: CatalogFilters;
+  onFiltersChange: (filters: Partial<CatalogFilters>) => void;
+  onReset: () => void;
+  activeFiltersCount: number;
   loading?: boolean;
+  totalBooks?: number;
+  currentCount?: number;
+  viewMode?: 'grid' | 'list';
+  onViewModeChange?: (mode: 'grid' | 'list') => void;
+  hasActiveFilters?: boolean;
 }
 
-const CatalogFilters: React.FC<CatalogFiltersProps> = ({ onApplyFilters, loading = false }) => {
-  const [genres, setGenres] = useState<Array<{ id: number; name: string }>>([]);
-  const [authors, setAuthors] = useState<Array<{ id: number; name: string }>>([]);
-  const [yearRange, setYearRange] = useState<[number, number]>([1900, new Date().getFullYear()]);
-  
-  const [filters, setFilters] = useState<FilterParams>({
-    search: '',
-    genres: [],
-    authors: [],
-    yearFrom: 1900,
-    yearTo: new Date().getFullYear(),
-    onlyAvailable: false,
-    sortBy: 'popularity',
-  });
+const LANGUAGES = [
+  { value: '', label: 'Все языки' },
+  { value: 'ru', label: 'Русский' },
+  { value: 'en', label: 'English' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'fr', label: 'Français' },
+  { value: 'es', label: 'Español' },
+];
 
-  useEffect(() => {
-    const loadFilterData = async () => {
-      try {
-        const genresData = await genreService.getAllGenres();
-        setGenres(genresData);
+const SORT_OPTIONS = [
+  { value: 'title', label: 'По названию' },
+  { value: 'author', label: 'По автору' },
+  { value: 'publicationYear', label: 'По году издания' },
+  { value: 'rating', label: 'По рейтингу' },
+  { value: 'uploadDate', label: 'По дате добавления' },
+];
 
-        const authorsData = await authorService.getAllAuthors();
-        setAuthors(authorsData);
-      } catch (error) {
-        console.error('Ошибка загрузки данных фильтров:', error);
-      }
-    };
+const CatalogFiltersComponent: React.FC<CatalogFiltersProps> = ({
+  filters,
+  onFiltersChange,
+  onReset,
+  activeFiltersCount,
+  loading = false,
+  totalBooks,
+  currentCount,
+  viewMode,
+  onViewModeChange,
+  hasActiveFilters
+}) => {
+  const { categories, loading: categoriesLoading } = useCategories();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [searchValue, setSearchValue] = useState(filters.search);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFiltersChange({ search: searchValue });
+  };
+
+  const handleCategoryToggle = (categoryId: number) => {
+    const newCategoryIds = filters.categoryIds.includes(categoryId)
+      ? filters.categoryIds.filter(id => id !== categoryId)
+      : [...filters.categoryIds, categoryId];
     
-    loadFilterData();
-  }, []);
-
-  const handleFilterChange = (key: keyof FilterParams, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    onFiltersChange({ categoryIds: newCategoryIds });
   };
 
-  const handleYearRangeChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const value = parseInt(event.target.value, 10);
-    const newRange = [...yearRange] as [number, number];
-    newRange[index] = value;
-    setYearRange(newRange);
-    
-    if (index === 0) {
-      handleFilterChange('yearFrom', value);
-    } else {
-      handleFilterChange('yearTo', value);
-    }
+  const handleYearChange = (field: 'yearFrom' | 'yearTo', value: string) => {
+    const year = parseInt(value) || (field === 'yearFrom' ? 1900 : new Date().getFullYear());
+    onFiltersChange({ [field]: year });
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleFilterChange('search', event.target.value);
-  };
-
-  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, key: keyof FilterParams) => {
-    handleFilterChange(key, event.target.value);
-  };
-
-  const handleMultiSelectChange = (event: React.ChangeEvent<HTMLSelectElement>, key: keyof FilterParams) => {
-    const options = event.target.options;
-    const selectedValues: number[] = [];
-    
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) {
-        selectedValues.push(parseInt(options[i].value, 10));
-      }
-    }
-    
-    handleFilterChange(key, selectedValues);
-  };
-
-  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleFilterChange('onlyAvailable', event.target.checked);
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      search: '',
-      genres: [],
-      authors: [],
-      yearFrom: 1900,
-      yearTo: new Date().getFullYear(),
-      onlyAvailable: false,
-      sortBy: 'popularity',
-    });
-    setYearRange([1900, new Date().getFullYear()]);
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onApplyFilters(filters);
-  };
+  const currentYear = new Date().getFullYear();
 
   return (
     <div className="catalog-filters">
+      {/* Заголовок фильтров с информацией о книгах */}
       <div className="filters-header">
-        <h4 className="filters-title">
-          <FiFilter className="filter-icon" /> Фильтры
-        </h4>
+        <div className="filters-title-section">
+          <div className="filters-title">
+            <FiFilter className="filter-icon" />
+            <span>Фильтры</span>
+            {activeFiltersCount > 0 && (
+              <span className="filters-badge">{activeFiltersCount}</span>
+            )}
+          </div>
+          
+          {/* Информация о количестве книг */}
+          {totalBooks !== undefined && currentCount !== undefined && (
+            <div className="books-count-info">
+              <FiBook className="book-icon" />
+              <span className="books-count-text">
+                {loading ? (
+                  'Загрузка...'
+                ) : hasActiveFilters ? (
+                  <>Найдено <strong>{currentCount}</strong> из {totalBooks} книг</>
+                ) : (
+                  <>Всего <strong>{totalBooks}</strong> {totalBooks === 1 ? 'книга' : totalBooks < 5 ? 'книги' : 'книг'}</>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+        
+        <div className="filters-actions">
+          {/* Кнопки переключения вида */}
+          {viewMode && onViewModeChange && (
+            <div className="view-mode-section">
+              <button
+                className={`view-mode-button ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => onViewModeChange('grid')}
+                title="Сетка"
+              >
+                <FiGrid />
+              </button>
+              <button
+                className={`view-mode-button ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => onViewModeChange('list')}
+                title="Список"
+              >
+                <FiList />
+              </button>
+            </div>
+          )}
+          
+          <button
+            className="filters-toggle"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <FiChevronDown 
+              className={`chevron-icon ${isExpanded ? 'expanded' : ''}`} 
+            />
+          </button>
+          
+          {activeFiltersCount > 0 && (
+            <button
+              className="filters-reset"
+              onClick={onReset}
+              title="Сбросить фильтры"
+            >
+              <FiRefreshCw />
+            </button>
+          )}
+        </div>
       </div>
-      
-      <form onSubmit={handleSubmit}>
-        <div className="filter-section">
-          <div className="search-container">
-            <input
-              type="text"
-              placeholder="Поиск по названию или автору"
-              className="search-input"
-              value={filters.search}
-              onChange={handleSearchChange}
-            />
-            <button type="button" className="search-button" onClick={() => onApplyFilters(filters)}>
-              <FiSearch />
-            </button>
-          </div>
-        </div>
-        
-        <hr className="filter-divider" />
-        
-        <div className="filter-section">
-          <label className="filter-label">Жанры</label>
-          <select
-            multiple
-            className="filter-select"
-            value={filters.genres?.map(id => id.toString()) || []}
-            onChange={(e) => handleMultiSelectChange(e, 'genres')}
-            size={4}
-          >
-            {genres.map(genre => (
-              <option key={genre.id} value={genre.id}>{genre.name}</option>
-            ))}
-          </select>
-          <small className="filter-help">Зажмите Ctrl (Cmd) для выбора нескольких жанров</small>
-        </div>
-        
-        <div className="filter-section">
-          <label className="filter-label">Авторы</label>
-          <select
-            multiple
-            className="filter-select"
-            value={filters.authors?.map(id => id.toString()) || []}
-            onChange={(e) => handleMultiSelectChange(e, 'authors')}
-            size={4}
-          >
-            {authors.map(author => (
-              <option key={author.id} value={author.id}>{author.name}</option>
-            ))}
-          </select>
-          <small className="filter-help">Зажмите Ctrl (Cmd) для выбора нескольких авторов</small>
-        </div>
-        
-        <div className="filter-section">
-          <label className="filter-label">Год издания: {yearRange[0]} - {yearRange[1]}</label>
-          <div className="year-range-inputs">
-            <input
-              type="number"
-              min="1900"
-              max={yearRange[1]}
-              value={yearRange[0]}
-              onChange={(e) => handleYearRangeChange(e, 0)}
-              className="year-input"
-            />
-            <span className="year-range-separator">-</span>
-            <input
-              type="number"
-              min={yearRange[0]}
-              max={new Date().getFullYear()}
-              value={yearRange[1]}
-              onChange={(e) => handleYearRangeChange(e, 1)}
-              className="year-input"
-            />
-          </div>
-        </div>
-        
-        <div className="filter-section">
-          <label className="filter-checkbox">
-            <input
-              type="checkbox"
-              checked={filters.onlyAvailable}
-              onChange={handleCheckboxChange}
-            />
-            <span className="checkbox-label">Только доступные для чтения</span>
-          </label>
-        </div>
-        
-        <div className="filter-section">
-          <label className="filter-label">Сортировать по</label>
-          <select
-            value={filters.sortBy}
-            onChange={(e) => handleSelectChange(e, 'sortBy')}
-            className="filter-select"
-          >
-            <option value="popularity">Популярности</option>
-            <option value="title_asc">Названию (А-Я)</option>
-            <option value="title_desc">Названию (Я-А)</option>
-            <option value="year_desc">Новые</option>
-            <option value="year_asc">Старые</option>
-            <option value="rating_desc">Рейтингу</option>
-          </select>
-        </div>
-        
-        <div className="filter-actions">
-          <div className="filter-actions-row">
-            <button 
-              type="button" 
-              className="reset-btn"
-              onClick={handleResetFilters}
-            >
-              <FiRefreshCw className="button-icon" /> Сбросить
-            </button>
-            <button 
-              type="submit" 
-              className="apply-btn"
-              disabled={loading}
-            >
-              {loading ? 'Применение...' : 'Применить'}
-            </button>
-          </div>
+
+      {/* Поиск - всегда видимый */}
+      <form onSubmit={handleSearchSubmit} className="search-section">
+        <div className="search-container">
+          <Input
+            type="text"
+            placeholder="Поиск по названию или автору..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="search-input"
+          />
+          <button type="submit" className="search-button">
+            <FiSearch />
+          </button>
         </div>
       </form>
+
+      {/* Расширенные фильтры */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="filters-content"
+          >
+            {/* Быстрые фильтры */}
+            <div className="filter-section">
+              <label className="filter-label">Быстрые фильтры</label>
+              <div className="quick-filters">
+                <Button
+                  size="small"
+                  type={filters.sortBy === 'uploadDate' && filters.direction === 'desc' ? 'primary' : 'default'}
+                  onClick={() => onFiltersChange({ sortBy: 'uploadDate', direction: 'desc' })}
+                >
+                  Новинки
+                </Button>
+                <Button
+                  size="small"
+                  type={filters.sortBy === 'rating' && filters.direction === 'desc' ? 'primary' : 'default'}
+                  onClick={() => onFiltersChange({ sortBy: 'rating', direction: 'desc' })}
+                >
+                  Популярные
+                </Button>
+                <Button
+                  size="small"
+                  type={filters.minRating >= 4 ? 'primary' : 'default'}
+                  onClick={() => onFiltersChange({ minRating: filters.minRating >= 4 ? 0 : 4 })}
+                >
+                  <FiStar /> Высокий рейтинг
+                </Button>
+              </div>
+            </div>
+
+            {/* Категории */}
+            <div className="filter-section">
+              <label className="filter-label">Категории</label>
+              <div className="categories-list">
+                {categoriesLoading ? (
+                  <div className="categories-loading">Загрузка...</div>
+                ) : (
+                  categories.map(category => (
+                    <div key={category.id} className="category-item">
+                      <label className="category-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={filters.categoryIds.includes(category.id)}
+                          onChange={() => handleCategoryToggle(category.id)}
+                        />
+                        <span className="category-name">{category.name}</span>
+                        <span className="category-count">({category.bookCount})</span>
+                      </label>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Год издания */}
+            <div className="filter-section">
+              <label className="filter-label">
+                Год издания: {filters.yearFrom} - {filters.yearTo}
+              </label>
+              <div className="year-range">
+                <Input
+                  type="number"
+                  min="1900"
+                  max={filters.yearTo}
+                  value={filters.yearFrom}
+                  onChange={(e) => handleYearChange('yearFrom', e.target.value)}
+                  className="year-input"
+                  placeholder="От"
+                />
+                <span className="year-separator">—</span>
+                <Input
+                  type="number"
+                  min={filters.yearFrom}
+                  max={currentYear}
+                  value={filters.yearTo}
+                  onChange={(e) => handleYearChange('yearTo', e.target.value)}
+                  className="year-input"
+                  placeholder="До"
+                />
+              </div>
+            </div>
+
+            {/* Язык */}
+            <div className="filter-section">
+              <label className="filter-label">Язык</label>
+              <Select
+                value={filters.language}
+                onChange={(value) => onFiltersChange({ language: value })}
+                options={LANGUAGES}
+                className="language-select"
+              />
+            </div>
+
+            {/* Рейтинг */}
+            <div className="filter-section">
+              <label className="filter-label">Минимальный рейтинг</label>
+              <div className="rating-filter">
+                <Rate
+                  value={filters.minRating}
+                  onChange={(value) => onFiltersChange({ minRating: value })}
+                />
+                {filters.minRating > 0 && (
+                  <button
+                    className="rating-clear"
+                    onClick={() => onFiltersChange({ minRating: 0 })}
+                  >
+                    <FiX />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Сортировка */}
+            <div className="filter-section">
+              <label className="filter-label">Сортировка</label>
+              <div className="sort-controls">
+                <Select
+                  value={filters.sortBy}
+                  onChange={(value) => onFiltersChange({ sortBy: value as any })}
+                  options={SORT_OPTIONS}
+                  className="sort-select"
+                />
+                <Button
+                  type={filters.direction === 'desc' ? 'primary' : 'default'}
+                  onClick={() => onFiltersChange({ 
+                    direction: filters.direction === 'asc' ? 'desc' : 'asc' 
+                  })}
+                  className="sort-direction"
+                >
+                  {filters.direction === 'asc' ? '↑' : '↓'}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Активные фильтры */}
+      {activeFiltersCount > 0 && (
+        <div className="active-filters">
+          <div className="active-filters-title">Активные фильтры:</div>
+          <div className="active-filters-list">
+            {filters.search && (
+              <span className="filter-tag">
+                Поиск: "{filters.search}"
+                <button onClick={() => onFiltersChange({ search: '' })}>
+                  <FiX />
+                </button>
+              </span>
+            )}
+            {filters.categoryIds.length > 0 && (
+              <span className="filter-tag">
+                Категории: {filters.categoryIds.length}
+                <button onClick={() => onFiltersChange({ categoryIds: [] })}>
+                  <FiX />
+                </button>
+              </span>
+            )}
+            {filters.language && (
+              <span className="filter-tag">
+                Язык: {LANGUAGES.find(l => l.value === filters.language)?.label}
+                <button onClick={() => onFiltersChange({ language: '' })}>
+                  <FiX />
+                </button>
+              </span>
+            )}
+            {filters.minRating > 0 && (
+              <span className="filter-tag">
+                Рейтинг: от {filters.minRating} ★
+                <button onClick={() => onFiltersChange({ minRating: 0 })}>
+                  <FiX />
+                </button>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default CatalogFilters; 
+export default CatalogFiltersComponent; 

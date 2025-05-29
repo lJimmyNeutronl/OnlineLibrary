@@ -1,0 +1,189 @@
+/* Стили для улучшенного Input компонента */
+.input-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.input-wrapper input {
+  box-sizing: border-box;
+  margin: 0;
+  font-variant: tabular-nums;
+  list-style: none;
+  font-feature-settings: 'tnum';
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+  color: #2c3e50;
+  background: white;
+  background-image: none;
+  border: 2px solid rgba(55, 105, 245, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  outline: none;
+}
+
+.input-wrapper input:focus {
+  border-color: #3769f5;
+  box-shadow: 0 0 0 3px rgba(55, 105, 245, 0.1);
+}
+
+.input-wrapper input:hover:not(:disabled) {
+  border-color: rgba(55, 105, 245, 0.4);
+}
+
+.input-wrapper input:disabled {
+  background-color: #f5f5f5;
+  border-color: #e0e0e0;
+  color: rgba(0, 0, 0, 0.25);
+  cursor: not-allowed;
+}
+
+.input-wrapper input::placeholder {
+  color: #a0a0a0;
+  font-weight: 400;
+}
+
+/* Стили для prefix */
+.input-prefix {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  color: #3769f5;
+  font-size: 16px;
+}
+
+/* Стили для suffix */
+.input-suffix {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  color: #666;
+}
+
+/* Стили для кнопки очистки */
+.input-clear-icon {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 50%;
+  background: rgba(55, 105, 245, 0.1);
+  color: #3769f5;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+
+.input-clear-icon:hover {
+  background: #ff4d4f;
+  color: white;
+}
+
+/* Стили для addon элементов */
+.input-addon-before,
+.input-addon-after {
+  padding: 0 12px;
+  border: 2px solid rgba(55, 105, 245, 0.2);
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  display: inline-flex;
+  align-items: center;
+  color: #3769f5;
+  font-weight: 500;
+}
+
+.input-addon-before {
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+}
+
+.input-addon-after {
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Размеры */
+.input-wrapper.size-small input {
+  height: 32px;
+  font-size: 14px;
+  padding: 0 12px;
+}
+
+.input-wrapper.size-middle input {
+  height: 40px;
+  font-size: 16px;
+  padding: 0 16px;
+}
+
+.input-wrapper.size-large input {
+  height: 48px;
+  font-size: 18px;
+  padding: 0 20px;
+}
+
+/* Адаптация для prefix/suffix */
+.input-wrapper.has-prefix input {
+  padding-left: 44px;
+}
+
+.input-wrapper.has-suffix input {
+  padding-right: 44px;
+}
+
+.input-wrapper.size-small.has-prefix input {
+  padding-left: 36px;
+}
+
+.input-wrapper.size-small.has-suffix input {
+  padding-right: 36px;
+}
+
+.input-wrapper.size-large.has-prefix input {
+  padding-left: 52px;
+}
+
+.input-wrapper.size-large.has-suffix input {
+  padding-right: 52px;
+}
+
+/* Анимации */
+@keyframes inputFocus {
+  0% {
+    box-shadow: 0 0 0 0 rgba(55, 105, 245, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 3px rgba(55, 105, 245, 0.1);
+  }
+}
+
+.input-wrapper input:focus {
+  animation: inputFocus 0.3s ease;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .input-wrapper.size-middle input {
+    height: 36px;
+    font-size: 14px;
+    padding: 0 12px;
+  }
+  
+  .input-wrapper.size-large input {
+    height: 40px;
+    font-size: 16px;
+    padding: 0 16px;
+  }
+} 

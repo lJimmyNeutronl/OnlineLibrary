@@ -1,204 +1,856 @@
-.catalog-filters {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 24px;
+/* Глобальные стили для правильной работы z-index */
+html, body {
+  position: relative !important;
+  z-index: 1 !important;
 }
 
+.catalog-filters {
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(55, 105, 245, 0.08);
+  margin-bottom: 24px;
+  overflow: visible !important;
+  border: 1px solid rgba(55, 105, 245, 0.08);
+  transition: all 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+.catalog-filters:hover {
+  box-shadow: 0 12px 40px rgba(55, 105, 245, 0.12);
+}
+
+/* Заголовок фильтров */
 .filters-header {
-  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(55, 105, 245, 0.08);
+}
+
+.filters-title-section {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
 }
 
 .filters-title {
-  margin: 0;
   display: flex;
   align-items: center;
-  font-size: 1.2rem;
+  gap: 8px;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #333;
 }
 
 .filter-icon {
-  margin-right: 8px;
   color: #3769f5;
+  font-size: 1.2rem;
 }
 
-.filter-section {
-  margin-bottom: 20px;
-}
-
-.filter-label {
-  display: block;
-  margin-bottom: 8px;
+.filters-badge {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  color: white;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
   font-weight: 500;
-  color: #555;
+  box-shadow: none !important;
+  transition: none !important;
+  animation: none !important;
 }
 
-.filter-select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
-  font-family: inherit;
+/* Информация о количестве книг - по центру */
+.books-count-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-size: 0.95rem;
+  background: rgba(55, 105, 245, 0.05);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(55, 105, 245, 0.1);
+}
+
+.book-icon {
+  color: #3769f5;
   font-size: 1rem;
 }
 
-.filter-help {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.8rem;
-  color: #888;
+.books-count-text {
+  white-space: nowrap;
 }
 
-.filter-divider {
-  margin: 16px 0;
-  border: 0;
-  border-top: 1px solid #eee;
-  opacity: 0.5;
+.books-count-text strong {
+  color: #3769f5;
+  font-weight: 600;
+}
+
+.filters-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Кнопки переключения вида */
+.view-mode-section {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: linear-gradient(135deg, rgba(55, 105, 245, 0.05) 0%, rgba(142, 84, 233, 0.03) 100%);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid rgba(55, 105, 245, 0.1);
+}
+
+.view-mode-button {
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.view-mode-button:hover {
+  background: rgba(55, 105, 245, 0.1);
+  color: #3769f5;
+}
+
+.view-mode-button.active {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(55, 105, 245, 0.3);
+}
+
+.filters-toggle {
+  background: rgba(55, 105, 245, 0.08);
+  border: 1px solid rgba(55, 105, 245, 0.15);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  color: #3769f5;
+  transform: none !important;
+  animation: none !important;
+  will-change: auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.filters-toggle:hover {
+  background: rgba(55, 105, 245, 0.15);
+  transform: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+.filters-toggle:active,
+.filters-toggle:focus {
+  transform: none !important;
+  animation: none !important;
+}
+
+.chevron-icon {
+  transition: transform 0.3s ease;
+  font-size: 16px;
+}
+
+.chevron-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.filters-reset {
+  background: rgba(255, 77, 79, 0.08);
+  border: 1px solid rgba(255, 77, 79, 0.15);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #ff4d4f;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.filters-reset:hover {
+  background: rgba(255, 77, 79, 0.15);
+  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.2);
+}
+
+/* Поиск */
+.search-section {
+  padding: 24px;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(55, 105, 245, 0.08);
+  position: relative;
+}
+
+.search-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(55, 105, 245, 0.2) 50%, transparent 100%);
 }
 
 .search-container {
   position: relative;
+  background: white;
+  border-radius: 50px;
+  box-shadow: 0 4px 20px rgba(55, 105, 245, 0.08);
+  border: 2px solid rgba(55, 105, 245, 0.06);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  height: 56px;
   display: flex;
+  align-items: center;
 }
 
-.search-input {
-  flex: 1;
-  padding: 10px 36px 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 1rem;
+.search-container:hover {
+  box-shadow: 0 6px 25px rgba(55, 105, 245, 0.12);
+  border-color: rgba(55, 105, 245, 0.1);
+}
+
+.search-container:focus-within {
+  border-color: #3769f5;
+  box-shadow: 0 6px 25px rgba(55, 105, 245, 0.15), 0 0 0 4px rgba(55, 105, 245, 0.1);
+}
+
+.search-container .search-input,
+.search-container .search-input input {
+  width: 100%;
+  padding: 0 70px 0 20px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  outline: none;
+  color: #2c3e50;
+  box-shadow: none !important;
+  transform: none !important;
+  border-radius: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.search-container .search-input::placeholder,
+.search-container .search-input input::placeholder {
+  color: #a0a0a0;
+  font-weight: 400;
+}
+
+.search-container .input-wrapper {
+  width: 100%;
+  border: none;
+  background: transparent;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.search-container .input-wrapper input {
+  height: 100%;
+  line-height: 1.5;
+  padding: 0 70px 0 20px;
+}
+
+.search-container .input-wrapper input:focus {
+  border: none;
+  box-shadow: none;
+  transform: none;
 }
 
 .search-button {
   position: absolute;
-  right: 0;
-  top: 0;
-  height: 100%;
-  width: 40px;
-  background: transparent;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
   border: none;
   cursor: pointer;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(55, 105, 245, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3769f5;
+  font-size: 18px;
 }
 
 .search-button:hover {
-  color: #1f4bbd;
+  transform: translateY(-50%);
+  box-shadow: 0 4px 16px rgba(55, 105, 245, 0.4);
 }
 
-.year-range-inputs {
+.search-button:active {
+  transform: translateY(-50%);
+}
+
+/* Контент фильтров */
+.filters-content {
+  padding: 24px;
+  overflow: visible;
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  position: relative !important;
+  z-index: auto !important;
+}
+
+.filter-section {
+  margin-bottom: 28px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(55, 105, 245, 0.06);
+  border: 1px solid rgba(55, 105, 245, 0.08);
+  transition: all 0.3s ease;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.filter-section:hover {
+  box-shadow: 0 4px 20px rgba(55, 105, 245, 0.12);
+}
+
+.filter-section:last-child {
+  margin-bottom: 0;
+}
+
+.filter-section .filter-label,
+.filter-section > .filter-label,
+.catalog-filters .filter-section .filter-label,
+.catalog-filters .filter-label,
+.filters-content .filter-section .filter-label {
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  color: #2c3e50 !important;
+  margin-bottom: 40px !important;
+  position: relative !important;
+  padding-left: 16px !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  display: block !important;
+}
+
+.filter-label::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 16px;
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  border-radius: 2px;
+}
+
+/* Быстрые фильтры */
+.quick-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quick-filters .ant-btn {
+  border-radius: 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.quick-filters .ant-btn-default {
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  border-color: rgba(55, 105, 245, 0.2);
+  color: #3769f5;
+}
+
+.quick-filters .ant-btn-default:hover {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(55, 105, 245, 0.3);
+}
+
+.quick-filters .ant-btn-primary {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(55, 105, 245, 0.3);
+}
+
+/* Категории */
+.categories-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 2px solid rgba(55, 105, 245, 0.1);
+  border-radius: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+}
+
+.categories-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.categories-list::-webkit-scrollbar-track {
+  background: rgba(55, 105, 245, 0.05);
+  border-radius: 3px;
+}
+
+.categories-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  border-radius: 3px;
+}
+
+.categories-loading {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+  font-style: italic;
+}
+
+.category-item {
+  margin-bottom: 8px;
+}
+
+.category-item:last-child {
+  margin-bottom: 0;
+}
+
+.category-checkbox {
   display: flex;
   align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.category-checkbox:hover {
+  background: linear-gradient(135deg, rgba(55, 105, 245, 0.05) 0%, rgba(142, 84, 233, 0.05) 100%);
+  border-color: rgba(55, 105, 245, 0.2);
+  box-shadow: 0 2px 8px rgba(55, 105, 245, 0.1);
+}
+
+.category-checkbox input[type="checkbox"] {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #3769f5;
+  cursor: pointer;
+}
+
+.category-name {
+  flex: 1;
+  color: #2c3e50;
+  font-weight: 500;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.category-count {
+  font-size: 12px;
+  color: #666;
+  background: linear-gradient(135deg, #e8f2ff 0%, #f0f8ff 100%);
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(55, 105, 245, 0.2);
+  font-weight: 600;
+}
+
+/* Год издания */
+.year-range {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .year-input {
   flex: 1;
-  width: 80px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  text-align: center;
-  font-family: inherit;
-  font-size: 1rem;
+  max-width: 120px;
 }
 
-.year-range-separator {
-  margin: 0 10px;
-  color: #888;
+.year-input .input-wrapper {
+  width: 100%;
 }
 
-.filter-checkbox {
+.year-input .input-wrapper input {
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.year-separator {
+  color: #3769f5;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Рейтинг */
+.rating-filter {
   display: flex;
   align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.rating-clear {
+  background: rgba(255, 77, 79, 0.1);
+  border: 1px solid rgba(255, 77, 79, 0.3);
   cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  color: #ff4d4f;
+  transition: all 0.3s ease;
 }
 
-.filter-checkbox input {
-  margin-right: 8px;
+.rating-clear:hover {
+  background: #fff2f0;
+  color: #ff4d4f;
+  border-color: #ff4d4f;
 }
 
-.checkbox-label {
-  font-size: 1rem;
-  color: #555;
-}
-
-.filter-actions {
-  margin-top: 24px;
-}
-
-.filter-actions-row {
+/* Сортировка */
+.sort-controls {
   display: flex;
   gap: 12px;
+  align-items: center;
+  position: relative !important;
+  z-index: auto !important;
 }
 
-.reset-btn, .apply-btn {
+.sort-select {
   flex: 1;
+}
+
+.sort-direction {
+  min-width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 16px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 1rem;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.sort-direction.ant-btn-primary {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  box-shadow: 0 4px 12px rgba(55, 105, 245, 0.3);
+}
+
+/* Активные фильтры */
+.active-filters {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #e8f2ff 0%, #f0f8ff 100%);
+  border-top: 1px solid rgba(55, 105, 245, 0.2);
+}
+
+.active-filters-title {
+  font-size: 12px;
+  color: #3769f5;
+  margin-bottom: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.active-filters-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  color: #3769f5;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 2px solid rgba(55, 105, 245, 0.2);
+  box-shadow: 0 2px 8px rgba(55, 105, 245, 0.1);
+  transition: all 0.3s ease;
+}
+
+.filter-tag:hover {
+  box-shadow: 0 4px 12px rgba(55, 105, 245, 0.2);
+}
+
+.filter-tag button {
+  background: rgba(55, 105, 245, 0.1);
+  border: none;
   cursor: pointer;
-  transition: all 0.2s;
+  padding: 4px;
+  border-radius: 50%;
+  color: #3769f5;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
 }
 
-.reset-btn {
-  background-color: white;
-  border: 1px solid #ddd;
-  color: #666;
-}
-
-.reset-btn:hover {
-  background-color: #f5f5f5;
-  border-color: #ccc;
-}
-
-.apply-btn {
-  background-color: #3769f5;
-  border: 1px solid #3769f5;
+.filter-tag button:hover {
+  background: #ff4d4f;
   color: white;
 }
 
-.apply-btn:hover:not(:disabled) {
-  background-color: #1f4bbd;
-  border-color: #1f4bbd;
-}
-
-.apply-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.button-icon {
-  margin-right: 6px;
-}
-
+/* Адаптивные стили */
 @media (max-width: 768px) {
-  .catalog-filters {
+  .filters-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+  
+  .filters-title-section {
+    justify-content: flex-start;
+  }
+  
+  .filters-title {
+    font-size: 1.1rem;
+  }
+  
+  .books-count-info {
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    align-self: center;
+  }
+  
+  .filters-actions {
+    justify-content: center;
+    gap: 12px;
+  }
+  
+  .view-mode-button {
+    padding: 6px 8px;
+    font-size: 12px;
+    min-width: 32px;
+    height: 32px;
+  }
+  
+  .filters-toggle,
+  .filters-reset {
+    min-width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+  
+  .search-section {
+    padding: 16px 20px;
+  }
+  
+  .filters-content {
+    padding: 20px;
+  }
+  
+  .filter-section {
+    margin-bottom: 20px;
     padding: 16px;
   }
   
-  .year-range-inputs {
+  .quick-filters {
+    gap: 8px;
+  }
+  
+  .year-range {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 12px;
   }
   
   .year-input {
-    width: 100%;
-    margin-bottom: 8px;
+    max-width: none;
   }
   
-  .year-range-separator {
-    display: none;
+  .sort-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
+  
+  .active-filters {
+    padding: 16px 20px;
+  }
+  
+  .filter-section .custom-select .select-dropdown {
+    max-height: 200px;
+    z-index: 1060 !important;
+  }
+}
+
+.catalog-filters * {
+  /* Применяем улучшение четкости ко всем элементам панели */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.catalog-filters button,
+.catalog-filters input,
+.catalog-filters select {
+  /* Отключаем потенциально проблемные трансформации */
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform: translateZ(0);
+}
+
+.catalog-filters *:hover,
+.catalog-filters *:focus,
+.catalog-filters *:active {
+  /* Принудительно отключаем любые трансформации движения */
+  transform: none !important;
+  /* Принудительно включаем аппаратное ускорение для четкости */
+  will-change: auto;
+  /* Отключаем анимации масштабирования */
+  animation: none !important;
+}
+
+/* Исключение для кнопки поиска которая должна сохранить центрирование */
+.search-button,
+.search-button:hover,
+.search-button:focus,
+.search-button:active {
+  transform: translateY(-50%) !important;
+}
+
+/* Исправляем z-index для выпадающих меню */
+.sort-select .select-dropdown,
+.language-select .select-dropdown {
+  z-index: 2000 !important;
+}
+
+/* Обеспечиваем правильное позиционирование для всех Select компонентов */
+.sort-select,
+.language-select {
+  flex: 1;
+  position: relative;
+  z-index: 100;
+}
+
+/* Убеждаемся, что дропдауны отображаются поверх всего остального */
+.filter-section .custom-select .select-dropdown {
+  z-index: 2000 !important;
+  /* Добавляем дополнительные стили для лучшей видимости */
+  background: white;
+  border: 2px solid rgba(55, 105, 245, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(55, 105, 245, 0.15);
+}
+
+/* Обеспечиваем правильное наследование стилей */
+.filters-content {
+  padding: 24px;
+  overflow: visible; /* Важно для отображения дропдаунов */
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+}
+
+/* Дополнительные исправления для мобильных устройств */
+@media (max-width: 768px) {
+  .filter-section .custom-select .select-dropdown {
+    max-height: 200px;
+    z-index: 1060 !important;
+  }
+}
+
+/* Более специфичные правила для margin-bottom заголовков */
+.catalog-filters .filter-section .filter-label,
+.filter-section > .filter-label {
+  margin-bottom: 32px !important;
+}
+
+/* Отключаем все потенциальные анимации для элементов управления фильтрами */
+.catalog-filters *:hover,
+.catalog-filters *:focus,
+.catalog-filters *:active {
+  /* Принудительно отключаем любые трансформации движения */
+  transform: none !important;
+  /* Принудительно включаем аппаратное ускорение для четкости */
+  will-change: auto;
+  /* Отключаем анимации масштабирования */
+  animation: none !important;
+}
+
+/* Особые стили для родительских контейнеров Select */
+.filter-section,
+.sort-controls,
+.filters-content {
+  position: relative !important;
+  z-index: auto !important;
+  overflow: visible !important;
+}
+
+/* Убираем все что может мешать отображению выпадающих меню */
+.books-page,
+.books-page-container,
+.page-header {
+  overflow: visible !important;
+  z-index: auto !important;
+}
+
+/* Конкретные стили для компонента Select в фильтрах */
+.catalog-filters .custom-select {
+  position: relative !important;
+  z-index: 200 !important;
+}
+
+.catalog-filters .select-dropdown {
+  position: absolute !important;
+  z-index: 99999 !important;
+  top: calc(100% + 4px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  background: white !important;
+  border: 2px solid rgba(55, 105, 245, 0.2) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(55, 105, 245, 0.15) !important;
+  max-height: 250px !important;
+  overflow-y: auto !important;
 } 

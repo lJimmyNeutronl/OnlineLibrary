@@ -1,212 +1,194 @@
-.books-page-container {
+.books-page {
+  /* Убираем старые стили фона, так как теперь фон контролируется AnimatedBackground */
+  min-height: 100vh;
+  /* background убираем, используется из AnimatedBackground */
+  padding: 40px 0; /* Добавляем padding как на других страницах */
+}
+
+.books-page-wrapper {
+  /* Обертка для всего контента */
   width: 100%;
-  min-height: calc(100vh - 64px);
-  background-color: #f5f7fa;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .books-page-content {
+  /* Белый блок с фильтрами и книгами */
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 16px;
+  margin-top: 32px;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.books-page-header {
-  margin-bottom: 24px;
+.books-page-container {
+  /* Контейнер внутри белого блока */
+  width: 100%;
+}
+
+/* Заголовок страницы - теперь вне белого блока */
+.page-header {
   text-align: center;
+  margin-bottom: 0; /* Убираем нижний отступ, так как есть margin-top у белого блока */
+  padding: 0; /* Убираем padding */
 }
 
-.books-page-description {
-  max-width: 700px;
-  margin: 0 auto 32px;
-  color: #555;
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+  /* Добавляем текстовую тень для лучшей читаемости на анимированном фоне */
+  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.8));
+}
+
+.page-description {
   font-size: 1.1rem;
+  color: #555;
+  max-width: 600px;
+  margin: 0 auto;
   line-height: 1.6;
+  padding: 12px 20px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
 }
 
-.books-content-section {
+/* Контент книг */
+.books-content {
+  margin-top: 24px;
+}
+
+/* Состояния */
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 24px;
-  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Строка с фильтрами и книгами */
-.books-page-row {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0 -12px;
-}
-
-.books-page-sidebar {
-  flex: 0 0 100%;
-  max-width: 100%;
-  padding: 0 12px;
-  margin-bottom: 24px;
-}
-
-.books-page-main {
-  flex: 0 0 100%;
-  max-width: 100%;
-  padding: 0 12px;
-}
-
-/* Стили для состояния загрузки */
-.books-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 80px 0;
-}
-
-.loader {
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3769f5;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Стили для пустого состояния */
-.books-empty {
-  padding: 32px;
-  text-align: center;
-}
-
-.empty-icon {
+.error-icon {
   font-size: 48px;
+  color: #ff4d4f;
   margin-bottom: 16px;
 }
 
-.empty-message {
-  color: #666;
-  font-size: 1.1rem;
+.error-state h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0 0 8px 0;
 }
 
-/* Стили для пагинации */
+.error-state p {
+  color: #666;
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.loading-state p {
+  margin-top: 16px;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Пагинация */
 .pagination-container {
-  margin-top: 32px;
+  margin-top: 40px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.pagination-info {
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.pagination-buttons {
-  display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  margin-bottom: 16px;
-}
-
-.pagination-button {
-  margin: 0 4px 8px;
-  padding: 8px 14px;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.pagination-button:hover:not(.disabled):not(.active) {
-  background-color: #f0f0f0;
-  border-color: #ccc;
-}
-
-.pagination-button.active {
-  background-color: #3769f5;
-  color: white;
-  border-color: #3769f5;
-}
-
-.pagination-button.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-ellipsis {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 4px;
-}
-
-.pagination-size {
-  margin-top: 8px;
-}
-
-.page-size-select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
-  font-size: 0.9rem;
+  padding: 20px 0;
 }
 
 /* Адаптивность */
-@media (min-width: 768px) {
-  .books-page-sidebar {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
-    margin-bottom: 0;
-  }
-
-  .books-page-main {
-    flex: 0 0 66.666667%;
-    max-width: 66.666667%;
-  }
-  
-  .pagination-container {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-  
-  .pagination-info {
-    margin-bottom: 0;
-  }
-  
-  .pagination-buttons {
-    margin-bottom: 0;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  
-  .pagination-size {
-    margin-top: 0;
+@media (max-width: 1024px) {
+  .books-page-wrapper {
+    padding: 0 16px;
   }
 }
 
 @media (max-width: 768px) {
-  .books-page-description {
+  .books-page {
+    padding: 20px 0;
+  }
+  
+  .books-page-wrapper {
+    padding: 0 12px;
+  }
+  
+  .books-page-content {
+    margin-top: 24px;
+    padding: 16px;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .page-description {
     font-size: 1rem;
+    padding: 10px 16px;
+  }
+  
+  .books-content {
+    margin-top: 16px;
+  }
+  
+  .error-state,
+  .loading-state {
+    padding: 40px 16px;
+  }
+  
+  .error-icon {
+    font-size: 36px;
+  }
+  
+  .error-state h3 {
+    font-size: 1.25rem;
+  }
+  
+  .pagination-container {
+    margin-top: 24px;
+    padding: 16px 0;
   }
 }
 
 @media (max-width: 480px) {
+  .books-page-wrapper {
+    padding: 0 8px;
+  }
+  
   .books-page-content {
-    padding: 20px 12px;
+    padding: 12px;
   }
   
-  .books-content-section {
-    padding: 16px;
+  .page-title {
+    font-size: 1.75rem;
   }
   
-  .pagination-button {
-    padding: 6px 10px;
-    font-size: 0.8rem;
+  .page-description {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+  
+  .error-state,
+  .loading-state {
+    padding: 32px 12px;
   }
 } 

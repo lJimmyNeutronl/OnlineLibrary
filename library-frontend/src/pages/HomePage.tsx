@@ -11,15 +11,7 @@ import {
   FaBookReader, 
   FaPencilAlt, 
   FaGraduationCap, 
-  FaFeatherAlt,
-  FaSearch, 
-  FaUsers, 
-  FaArrowRight,
-  FaChevronRight,
-  FaChevronDown,
-  FaChevronUp,
-  FaHeart,
-  FaEye
+  FaFeatherAlt
 } from 'react-icons/fa';
 import { MdClear } from 'react-icons/md';
 import BookCard from '../components/book-card/BookCard';

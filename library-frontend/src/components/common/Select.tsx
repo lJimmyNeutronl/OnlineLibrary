@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi';
+import './Select.css';
 
 export interface SelectOptionType {
   value: string | number;
@@ -17,6 +18,7 @@ interface SelectProps {
   disabled?: boolean;
   allowClear?: boolean;
   className?: string;
+  size?: 'small' | 'middle' | 'large';
 }
 
 interface OptionProps {
@@ -42,6 +44,7 @@ const Select: SelectComponent = ({
   disabled = false,
   allowClear = false,
   className = '',
+  size = 'middle',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState<string | number | undefined>(propValue !== undefined ? propValue : defaultValue);
@@ -138,68 +141,37 @@ const Select: SelectComponent = ({
     }
   };
 
-  // Стили для основного контейнера
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-    width: '100%',
-    ...style
-  };
+  // Формируем классы
+  const containerClasses = [
+    'custom-select',
+    `size-${size}`,
+    className
+  ].filter(Boolean).join(' ');
 
-  // Стили для селекта
-  const selectStyle: React.CSSProperties = {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: '32px',
-    padding: '4px 11px',
-    border: '1px solid #d9d9d9',
-    borderRadius: '4px',
-    backgroundColor: disabled ? '#f5f5f5' : '#fff',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    transition: 'all 0.3s',
-  };
+  const selectorClasses = [
+    'select-selector',
+    isOpen ? 'open' : '',
+    disabled ? 'disabled' : ''
+  ].filter(Boolean).join(' ');
 
-  // Стили для дропдауна
-  const dropdownStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: 'calc(100% + 4px)',
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    backgroundColor: '#fff',
-    border: '1px solid #d9d9d9',
-    borderRadius: '4px',
-    boxShadow: '0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08)',
-    maxHeight: '256px',
-    overflow: 'auto',
-    padding: '4px 0',
-  };
+  const valueClasses = [
+    'select-value',
+    !selectedOption ? 'placeholder' : ''
+  ].filter(Boolean).join(' ');
 
   return (
     <div 
-      className={`custom-select ${className}`} 
-      style={containerStyle}
+      className={containerClasses}
+      style={style}
       ref={selectRef}
       tabIndex={disabled ? -1 : 0}
       onKeyDown={handleKeyDown}
     >
       <div 
-        className={`select-selector ${isOpen ? 'open' : ''}`}
-        style={selectStyle}
+        className={selectorClasses}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
-        <div 
-          className="select-value" 
-          style={{ 
-            flex: 1, 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis', 
-            whiteSpace: 'nowrap',
-            color: !selectedOption && !disabled ? '#bfbfbf' : 'rgba(0, 0, 0, 0.85)',
-            opacity: disabled ? 0.4 : 1,
-          }}
-        >
+        <div className={valueClasses}>
           {selectedOption ? selectedOption.label : placeholder}
         </div>
         
@@ -207,37 +179,41 @@ const Select: SelectComponent = ({
           {allowClear && value !== undefined && !disabled && (
             <FiX 
               size={14} 
-              style={{ marginRight: 8, color: '#bfbfbf' }}
+              className="select-clear"
               onClick={handleClear}
             />
           )}
-          {isOpen ? <FiChevronUp size={16} color="#bfbfbf" /> : <FiChevronDown size={16} color="#bfbfbf" />}
+          <div className="select-arrow">
+            {isOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+          </div>
         </div>
       </div>
       
       {isOpen && !disabled && (
-        <div className="select-dropdown" style={dropdownStyle} ref={dropdownRef}>
+        <div className="select-dropdown" ref={dropdownRef}>
           {options.length === 0 ? (
-            <div style={{ padding: '8px 12px', color: '#999', textAlign: 'center' }}>
+            <div className="select-empty">
               Нет доступных опций
             </div>
           ) : (
-            options.map((option, index) => (
-              <div 
-                key={option.value.toString()}
-                className={`select-option ${value === option.value ? 'selected' : ''} ${activeIndex === index ? 'active' : ''}`}
-                style={{
-                  padding: '8px 12px',
-                  cursor: option.disabled ? 'not-allowed' : 'pointer',
-                  backgroundColor: activeIndex === index ? '#f5f5f5' : 'transparent',
-                  color: option.disabled ? '#bfbfbf' : 'rgba(0, 0, 0, 0.85)',
-                  fontWeight: value === option.value ? 'bold' : 'normal',
-                }}
-                onClick={() => !option.disabled && handleSelect(option)}
-              >
-                {option.label}
-              </div>
-            ))
+            options.map((option, index) => {
+              const optionClasses = [
+                'select-option',
+                value === option.value ? 'selected' : '',
+                activeIndex === index ? 'active' : '',
+                option.disabled ? 'disabled' : ''
+              ].filter(Boolean).join(' ');
+
+              return (
+                <div 
+                  key={option.value.toString()}
+                  className={optionClasses}
+                  onClick={() => !option.disabled && handleSelect(option)}
+                >
+                  {option.label}
+                </div>
+              );
+            })
           )}
         </div>
       )}
