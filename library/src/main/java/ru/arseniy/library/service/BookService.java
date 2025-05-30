@@ -379,4 +379,126 @@ public class BookService {
         Pageable pageable = PageRequest.of(page, size);
         return new PageImpl<>(paginatedBooks, pageable, totalElements);
     }
+    
+    /**
+     * Получает все ID категории включая подкатегории
+     *
+     * @param categoryId ID родительской категории
+     * @return список всех ID (родительская + все подкатегории)
+     */
+    private List<Integer> getAllCategoryIds(Integer categoryId) {
+        List<Integer> allIds = new ArrayList<>();
+        allIds.add(categoryId);
+        
+        // Получаем все подкатегории рекурсивно
+        collectSubcategoryIds(categoryId, allIds);
+        
+        return allIds;
+    }
+    
+    /**
+     * Рекурсивно собирает ID всех подкатегорий
+     *
+     * @param parentCategoryId ID родительской категории
+     * @param allIds список для накопления ID
+     */
+    private void collectSubcategoryIds(Integer parentCategoryId, List<Integer> allIds) {
+        List<Category> subcategories = categoryRepository.findByParentCategoryId(parentCategoryId);
+        
+        for (Category subcategory : subcategories) {
+            allIds.add(subcategory.getId());
+            // Рекурсивно обрабатываем вложенные подкатегории
+            collectSubcategoryIds(subcategory.getId(), allIds);
+        }
+    }
+    
+    /**
+     * Получает книги по нескольким родительским категориям
+     *
+     * @param categoryIds список ID родительских категорий
+     * @param pageable параметры пагинации
+     * @param includeSubcategories включать ли подкатегории
+     * @return страница книг
+     */
+    public Page<Book> getBooksByMultipleCategories(List<Integer> categoryIds, Pageable pageable, boolean includeSubcategories) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        
+        List<Integer> allCategoryIds = new ArrayList<>();
+        
+        if (includeSubcategories) {
+            // Для каждой родительской категории получаем все подкатегории
+            for (Integer categoryId : categoryIds) {
+                allCategoryIds.addAll(getAllCategoryIds(categoryId));
+            }
+        } else {
+            // Используем только родительские категории
+            allCategoryIds = categoryIds;
+        }
+        
+        Page<Book> result = bookRepository.findBooksByMultipleCategories(allCategoryIds, pageable);
+        
+        return result;
+    }
+    
+    /**
+     * Получает книги по нескольким родительским категориям с сортировкой по рейтингу
+     *
+     * @param categoryIds список ID родительских категорий  
+     * @param page номер страницы
+     * @param size размер страницы
+     * @param direction направление сортировки
+     * @param includeSubcategories включать ли подкатегории
+     * @return страница книг
+     */
+    public Page<Book> getBooksByMultipleCategoriesWithRatingSort(List<Integer> categoryIds, int page, int size, String direction, boolean includeSubcategories) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Page.empty(PageRequest.of(page, size));
+        }
+        
+        List<Integer> allCategoryIds = new ArrayList<>();
+        
+        if (includeSubcategories) {
+            // Для каждой родительской категории получаем все подкатегории
+            for (Integer categoryId : categoryIds) {
+                allCategoryIds.addAll(getAllCategoryIds(categoryId));
+            }
+        } else {
+            // Используем только родительские категории
+            allCategoryIds = categoryIds;
+        }
+        
+        // Получаем все книги по категориям без пагинации
+        List<Book> allBooks = bookRepository.findBooksByMultipleCategoriesAsList(allCategoryIds);
+        
+        // Обогащаем книги информацией о рейтинге
+        enrichBooksWithRatings(allBooks);
+        
+        // Сортируем книги по рейтингу
+        Comparator<Book> ratingComparator;
+        if ("desc".equalsIgnoreCase(direction)) {
+            // Сортировка по убыванию: высокие рейтинги первыми
+            ratingComparator = Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder());
+        } else {
+            // Сортировка по возрастанию: низкие рейтинги первыми
+            ratingComparator = Comparator.comparing(Book::getRating)
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0);
+        }
+        
+        List<Book> sortedBooks = allBooks.stream()
+                .sorted(ratingComparator)
+                .collect(Collectors.toList());
+        
+        // Применяем пагинацию вручную
+        int totalElements = sortedBooks.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Book> paginatedBooks = sortedBooks.subList(startIndex, endIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
 }

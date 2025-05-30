@@ -254,6 +254,55 @@ const bookService = {
     }
   },
   
+  // Получение книг по нескольким категориям
+  async getBooksByMultipleCategories(categoryIds: number[], params: BookSearchParams = {}): Promise<PagedResponse<Book>> {
+    try {
+      if (!categoryIds || categoryIds.length === 0) {
+        return {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          size: params.size || 10,
+          number: params.page || 0
+        };
+      }
+
+      const queryParams = new URLSearchParams();
+      
+      // Добавляем параметры пагинации и сортировки
+      if (params.page !== undefined) queryParams.append('page', params.page.toString());
+      if (params.size !== undefined) queryParams.append('size', params.size.toString());
+      if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+      if (params.direction) queryParams.append('direction', params.direction);
+      
+      // Добавляем ID категорий как отдельные параметры
+      categoryIds.forEach(id => queryParams.append('categoryIds', id.toString()));
+      
+      // По умолчанию включаем подкатегории для мультифильтра
+      const includeSubcategories = params.includeSubcategories !== undefined ? params.includeSubcategories : true;
+      queryParams.append('includeSubcategories', includeSubcategories.toString());
+      
+      const url = `/books/categories?${queryParams.toString()}`;
+      
+      const response = await API.get<PagedResponse<Book>>(url);
+      
+      // Обновляем рейтинги книг в кэше
+      this.updateBooksRatingsCache(response.data.content);
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Ошибка при получении книг для категорий ${categoryIds.join(', ')}, используем мок данные:`, error);
+      // Возвращаем пустой результат при ошибке с мультикатегориями
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: params.size || 10,
+        number: params.page || 0
+      };
+    }
+  },
+  
   // Получение популярных книг
   async getPopularBooks(limit: number = 10): Promise<Book[]> {
     try {

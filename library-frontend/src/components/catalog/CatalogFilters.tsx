@@ -12,7 +12,7 @@ import {
   FiList
 } from 'react-icons/fi';
 import { Button, Input, Select, Rate } from '../common';
-import { useCategories } from '../../hooks/useCategories';
+import { useRootCategories } from '../../hooks/useCategories';
 import { CatalogFilters } from '../../hooks/useCatalogFilters';
 import './CatalogFilters.css';
 
@@ -58,7 +58,7 @@ const CatalogFiltersComponent: React.FC<CatalogFiltersProps> = ({
   onViewModeChange,
   hasActiveFilters
 }) => {
-  const { categories, loading: categoriesLoading } = useCategories();
+  const { categories, loading: categoriesLoading } = useRootCategories();
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchValue, setSearchValue] = useState(filters.search);
 

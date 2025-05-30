@@ -6,10 +6,12 @@ import { BookList } from '../components/book-card';
 import CatalogFilters from '../components/catalog/CatalogFilters';
 import AnimatedBackground from '../components/common/AnimatedBackground';
 import { Pagination, Spin, Empty, Button } from '../components/common';
+import bookService from '../services/bookService';
 import './BooksPage.css';
 
 const BooksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [totalBooksInDB, setTotalBooksInDB] = useState<number>(0);
   
   // Хуки для управления фильтрами и данными
   const {
@@ -31,6 +33,21 @@ const BooksPage: React.FC = () => {
     totalPages,
     refetch,
   } = useCatalog(apiParams);
+  
+  // Получаем общее количество книг в базе данных при первой загрузке
+  React.useEffect(() => {
+    const fetchTotalBooks = async () => {
+      try {
+        // Запрашиваем первую страницу без фильтров для получения общего количества
+        const response = await bookService.getBooks({ page: 0, size: 1 });
+        setTotalBooksInDB(response.totalElements);
+      } catch (error) {
+        console.error('Ошибка при получении общего количества книг:', error);
+      }
+    };
+    
+    fetchTotalBooks();
+  }, []);
 
   // Обработчики
   const handlePageChange = (page: number) => {
@@ -91,8 +108,8 @@ const BooksPage: React.FC = () => {
                 onReset={resetFilters}
                 activeFiltersCount={activeFiltersCount}
                 loading={loading}
-                totalBooks={totalElements}
-                currentCount={books.length}
+                totalBooks={totalBooksInDB}
+                currentCount={totalElements}
                 viewMode={viewMode}
                 onViewModeChange={handleViewModeChange}
                 hasActiveFilters={hasActiveFilters}

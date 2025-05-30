@@ -21,7 +21,6 @@ import { fadeIn } from '@/styles/animations';
 import styles from '@/components/common/SearchFilterPanel/SearchFilterPanel.module.css';
 import '@/styles/common.css';
 
-
 const { Title, Paragraph } = Typography;
 
 const CategoryBooksPage = () => {
@@ -31,45 +30,54 @@ const CategoryBooksPage = () => {
   const [page, setPage] = useState<number>(1);
   const [totalBooks, setTotalBooks] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  
+  // Состояния для фильтрации и отображения
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('rating');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
+  const [isFilteringActive, setIsFilteringActive] = useState<boolean>(false);
+  
   const pageSize = 15;
 
   const { category } = useCategoryDetails(categoryId);
 
-  const fetchBooks = useCallback(async (currentPage = page) => {
+  // Функция загрузки с явной передачей параметров
+  const loadBooks = async (pageNumber: number, sortByParam?: SortOption, sortDirectionParam?: SortDirection) => {
     if (!categoryId) return;
+    
+    const currentSortBy = sortByParam || sortBy;
+    const currentSortDirection = sortDirectionParam || sortDirection;
     
     setLoading(true);
     try {
       // Определяем параметры сортировки
-      let sortByParam: string | undefined;
-      let directionParam: 'asc' | 'desc' = sortDirection;
+      let apiSortBy: string | undefined;
+      let directionParam: 'asc' | 'desc' = currentSortDirection;
       
-      switch (sortBy) {
+      switch (currentSortBy) {
         case 'year':
-          sortByParam = 'publicationYear';
+          apiSortBy = 'publicationYear';
           break;
         case 'rating':
-          sortByParam = 'rating';
+          apiSortBy = 'rating';
           break;
         case 'uploadDate':
-          sortByParam = 'uploadDate';
+          apiSortBy = 'uploadDate';
           break;
         case 'relevance':
         default:
           // По умолчанию сортируем по рейтингу, если нет специальной сортировки
-          sortByParam = 'rating';
+          apiSortBy = 'rating';
           break;
       }
       
       const response = await bookService.getBooksByCategory(Number(categoryId), {
-        page: currentPage - 1,
+        page: pageNumber - 1, // API использует 0-based индексацию
         size: pageSize,
-        sortBy: sortByParam,
+        sortBy: apiSortBy,
         direction: directionParam
       });
       
@@ -84,31 +92,61 @@ const CategoryBooksPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [categoryId, page, sortBy, sortDirection, pageSize]);
+  };
 
+  // Загрузка при первом рендере и смене категории
   useEffect(() => {
-    fetchBooks();
-  }, [fetchBooks]);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-    window.scrollTo(0, 0);
-    
-    // Если нет активных фильтров, запрашиваем новую страницу с сервера
-    if (filteredBooks.length === 0) {
-      fetchBooks(newPage);
+    if (categoryId) {
+      setPage(1);
+      setIsInitialized(false);
+      setSearchQuery('');
+      setFilteredBooks([]);
+      setIsFilteringActive(false);
+      loadBooks(1);
     }
-  }, [filteredBooks.length, fetchBooks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryId]);
+
+  // Загрузка при смене страницы (кроме первоначальной загрузки)
+  useEffect(() => {
+    if (categoryId && isInitialized && !isFilteringActive) {
+      loadBooks(page);
+    } else if (categoryId && !isInitialized) {
+      // Первоначальная загрузка завершена
+      setIsInitialized(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, categoryId, isInitialized, isFilteringActive]);
+
+  // Обновляем состояние фильтрации при изменении поискового запроса
+  useEffect(() => {
+    const wasActive = isFilteringActive;
+    const newActive = searchQuery.trim() !== '';
+    setIsFilteringActive(newActive);
+  }, [searchQuery, isFilteringActive]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleSortChange = useCallback((value: SortOption, direction: SortDirection) => {
     setSortBy(value);
     setSortDirection(direction);
+    
+    // При изменении сортировки сбрасываем страницу и фильтрацию
     setPage(1);
-  }, []);
-
-  const handleResetPage = useCallback(() => {
-    setPage(1);
-  }, []);
+    if (isFilteringActive) {
+      setSearchQuery('');
+      setFilteredBooks([]);
+      setIsFilteringActive(false);
+    }
+    
+    // Сразу загружаем данные с новыми параметрами
+    if (!isFilteringActive) {
+      loadBooks(1, value, direction);
+    }
+  }, [isFilteringActive]);
 
   const handleViewModeChange = useCallback((mode: ViewMode) => {
     setViewMode(mode);
@@ -116,11 +154,22 @@ const CategoryBooksPage = () => {
 
   const handleFilteredDataChange = useCallback((filtered: Book[]) => {
     setFilteredBooks(filtered);
-    setPage(1); // Сбрасываем страницу при фильтрации
+    
+    // Сбрасываем страницу только если есть активный поиск
+    if (searchQuery.trim() !== '') {
+      setPage(1);
+    }
+  }, [searchQuery]);
+
+  const handleSearchQueryChange = useCallback((query: string) => {
+    setSearchQuery(query);
   }, []);
 
-  // Определяем, активна ли фильтрация
-  const isFilteringActive = filteredBooks.length > 0;
+  const handleResetPage = useCallback(() => {
+    setPage(1);
+  }, []);
+
+  // Определяем, какие книги отображать
   const displayBooks = isFilteringActive ? filteredBooks : books;
   
   // Пагинация на клиентской стороне для отфильтрованных результатов
@@ -187,6 +236,7 @@ const CategoryBooksPage = () => {
             onSortChange={handleSortChange}
             onViewModeChange={handleViewModeChange}
             searchQuery={searchQuery}
+            onSearchQueryChange={handleSearchQueryChange}
             sortBy={sortBy}
             sortDirection={sortDirection}
             viewMode={viewMode}
@@ -208,13 +258,17 @@ const CategoryBooksPage = () => {
                 viewMode={viewMode}
               />
 
-              <div style={{ textAlign: 'center', marginTop: '32px' }}>
-                <Pagination
-                  currentPage={page}
-                  totalPages={isFilteringActive ? Math.ceil(filteredBooks.length / pageSize) : totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div>
+              {/* Пагинация */}
+              {(isFilteringActive ? Math.ceil(filteredBooks.length / pageSize) : totalPages) > 1 && (
+                <div style={{ textAlign: 'center', marginTop: '32px' }}>
+                  <p>Страница {page} из {isFilteringActive ? Math.ceil(filteredBooks.length / pageSize) : totalPages}</p>
+                  <Pagination
+                    currentPage={page}
+                    totalPages={isFilteringActive ? Math.ceil(filteredBooks.length / pageSize) : totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                </div>
+              )}
             </>
           )}
         </motion.div>

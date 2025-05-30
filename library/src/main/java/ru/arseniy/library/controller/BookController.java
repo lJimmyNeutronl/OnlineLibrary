@@ -144,6 +144,42 @@ public class BookController {
         return ResponseEntity.ok(bookDTOPage);
     }
     
+    @GetMapping("/categories")
+    public ResponseEntity<Page<BookDTO>> getBooksByMultipleCategories(
+            @RequestParam List<Integer> categoryIds,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "title") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(defaultValue = "false") boolean includeSubcategories) {
+        
+        Page<Book> books;
+        Pageable pageable;
+        
+        // Если сортировка по рейтингу, обрабатываем отдельно
+        if ("rating".equals(sortBy)) {
+            books = bookService.getBooksByMultipleCategoriesWithRatingSort(categoryIds, page, size, direction, includeSubcategories);
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+            books = bookService.getBooksByMultipleCategories(categoryIds, pageable, includeSubcategories);
+        }
+        
+        // Преобразуем Page<Book> в Page<BookDTO>
+        List<BookDTO> bookDTOs = books.getContent().stream()
+                .map(BookDTO::fromEntity)
+                .collect(Collectors.toList());
+        
+        Page<BookDTO> bookDTOPage = new PageImpl<>(
+                bookDTOs, 
+                pageable, 
+                books.getTotalElements()
+        );
+        
+        return ResponseEntity.ok(bookDTOPage);
+    }
+    
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BookDTO> createBook(

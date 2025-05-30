@@ -76,4 +76,17 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
            "LOWER(b.author) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(b.description) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Book> searchBooksAsList(@Param("query") String query);
+    
+    /**
+     * Находит уникальные книги по нескольким категориям с пагинацией
+     */
+    @Query("SELECT DISTINCT b FROM Book b JOIN b.categories c WHERE c.id IN :categoryIds")
+    Page<Book> findBooksByMultipleCategories(@Param("categoryIds") List<Integer> categoryIds, Pageable pageable);
+    
+    /**
+     * Находит уникальные книги по нескольким категориям без пагинации (возвращает список)
+     * Используется для сортировки по рейтингу
+     */
+    @Query("SELECT DISTINCT b FROM Book b JOIN b.categories c WHERE c.id IN :categoryIds")
+    List<Book> findBooksByMultipleCategoriesAsList(@Param("categoryIds") List<Integer> categoryIds);
 }

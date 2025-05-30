@@ -77,4 +77,56 @@ export const useCategories = () => {
     error,
     toggleCategory,
   };
+};
+
+/**
+ * Хук для получения только корневых категорий (родительских) без подкатегорий
+ * Используется для фильтров
+ */
+export const useRootCategories = () => {
+  const [categories, setCategories] = useState<CategoryWithBookCount[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRootCategories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Получаем иерархию категорий
+        const categoryHierarchy = await categoryService.getCategoryHierarchy();
+        
+        // Получаем данные о количестве книг в каждой категории
+        const categoriesWithBookCount = await categoryService.getCategoriesWithBookCount();
+        
+        // Создаем словарь для быстрого доступа к количеству книг по ID категории
+        const bookCountMap = categoriesWithBookCount.reduce((map, category) => {
+          map[category.id] = category.bookCount;
+          return map;
+        }, {} as Record<number, number>);
+        
+        // Возвращаем только корневые категории с данными с сервера (уже включают подкатегории)
+        const rootCategories = categoryHierarchy.map(rootCategory => ({
+          ...rootCategory,
+          bookCount: bookCountMap[rootCategory.id] || 0, // Используем данные с сервера напрямую
+          subcategories: undefined // Убираем подкатегории для фильтров
+        }));
+        
+        setCategories(rootCategories);
+      } catch (err) {
+        setError('Не удалось загрузить категории. Пожалуйста, попробуйте позже.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRootCategories();
+  }, []);
+
+  return {
+    categories,
+    loading,
+    error,
+  };
 }; 
