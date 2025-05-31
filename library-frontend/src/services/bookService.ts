@@ -57,6 +57,10 @@ export interface BookSearchParams {
   direction?: 'asc' | 'desc';
   query?: string;
   includeSubcategories?: boolean;
+  yearFrom?: number;
+  yearTo?: number;
+  language?: string;
+  minRating?: number;
 }
 
 // Интерфейс для кэшированных рейтингов
@@ -145,7 +149,15 @@ const bookService = {
       if (params.direction) queryParams.append('direction', params.direction);
       if (params.query) queryParams.append('query', params.query);
       
-      const response = await API.get<PagedResponse<Book>>(`/books?${queryParams.toString()}`);
+      // Добавляем параметры фильтрации
+      if (params.yearFrom !== undefined && params.yearFrom > 0) queryParams.append('yearFrom', params.yearFrom.toString());
+      if (params.yearTo !== undefined && params.yearTo > 0) queryParams.append('yearTo', params.yearTo.toString());
+      if (params.language) queryParams.append('language', params.language);
+      if (params.minRating !== undefined && params.minRating > 0) queryParams.append('minRating', params.minRating.toString());
+      
+      const url = `/books?${queryParams.toString()}`;
+      
+      const response = await API.get<PagedResponse<Book>>(url);
       
       // Обновляем рейтинги книг в кэше
       this.updateBooksRatingsCache(response.data.content);
@@ -175,6 +187,12 @@ const bookService = {
       
       // Добавляем параметр поиска
       queryParams.append('query', query);
+      
+      // Добавляем параметры фильтрации
+      if (params.yearFrom !== undefined && params.yearFrom > 0) queryParams.append('yearFrom', params.yearFrom.toString());
+      if (params.yearTo !== undefined && params.yearTo > 0) queryParams.append('yearTo', params.yearTo.toString());
+      if (params.language) queryParams.append('language', params.language);
+      if (params.minRating !== undefined && params.minRating > 0) queryParams.append('minRating', params.minRating.toString());
       
       const response = await API.get<PagedResponse<Book>>(`/books/search?${queryParams.toString()}`);
       
@@ -236,6 +254,12 @@ const bookService = {
       const includeSubcategories = params.includeSubcategories !== undefined ? params.includeSubcategories : true;
       queryParams.append('includeSubcategories', includeSubcategories.toString());
       
+      // Добавляем параметры фильтрации
+      if (params.yearFrom !== undefined && params.yearFrom > 0) queryParams.append('yearFrom', params.yearFrom.toString());
+      if (params.yearTo !== undefined && params.yearTo > 0) queryParams.append('yearTo', params.yearTo.toString());
+      if (params.language) queryParams.append('language', params.language);
+      if (params.minRating !== undefined && params.minRating > 0) queryParams.append('minRating', params.minRating.toString());
+      
       const response = await API.get<PagedResponse<Book>>(`/books/category/${categoryId}?${queryParams.toString()}`);
       
       // Обновляем рейтинги книг в кэше
@@ -281,6 +305,12 @@ const bookService = {
       // По умолчанию включаем подкатегории для мультифильтра
       const includeSubcategories = params.includeSubcategories !== undefined ? params.includeSubcategories : true;
       queryParams.append('includeSubcategories', includeSubcategories.toString());
+      
+      // Добавляем параметры фильтрации
+      if (params.yearFrom !== undefined && params.yearFrom > 0) queryParams.append('yearFrom', params.yearFrom.toString());
+      if (params.yearTo !== undefined && params.yearTo > 0) queryParams.append('yearTo', params.yearTo.toString());
+      if (params.language) queryParams.append('language', params.language);
+      if (params.minRating !== undefined && params.minRating > 0) queryParams.append('minRating', params.minRating.toString());
       
       const url = `/books/categories?${queryParams.toString()}`;
       

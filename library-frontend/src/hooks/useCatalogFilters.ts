@@ -19,8 +19,8 @@ export interface CatalogFiltersState extends CatalogFilters {
 const DEFAULT_FILTERS: CatalogFilters = {
   search: '',
   categoryIds: [],
-  yearFrom: 1900,
-  yearTo: new Date().getFullYear(),
+  yearFrom: 0,
+  yearTo: 0,
   language: '',
   minRating: 0,
   sortBy: 'title',

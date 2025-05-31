@@ -29,12 +29,22 @@ public class BookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "title") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(required = false) Integer yearFrom,
+            @RequestParam(required = false) Integer yearTo,
+            @RequestParam(required = false) String language,
+            @RequestParam(defaultValue = "0") double minRating) {
         
-        Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<Book> books;
         
-        Page<Book> books = bookService.getAllBooks(pageable);
+        // Если сортировка по рейтингу, используем специальный метод
+        if ("rating".equals(sortBy)) {
+            books = bookService.getAllBooksWithRatingSortAndFilters(page, size, direction, yearFrom, yearTo, language, minRating);
+        } else {
+            Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+            books = bookService.getAllBooksWithFilters(pageable, yearFrom, yearTo, language, minRating);
+        }
         
         // Преобразуем Page<Book> в Page<BookDTO>
         List<BookDTO> bookDTOs = books.getContent().stream()
@@ -43,7 +53,7 @@ public class BookController {
         
         Page<BookDTO> bookDTOPage = new PageImpl<>(
                 bookDTOs, 
-                pageable, 
+                PageRequest.of(page, size), 
                 books.getTotalElements()
         );
         
@@ -72,19 +82,23 @@ public class BookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "title") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(required = false) Integer yearFrom,
+            @RequestParam(required = false) Integer yearTo,
+            @RequestParam(required = false) String language,
+            @RequestParam(defaultValue = "0") double minRating) {
         
         Page<Book> books;
         Pageable pageable;
         
         // Если сортировка по рейтингу, обрабатываем отдельно
         if ("rating".equals(sortBy)) {
-            books = bookService.searchBooksWithRatingSort(query, page, size, direction);
+            books = bookService.searchBooksWithRatingSortAndFilters(query, page, size, direction, yearFrom, yearTo, language, minRating);
             pageable = PageRequest.of(page, size);
         } else {
             Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
             pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-            books = bookService.searchBooks(query, pageable);
+            books = bookService.searchBooksWithFilters(query, pageable, yearFrom, yearTo, language, minRating);
         }
         
         // Преобразуем Page<Book> в Page<BookDTO>
@@ -108,25 +122,29 @@ public class BookController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "title") String sortBy,
             @RequestParam(defaultValue = "asc") String direction,
-            @RequestParam(defaultValue = "true") boolean includeSubcategories) {
+            @RequestParam(defaultValue = "true") boolean includeSubcategories,
+            @RequestParam(required = false) Integer yearFrom,
+            @RequestParam(required = false) Integer yearTo,
+            @RequestParam(required = false) String language,
+            @RequestParam(defaultValue = "0") double minRating) {
         
         Page<Book> books;
         Pageable pageable;
         
         // Если сортировка по рейтингу, обрабатываем отдельно
         if ("rating".equals(sortBy)) {
-            books = bookService.getBooksByCategoryWithRatingSort(categoryId, page, size, direction, includeSubcategories);
+            books = bookService.getBooksByCategoryWithRatingSortAndFilters(categoryId, page, size, direction, includeSubcategories, yearFrom, yearTo, language, minRating);
             pageable = PageRequest.of(page, size);
         } else {
             Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
             pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
         
-        if (includeSubcategories) {
-            // Получаем книги с учетом всей иерархии категорий
-            books = bookService.getBooksByCategoryWithHierarchy(categoryId, pageable);
-        } else {
-            // Получаем книги только из указанной категории без подкатегорий
-            books = bookService.getBooksByCategory(categoryId, pageable);
+            if (includeSubcategories) {
+                // Получаем книги с учетом всей иерархии категорий
+                books = bookService.getBooksByCategoryWithHierarchyAndFilters(categoryId, pageable, yearFrom, yearTo, language, minRating);
+            } else {
+                // Получаем книги только из указанной категории без подкатегорий
+                books = bookService.getBooksByCategoryWithFilters(categoryId, pageable, yearFrom, yearTo, language, minRating);
             }
         }
         
@@ -151,19 +169,23 @@ public class BookController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "title") String sortBy,
             @RequestParam(defaultValue = "asc") String direction,
-            @RequestParam(defaultValue = "false") boolean includeSubcategories) {
+            @RequestParam(defaultValue = "false") boolean includeSubcategories,
+            @RequestParam(required = false) Integer yearFrom,
+            @RequestParam(required = false) Integer yearTo,
+            @RequestParam(required = false) String language,
+            @RequestParam(defaultValue = "0") double minRating) {
         
         Page<Book> books;
         Pageable pageable;
         
         // Если сортировка по рейтингу, обрабатываем отдельно
         if ("rating".equals(sortBy)) {
-            books = bookService.getBooksByMultipleCategoriesWithRatingSort(categoryIds, page, size, direction, includeSubcategories);
+            books = bookService.getBooksByMultipleCategoriesWithRatingSortAndFilters(categoryIds, page, size, direction, includeSubcategories, yearFrom, yearTo, language, minRating);
             pageable = PageRequest.of(page, size);
         } else {
             Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
             pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-            books = bookService.getBooksByMultipleCategories(categoryIds, pageable, includeSubcategories);
+            books = bookService.getBooksByMultipleCategoriesWithFilters(categoryIds, pageable, includeSubcategories, yearFrom, yearTo, language, minRating);
         }
         
         // Преобразуем Page<Book> в Page<BookDTO>

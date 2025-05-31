@@ -76,7 +76,7 @@ const CatalogFiltersComponent: React.FC<CatalogFiltersProps> = ({
   };
 
   const handleYearChange = (field: 'yearFrom' | 'yearTo', value: string) => {
-    const year = parseInt(value) || (field === 'yearFrom' ? 1900 : new Date().getFullYear());
+    const year = parseInt(value) || 0;
     onFiltersChange({ [field]: year });
   };
 
@@ -235,14 +235,14 @@ const CatalogFiltersComponent: React.FC<CatalogFiltersProps> = ({
             {/* Год издания */}
             <div className="filter-section">
               <label className="filter-label">
-                Год издания: {filters.yearFrom} - {filters.yearTo}
+                Год издания: {filters.yearFrom > 0 ? filters.yearFrom : 'любой'} - {filters.yearTo > 0 ? filters.yearTo : 'любой'}
               </label>
               <div className="year-range">
                 <Input
                   type="number"
-                  min="1900"
-                  max={filters.yearTo}
-                  value={filters.yearFrom}
+                  min="1800"
+                  max={filters.yearTo > 0 ? filters.yearTo : currentYear}
+                  value={filters.yearFrom > 0 ? filters.yearFrom : ''}
                   onChange={(e) => handleYearChange('yearFrom', e.target.value)}
                   className="year-input"
                   placeholder="От"
@@ -250,9 +250,9 @@ const CatalogFiltersComponent: React.FC<CatalogFiltersProps> = ({
                 <span className="year-separator">—</span>
                 <Input
                   type="number"
-                  min={filters.yearFrom}
+                  min={filters.yearFrom > 0 ? filters.yearFrom : 1800}
                   max={currentYear}
-                  value={filters.yearTo}
+                  value={filters.yearTo > 0 ? filters.yearTo : ''}
                   onChange={(e) => handleYearChange('yearTo', e.target.value)}
                   className="year-input"
                   placeholder="До"
@@ -332,6 +332,14 @@ const CatalogFiltersComponent: React.FC<CatalogFiltersProps> = ({
               <span className="filter-tag">
                 Категории: {filters.categoryIds.length}
                 <button onClick={() => onFiltersChange({ categoryIds: [] })}>
+                  <FiX />
+                </button>
+              </span>
+            )}
+            {(filters.yearFrom > 0 || filters.yearTo > 0) && (
+              <span className="filter-tag">
+                Год: {filters.yearFrom > 0 ? filters.yearFrom : 'любой'} - {filters.yearTo > 0 ? filters.yearTo : 'любой'}
+                <button onClick={() => onFiltersChange({ yearFrom: 0, yearTo: 0 })}>
                   <FiX />
                 </button>
               </span>

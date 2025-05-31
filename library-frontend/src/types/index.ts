@@ -57,6 +57,10 @@ export interface BookSearchParams {
   direction?: 'asc' | 'desc';
   query?: string;
   includeSubcategories?: boolean;
+  yearFrom?: number;
+  yearTo?: number;
+  language?: string;
+  minRating?: number;
 } 
 
 // Перечисление поддерживаемых форматов книг

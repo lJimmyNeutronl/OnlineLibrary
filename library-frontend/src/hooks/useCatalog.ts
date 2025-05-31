@@ -30,6 +30,10 @@ export const useCatalog = (filters: CatalogFiltersState) => {
         size: params.size,
         sortBy: params.sortBy,
         direction: params.direction,
+        yearFrom: params.yearFrom,
+        yearTo: params.yearTo,
+        language: params.language,
+        minRating: params.minRating,
       };
 
       // Приоритет логики:
@@ -51,67 +55,14 @@ export const useCatalog = (filters: CatalogFiltersState) => {
         response = await bookService.getBooks(baseParams);
       }
 
-      // Применяем дополнительные фильтры на клиенте только для тех параметров, 
-      // которые еще не поддерживаются API (НЕ для категорий!)
-      let filteredBooks = response.content;
-      let needsClientPagination = false;
-
-      // Фильтр по году издания
-      if (params.yearFrom > 1900 || params.yearTo < new Date().getFullYear()) {
-        filteredBooks = filteredBooks.filter(book => {
-          const year = book.publicationYear;
-          if (!year) return false;
-          return year >= params.yearFrom && year <= params.yearTo;
-        });
-        needsClientPagination = true;
-      }
-
-      // Фильтр по языку
-      if (params.language) {
-        filteredBooks = filteredBooks.filter(book =>
-          book.language?.toLowerCase() === params.language.toLowerCase()
-        );
-        needsClientPagination = true;
-      }
-
-      // Фильтр по рейтингу
-      if (params.minRating > 0) {
-        filteredBooks = filteredBooks.filter(book =>
-          (book.rating || 0) >= params.minRating
-        );
-        needsClientPagination = true;
-      }
-
-      // Если применялись клиентские фильтры, пересчитываем пагинацию
-      if (needsClientPagination && filteredBooks.length !== response.content.length) {
-        // Для клиентской фильтрации нужно получить ВСЕ данные, а не только текущую страницу
-        // Это временное решение - в идеале все фильтры должны быть на сервере
-        
-        const totalElements = filteredBooks.length;
-        const totalPages = Math.ceil(totalElements / params.size);
-        
-        // Применяем пагинацию вручную
-        const startIndex = params.page * params.size;
-        const endIndex = Math.min(startIndex + params.size, filteredBooks.length);
-        const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
-
-        setState({
-          books: paginatedBooks,
-          loading: false,
-          error: null,
-          totalElements: totalElements,
-          totalPages: totalPages,
-        });
-      } else {
-        // Используем данные с сервера как есть
-        setState({
-          books: filteredBooks,
-          loading: false,
-          error: null,
-          totalElements: response.totalElements,
-          totalPages: response.totalPages,
-        });
-      }
+      // Теперь все фильтры применяются на сервере, поэтому используем данные как есть
+      setState({
+        books: response.content,
+        loading: false,
+        error: null,
+        totalElements: response.totalElements,
+        totalPages: response.totalPages,
+      });
     } catch (error) {
       console.error('Error fetching books:', error);
       setState(prev => ({

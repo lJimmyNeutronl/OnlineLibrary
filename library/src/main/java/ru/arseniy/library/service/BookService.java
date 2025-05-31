@@ -501,4 +501,362 @@ public class BookService {
         Pageable pageable = PageRequest.of(page, size);
         return new PageImpl<>(paginatedBooks, pageable, totalElements);
     }
+    
+    /**
+     * Применяет фильтры к списку книг
+     */
+    private List<Book> applyFilters(List<Book> books, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        return books.stream()
+                .filter(book -> {
+                    // Фильтр по году издания
+                    if (yearFrom != null && book.getPublicationYear() != null && book.getPublicationYear() < yearFrom) {
+                        return false;
+                    }
+                    if (yearTo != null && book.getPublicationYear() != null && book.getPublicationYear() > yearTo) {
+                        return false;
+                    }
+                    
+                    // Фильтр по языку
+                    if (language != null && !language.trim().isEmpty()) {
+                        String bookLanguage = book.getLanguage();
+                        if (bookLanguage == null) {
+                            return false;
+                        }
+                        if (!bookLanguage.equalsIgnoreCase(language.trim())) {
+                            return false;
+                        }
+                    }
+                    
+                    // Фильтр по минимальному рейтингу
+                    if (minRating > 0) {
+                        Double bookRating = book.getRating();
+                        if (bookRating == null || bookRating < minRating) {
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Получает все книги с фильтрами
+     */
+    public Page<Book> getAllBooksWithFilters(Pageable pageable, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        // Если нет активных фильтров, используем стандартный метод
+        if (yearFrom == null && yearTo == null && (language == null || language.trim().isEmpty()) && minRating <= 0) {
+            Page<Book> page = bookRepository.findAll(pageable);
+            enrichBooksWithRatings(page.getContent());
+            return page;
+        }
+        
+        // Получаем все книги и применяем фильтры
+        List<Book> allBooks = bookRepository.findAll();
+        enrichBooksWithRatings(allBooks);
+        
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Применяем пагинацию вручную
+        int totalElements = filteredBooks.size();
+        int startIndex = (int) pageable.getOffset();
+        int endIndex = Math.min(startIndex + pageable.getPageSize(), totalElements);
+        
+        List<Book> paginatedBooks = filteredBooks.subList(startIndex, endIndex);
+        
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Поиск книг с фильтрами
+     */
+    public Page<Book> searchBooksWithFilters(String query, Pageable pageable, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        // Если нет активных фильтров, используем стандартный метод
+        if (yearFrom == null && yearTo == null && (language == null || language.trim().isEmpty()) && minRating <= 0) {
+            return searchBooks(query, pageable);
+        }
+        
+        // Получаем все результаты поиска и применяем фильтры
+        List<Book> allBooks = bookRepository.searchBooksAsList(query);
+        enrichBooksWithRatings(allBooks);
+        
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Применяем пагинацию вручную
+        int totalElements = filteredBooks.size();
+        int startIndex = (int) pageable.getOffset();
+        int endIndex = Math.min(startIndex + pageable.getPageSize(), totalElements);
+        
+        List<Book> paginatedBooks = filteredBooks.subList(startIndex, endIndex);
+        
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Поиск книг с сортировкой по рейтингу и фильтрами
+     */
+    public Page<Book> searchBooksWithRatingSortAndFilters(String query, int page, int size, String direction, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        // Получаем все книги по поисковому запросу без пагинации
+        List<Book> allBooks = bookRepository.searchBooksAsList(query);
+        
+        // Обогащаем книги информацией о рейтинге
+        enrichBooksWithRatings(allBooks);
+        
+        // Применяем фильтры
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Сортируем книги по рейтингу
+        Comparator<Book> ratingComparator;
+        if ("desc".equalsIgnoreCase(direction)) {
+            ratingComparator = Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder());
+        } else {
+            ratingComparator = Comparator.comparing(Book::getRating)
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0);
+        }
+        
+        List<Book> sortedBooks = filteredBooks.stream()
+                .sorted(ratingComparator)
+                .collect(Collectors.toList());
+        
+        // Применяем пагинацию вручную
+        int totalElements = sortedBooks.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Book> paginatedBooks = sortedBooks.subList(startIndex, endIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Получает книги по категории с фильтрами
+     */
+    public Page<Book> getBooksByCategoryWithFilters(Integer categoryId, Pageable pageable, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        // Если нет активных фильтров, используем стандартный метод
+        if (yearFrom == null && yearTo == null && (language == null || language.trim().isEmpty()) && minRating <= 0) {
+            return getBooksByCategory(categoryId, pageable);
+        }
+        
+        // Получаем все книги категории и применяем фильтры
+        List<Book> allBooks = bookRepository.findByExactCategoryIdAsList(categoryId);
+        enrichBooksWithRatings(allBooks);
+        
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Применяем пагинацию вручную
+        int totalElements = filteredBooks.size();
+        int startIndex = (int) pageable.getOffset();
+        int endIndex = Math.min(startIndex + pageable.getPageSize(), totalElements);
+        
+        List<Book> paginatedBooks = filteredBooks.subList(startIndex, endIndex);
+        
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Получает книги по категории с иерархией и фильтрами
+     */
+    public Page<Book> getBooksByCategoryWithHierarchyAndFilters(Integer categoryId, Pageable pageable, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        // Если нет активных фильтров, используем стандартный метод
+        if (yearFrom == null && yearTo == null && (language == null || language.trim().isEmpty()) && minRating <= 0) {
+            return getBooksByCategoryWithHierarchy(categoryId, pageable);
+        }
+        
+        // Получаем все ID категорий (включая подкатегории)
+        List<Integer> allCategoryIds = getAllCategoryIds(categoryId);
+        
+        // Получаем все книги и применяем фильтры
+        List<Book> allBooks = bookRepository.findByCategoryIdInAsList(allCategoryIds);
+        enrichBooksWithRatings(allBooks);
+        
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Применяем пагинацию вручную
+        int totalElements = filteredBooks.size();
+        int startIndex = (int) pageable.getOffset();
+        int endIndex = Math.min(startIndex + pageable.getPageSize(), totalElements);
+        
+        List<Book> paginatedBooks = filteredBooks.subList(startIndex, endIndex);
+        
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Получает книги по категории с сортировкой по рейтингу и фильтрами
+     */
+    public Page<Book> getBooksByCategoryWithRatingSortAndFilters(Integer categoryId, int page, int size, String direction, boolean includeSubcategories, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        List<Book> allBooks;
+        
+        if (includeSubcategories) {
+            List<Integer> allCategoryIds = getAllCategoryIds(categoryId);
+            allBooks = bookRepository.findByCategoryIdInAsList(allCategoryIds);
+        } else {
+            allBooks = bookRepository.findByExactCategoryIdAsList(categoryId);
+        }
+        
+        // Обогащаем книги информацией о рейтинге
+        enrichBooksWithRatings(allBooks);
+        
+        // Применяем фильтры
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Сортируем книги по рейтингу
+        Comparator<Book> ratingComparator;
+        if ("desc".equalsIgnoreCase(direction)) {
+            ratingComparator = Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder());
+        } else {
+            ratingComparator = Comparator.comparing(Book::getRating)
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0);
+        }
+        
+        List<Book> sortedBooks = filteredBooks.stream()
+                .sorted(ratingComparator)
+                .collect(Collectors.toList());
+        
+        // Применяем пагинацию вручную
+        int totalElements = sortedBooks.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Book> paginatedBooks = sortedBooks.subList(startIndex, endIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Получает книги по нескольким категориям с фильтрами
+     */
+    public Page<Book> getBooksByMultipleCategoriesWithFilters(List<Integer> categoryIds, Pageable pageable, boolean includeSubcategories, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        // Если нет активных фильтров, используем стандартный метод
+        if (yearFrom == null && yearTo == null && (language == null || language.trim().isEmpty()) && minRating <= 0) {
+            return getBooksByMultipleCategories(categoryIds, pageable, includeSubcategories);
+        }
+        
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        
+        List<Integer> allCategoryIds = new ArrayList<>();
+        
+        if (includeSubcategories) {
+            // Для каждой родительской категории получаем все подкатегории
+            for (Integer categoryId : categoryIds) {
+                allCategoryIds.addAll(getAllCategoryIds(categoryId));
+            }
+        } else {
+            // Используем только родительские категории
+            allCategoryIds = categoryIds;
+        }
+        
+        // Получаем все книги и применяем фильтры
+        List<Book> allBooks = bookRepository.findBooksByMultipleCategoriesAsList(allCategoryIds);
+        enrichBooksWithRatings(allBooks);
+        
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Применяем пагинацию вручную
+        int totalElements = filteredBooks.size();
+        int startIndex = (int) pageable.getOffset();
+        int endIndex = Math.min(startIndex + pageable.getPageSize(), totalElements);
+        
+        List<Book> paginatedBooks = filteredBooks.subList(startIndex, endIndex);
+        
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Получает книги по нескольким категориям с сортировкой по рейтингу и фильтрами
+     */
+    public Page<Book> getBooksByMultipleCategoriesWithRatingSortAndFilters(List<Integer> categoryIds, int page, int size, String direction, boolean includeSubcategories, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Page.empty(PageRequest.of(page, size));
+        }
+        
+        List<Integer> allCategoryIds = new ArrayList<>();
+        
+        if (includeSubcategories) {
+            // Для каждой родительской категории получаем все подкатегории
+            for (Integer categoryId : categoryIds) {
+                allCategoryIds.addAll(getAllCategoryIds(categoryId));
+            }
+        } else {
+            // Используем только родительские категории
+            allCategoryIds = categoryIds;
+        }
+        
+        // Получаем все книги без пагинации
+        List<Book> allBooks = bookRepository.findBooksByMultipleCategoriesAsList(allCategoryIds);
+        
+        // Обогащаем книги информацией о рейтинге
+        enrichBooksWithRatings(allBooks);
+        
+        // Применяем фильтры
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Сортируем книги по рейтингу
+        Comparator<Book> ratingComparator;
+        if ("desc".equalsIgnoreCase(direction)) {
+            ratingComparator = Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder());
+        } else {
+            ratingComparator = Comparator.comparing(Book::getRating)
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0);
+        }
+        
+        List<Book> sortedBooks = filteredBooks.stream()
+                .sorted(ratingComparator)
+                .collect(Collectors.toList());
+        
+        // Применяем пагинацию вручную
+        int totalElements = sortedBooks.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Book> paginatedBooks = sortedBooks.subList(startIndex, endIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
+    
+    /**
+     * Получает все книги с сортировкой по рейтингу и фильтрами
+     */
+    public Page<Book> getAllBooksWithRatingSortAndFilters(int page, int size, String direction, Integer yearFrom, Integer yearTo, String language, double minRating) {
+        // Получаем все книги без пагинации
+        List<Book> allBooks = bookRepository.findAll();
+        
+        // Обогащаем книги информацией о рейтинге
+        enrichBooksWithRatings(allBooks);
+        
+        // Применяем фильтры
+        List<Book> filteredBooks = applyFilters(allBooks, yearFrom, yearTo, language, minRating);
+        
+        // Сортируем книги по рейтингу
+        Comparator<Book> ratingComparator;
+        if ("desc".equalsIgnoreCase(direction)) {
+            ratingComparator = Comparator.comparing(Book::getRating, Comparator.reverseOrder())
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0, Comparator.reverseOrder());
+        } else {
+            ratingComparator = Comparator.comparing(Book::getRating)
+                    .thenComparing(book -> book.getRatingsCount() != null ? book.getRatingsCount() : 0);
+        }
+        
+        List<Book> sortedBooks = filteredBooks.stream()
+                .sorted(ratingComparator)
+                .collect(Collectors.toList());
+        
+        // Применяем пагинацию вручную
+        int totalElements = sortedBooks.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Book> paginatedBooks = sortedBooks.subList(startIndex, endIndex);
+        
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(paginatedBooks, pageable, totalElements);
+    }
 }
