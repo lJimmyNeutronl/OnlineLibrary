@@ -6,6 +6,9 @@ import App from './App.tsx'
 import './index.css'
 import { setupFavoritesMocks } from './mocks/booksMock'
 
+// Глобальная настройка PDF.js
+import './utils/pdfjs'
+
 // Инициализация мок-данных (только для разработки)
 setupFavoritesMocks()
 

@@ -1,11 +1,11 @@
-.books-page {
+.booksPage {
   /* Убираем старые стили фона, так как теперь фон контролируется AnimatedBackground */
   min-height: 100vh;
   /* background убираем, используется из AnimatedBackground */
   padding: 40px 0; /* Добавляем padding как на других страницах */
 }
 
-.books-page-wrapper {
+.booksPageWrapper {
   /* Обертка для всего контента */
   width: 100%;
   max-width: 1400px;
@@ -15,7 +15,7 @@
   z-index: 1;
 }
 
-.books-page-content {
+.booksPageContent {
   /* Белый блок с фильтрами и книгами */
   width: 100%;
   margin-top: 32px;
@@ -26,19 +26,19 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.books-page-container {
+.booksPageContainer {
   /* Контейнер внутри белого блока */
   width: 100%;
 }
 
 /* Заголовок страницы - теперь вне белого блока */
-.page-header {
+.pageHeader {
   text-align: center;
   margin-bottom: 0; /* Убираем нижний отступ, так как есть margin-top у белого блока */
   padding: 0; /* Убираем padding */
 }
 
-.page-title {
+.pageTitle {
   font-size: 2.5rem;
   font-weight: 700;
   background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
@@ -51,7 +51,7 @@
   filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.8));
 }
 
-.page-description {
+.pageDescription {
   font-size: 1.1rem;
   color: #555;
   max-width: 600px;
@@ -63,12 +63,12 @@
 }
 
 /* Контент книг */
-.books-content {
+.booksContent {
   margin-top: 24px;
 }
 
 /* Состояния */
-.error-state {
+.errorState {
   text-align: center;
   padding: 60px 20px;
   background: white;
@@ -76,25 +76,25 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.error-icon {
+.errorIcon {
   font-size: 48px;
   color: #ff4d4f;
   margin-bottom: 16px;
 }
 
-.error-state h3 {
+.errorState h3 {
   font-size: 1.5rem;
   color: #333;
   margin: 0 0 8px 0;
 }
 
-.error-state p {
+.errorState p {
   color: #666;
   margin: 0 0 24px 0;
   font-size: 1rem;
 }
 
-.loading-state {
+.loadingState {
   text-align: center;
   padding: 60px 20px;
   background: white;
@@ -102,14 +102,14 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.loading-state p {
+.loadingState p {
   margin-top: 16px;
   color: #666;
   font-size: 1rem;
 }
 
 /* Пагинация */
-.pagination-container {
+.paginationContainer {
   margin-top: 40px;
   display: flex;
   justify-content: center;
@@ -118,77 +118,77 @@
 
 /* Адаптивность */
 @media (max-width: 1024px) {
-  .books-page-wrapper {
+  .booksPageWrapper {
     padding: 0 16px;
   }
 }
 
 @media (max-width: 768px) {
-  .books-page {
+  .booksPage {
     padding: 20px 0;
   }
   
-  .books-page-wrapper {
+  .booksPageWrapper {
     padding: 0 12px;
   }
   
-  .books-page-content {
+  .booksPageContent {
     margin-top: 24px;
     padding: 16px;
   }
   
-  .page-title {
+  .pageTitle {
     font-size: 2rem;
   }
   
-  .page-description {
+  .pageDescription {
     font-size: 1rem;
     padding: 10px 16px;
   }
   
-  .books-content {
+  .booksContent {
     margin-top: 16px;
   }
   
-  .error-state,
-  .loading-state {
+  .errorState,
+  .loadingState {
     padding: 40px 16px;
   }
   
-  .error-icon {
+  .errorIcon {
     font-size: 36px;
   }
   
-  .error-state h3 {
+  .errorState h3 {
     font-size: 1.25rem;
   }
   
-  .pagination-container {
+  .paginationContainer {
     margin-top: 24px;
     padding: 16px 0;
   }
 }
 
 @media (max-width: 480px) {
-  .books-page-wrapper {
+  .booksPageWrapper {
     padding: 0 8px;
   }
   
-  .books-page-content {
+  .booksPageContent {
     padding: 12px;
   }
   
-  .page-title {
+  .pageTitle {
     font-size: 1.75rem;
   }
   
-  .page-description {
+  .pageDescription {
     font-size: 0.9rem;
     padding: 8px 12px;
   }
   
-  .error-state,
-  .loading-state {
+  .errorState,
+  .loadingState {
     padding: 32px 12px;
   }
 } 

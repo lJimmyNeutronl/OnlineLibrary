@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiHeart, FiGrid, FiList } from 'react-icons/fi';
-import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
-import { fetchFavorites, removeFromFavorites } from '../store/slices/favoritesSlice';
-import { Typography, Breadcrumb, Button, Row, Col, Divider, Spin, Empty } from '../components/common';
-import AnimatedBackground from '../components/common/AnimatedBackground';
-import BookList from '../components/book-card/BookList';
-import { Book } from '../services/bookService';
-import '../styles/common.css';
-import './FavoritesPage.css';
+import { useAppSelector, useAppDispatch } from '@hooks/reduxHooks';
+import { fetchFavorites, removeFromFavorites } from '@store/slices/favoritesSlice';
+import { Typography, Breadcrumb, Button, Row, Col, Divider, Spin, Empty } from '@components/common';
+import AnimatedBackground from '@components/common/AnimatedBackground';
+import BookList from '@components/book-card/BookList';
+import { Book } from '@services/bookService';
+import '@styles/common.css';
+import styles from './FavoritesPage.module.css';
 
 const { Title, Paragraph } = Typography;
 
@@ -65,7 +65,7 @@ const FavoritesPage = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="favorites-loading-container">
+        <div className={styles.favoritesLoadingContainer}>
           <Spin size="large" />
         </div>
       );
@@ -73,7 +73,7 @@ const FavoritesPage = () => {
 
     if (favorites.length === 0) {
       return (
-        <div className="favorites-empty-container">
+        <div className={styles.favoritesEmptyContainer}>
           <Empty 
             description="У вас пока нет избранных книг" 
             image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -81,7 +81,7 @@ const FavoritesPage = () => {
           <Button 
             type="primary" 
             onClick={() => navigate('/books')}
-            className="favorites-empty-button"
+            className={styles.favoritesEmptyButton}
           >
             Перейти к каталогу книг
           </Button>
@@ -91,19 +91,19 @@ const FavoritesPage = () => {
 
     return (
       <>
-        <div className="favorites-view-controls">
-          <div className="view-mode-section">
+        <div className={styles.favoritesViewControls}>
+          <div className={styles.viewModeSection}>
             <Button 
               icon={<FiGrid />} 
               onClick={() => setViewMode('grid')}
               type={viewMode === 'grid' ? 'primary' : 'default'}
-              className="view-mode-button"
+              className={styles.viewModeButton}
             />
             <Button 
               icon={<FiList />} 
               onClick={() => setViewMode('list')}
               type={viewMode === 'list' ? 'primary' : 'default'}
-              className="view-mode-button"
+              className={styles.viewModeButton}
             />
           </div>
         </div>
@@ -119,14 +119,14 @@ const FavoritesPage = () => {
   };
 
   return (
-    <AnimatedBackground className="favorites-page-container">
+    <AnimatedBackground className={styles.favoritesPageContainer}>
       <motion.div
         initial="hidden"
         animate="visible"
         variants={fadeIn}
-        className="favorites-page-content"
+        className={styles.favoritesPageContent}
       >
-        <Row className="favorites-page-header">
+        <Row className={styles.favoritesPageHeader}>
           <Col>
             <Breadcrumb>
               <Breadcrumb.Item>
@@ -135,7 +135,7 @@ const FavoritesPage = () => {
               <Breadcrumb.Item>Избранное</Breadcrumb.Item>
             </Breadcrumb>
             
-            <div className="favorites-page-title-row">
+            <div className={styles.favoritesPageTitleRow}>
               <button 
                 className="back-button"
                 onClick={() => navigate(-1)}
@@ -143,14 +143,14 @@ const FavoritesPage = () => {
                 <FiArrowLeft size={20} className="back-button-icon" />
                 Назад
               </button>
-              <Title level={2} className="favorites-page-title gradient-text">
-                <FiHeart className="favorites-page-title-icon" /> Избранные книги
+              <Title level={2} className={`${styles.favoritesPageTitle} gradient-text`}>
+                <FiHeart className={styles.favoritesPageTitleIcon} /> Избранные книги
               </Title>
             </div>
           </Col>
         </Row>
 
-        <Divider className="favorites-page-divider" />
+        <Divider className={styles.favoritesPageDivider} />
 
         <motion.div variants={slideUp}>
           <Paragraph className="info-paragraph">

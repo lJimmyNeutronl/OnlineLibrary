@@ -45,5 +45,8 @@ export default defineConfig({
       '@hooks': resolve(__dirname, './src/hooks'),
       '@types': resolve(__dirname, './src/types')
     }
+  },
+  define: {
+    global: 'globalThis'
   }
 })

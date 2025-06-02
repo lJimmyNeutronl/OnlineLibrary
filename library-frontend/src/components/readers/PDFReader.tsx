@@ -8,6 +8,13 @@ import Button from '../common/Button';
 import { AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineFullscreen } from 'react-icons/ai';
 import './Reader.css';
 
+// Дополнительная проверка и настройка worker'а
+if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+  const fallbackWorkerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+  pdfjs.GlobalWorkerOptions.workerSrc = fallbackWorkerSrc;
+  console.log('[PDFReader] Установлен fallback worker:', fallbackWorkerSrc);
+}
+
 // Проверка инициализации воркера (для диагностики)
 console.log('PDF.js используется версия:', pdfjs.version);
 console.log('PDF.js GlobalWorkerOptions доступен:', Boolean(pdfjs.GlobalWorkerOptions));

@@ -1,8 +1,8 @@
-.favorites-page-container {
+.favoritesPageContainer {
   padding: 40px 0;
 }
 
-.favorites-page-content {
+.favoritesPageContent {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
@@ -13,33 +13,33 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.favorites-page-header {
+.favoritesPageHeader {
   margin-bottom: 20px;
 }
 
-.favorites-page-title-row {
+.favoritesPageTitleRow {
   display: flex;
   align-items: center;
   margin-top: 16px;
 }
 
-.favorites-page-title {
+.favoritesPageTitle {
   margin: 0 !important;
   display: flex;
   align-items: center;
 }
 
-.favorites-page-title-icon {
+.favoritesPageTitleIcon {
   margin-right: 12px;
   color: #ff4d4f;
   font-size: 28px;
 }
 
-.favorites-page-divider {
+.favoritesPageDivider {
   margin: 16px 0 24px;
 }
 
-.favorites-page-description {
+.favoritesPageDescription {
   font-size: 16px;
   margin-bottom: 32px;
   color: #555;
@@ -47,13 +47,13 @@
 }
 
 /* Стили для контролов просмотра */
-.favorites-view-controls {
+.favoritesViewControls {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 20px;
 }
 
-.view-mode-section {
+.viewModeSection {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -63,7 +63,7 @@
   border: 1px solid rgba(55, 105, 245, 0.1);
 }
 
-.view-mode-button {
+.viewModeButton {
   padding: 10px 12px !important;
   border-radius: 8px !important;
   border: none !important;
@@ -71,19 +71,19 @@
   font-size: 16px;
 }
 
-.view-mode-button[data-type="default"] {
+.viewModeButton[data-type="default"] {
   background: transparent !important;
   color: #718096 !important;
 }
 
-.view-mode-button[data-type="primary"] {
+.viewModeButton[data-type="primary"] {
   background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%) !important;
   color: white !important;
   box-shadow: 0 2px 8px rgba(55, 105, 245, 0.3);
 }
 
 /* Стили для контейнера загрузки */
-.favorites-loading-container {
+.favoritesLoadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -91,7 +91,7 @@
 }
 
 /* Стили для пустого состояния */
-.favorites-empty-container {
+.favoritesEmptyContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -100,38 +100,38 @@
   text-align: center;
 }
 
-.favorites-empty-button {
+.favoritesEmptyButton {
   margin-top: 16px;
 }
 
 /* Адаптивные стили */
 @media (max-width: 768px) {
-  .favorites-page-container {
+  .favoritesPageContainer {
     padding: 20px 0;
   }
   
-  .favorites-page-content {
+  .favoritesPageContent {
     padding: 16px;
   }
   
-  .favorites-page-title {
+  .favoritesPageTitle {
     font-size: 24px !important;
   }
   
-  .favorites-page-title-icon {
+  .favoritesPageTitleIcon {
     font-size: 24px;
   }
   
-  .favorites-page-description {
+  .favoritesPageDescription {
     font-size: 14px;
     margin-bottom: 24px;
   }
   
-  .favorites-view-controls {
+  .favoritesViewControls {
     justify-content: center;
   }
 
-  .view-mode-button {
+  .viewModeButton {
     padding: 8px 10px !important;
     font-size: 14px;
   }

@@ -1,0 +1,28 @@
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  margin: 40px 0 30px;
+  text-align: center;
+}
+
+.sectionDividerLeft {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3));
+}
+
+.sectionDividerRight {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to left, rgba(55, 105, 245, 0.05), rgba(55, 105, 245, 0.3));
+}
+
+.sectionTitle {
+  margin: 0 20px;
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+} 

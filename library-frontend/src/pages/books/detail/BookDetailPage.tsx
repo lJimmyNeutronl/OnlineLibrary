@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Typography, 
   Divider, 
@@ -30,6 +30,7 @@ const PLACEHOLDER_IMAGE = '/src/assets/images/placeholder.png';
 
 const BookDetailPage = () => {
   const { bookId } = useParams<{ bookId: string }>();
+  const navigate = useNavigate();
   const { token } = useAppSelector(state => state.auth);
   const isAuthenticated = !!token;
   
@@ -175,9 +176,9 @@ const BookDetailPage = () => {
       return;
     }
     
-    // В реальном приложении здесь будет переход на страницу чтения книги
-    handleBookClick(parsedBookId);
-  }, [isAuthenticated, parsedBookId, handleBookClick]);
+    // Переход на страницу чтения книги
+    navigate(`/books/${parsedBookId}/read`);
+  }, [isAuthenticated, parsedBookId, navigate]);
 
   const scrollToReviews = useCallback(() => {
     const reviewsSection = document.getElementById('reviews-section');

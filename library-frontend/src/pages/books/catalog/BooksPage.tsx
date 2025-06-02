@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiAlertCircle } from 'react-icons/fi';
-import { useCatalogFilters, useCatalog } from '../hooks';
-import { BookList } from '../components/book-card';
-import CatalogFilters from '../components/catalog/CatalogFilters';
-import AnimatedBackground from '../components/common/AnimatedBackground';
-import { Pagination, Spin, Empty, Button } from '../components/common';
-import bookService from '../services/bookService';
-import './BooksPage.css';
+import { useCatalogFilters, useCatalog } from '@hooks/index';
+import { BookList } from '@components/book-card';
+import CatalogFilters from '@components/catalog/CatalogFilters';
+import AnimatedBackground from '@components/common/AnimatedBackground';
+import { Pagination, Spin, Empty, Button } from '@components/common';
+import bookService from '@services/bookService';
+import styles from './BooksPage.module.css';
 
 const BooksPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -82,24 +82,24 @@ const BooksPage: React.FC = () => {
   };
 
   return (
-    <AnimatedBackground className="books-page">
+    <AnimatedBackground className={styles.booksPage}>
       <motion.div 
-        className="books-page-wrapper"
+        className={styles.booksPageWrapper}
         initial="hidden"
         animate="visible"
         variants={pageVariants}
       >
         {/* Заголовок страницы - вне белого блока */}
-        <motion.div className="page-header" variants={itemVariants}>
-          <h1 className="page-title">Каталог книг</h1>
-          <p className="page-description">
+        <motion.div className={styles.pageHeader} variants={itemVariants}>
+          <h1 className={styles.pageTitle}>Каталог книг</h1>
+          <p className={styles.pageDescription}>
             Исследуйте нашу коллекцию книг. Используйте фильтры для поиска интересующих вас произведений.
           </p>
         </motion.div>
 
         {/* Белый блок с контентом */}
-        <div className="books-page-content">
-          <div className="books-page-container">
+        <div className={styles.booksPageContent}>
+          <div className={styles.booksPageContainer}>
             {/* Фильтры */}
             <motion.div variants={itemVariants}>
               <CatalogFilters
@@ -117,10 +117,10 @@ const BooksPage: React.FC = () => {
             </motion.div>
 
             {/* Контент */}
-            <motion.div className="books-content" variants={itemVariants}>
+            <motion.div className={styles.booksContent} variants={itemVariants}>
               {error ? (
-                <div className="error-state">
-                  <FiAlertCircle className="error-icon" />
+                <div className={styles.errorState}>
+                  <FiAlertCircle className={styles.errorIcon} />
                   <h3>Произошла ошибка</h3>
                   <p>{error}</p>
                   <Button type="primary" onClick={handleRetry}>
@@ -128,7 +128,7 @@ const BooksPage: React.FC = () => {
                   </Button>
                 </div>
               ) : loading ? (
-                <div className="loading-state">
+                <div className={styles.loadingState}>
                   <Spin size="large" />
                   <p>Загружаем книги...</p>
                 </div>
@@ -157,7 +157,7 @@ const BooksPage: React.FC = () => {
                   {/* Пагинация */}
                   {totalPages > 1 && (
                     <motion.div 
-                      className="pagination-container"
+                      className={styles.paginationContainer}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
