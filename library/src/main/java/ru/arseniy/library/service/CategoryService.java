@@ -29,6 +29,10 @@ public class CategoryService {
         return categoryRepository.findByParentCategoryId(parentId);
     }
     
+    public List<Category> getAllSubcategories() {
+        return categoryRepository.findByParentCategoryIsNotNull();
+    }
+    
     public Category getCategoryById(Integer id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Категория с ID " + id + " не найдена"));

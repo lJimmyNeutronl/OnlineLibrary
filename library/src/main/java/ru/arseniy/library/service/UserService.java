@@ -11,14 +11,18 @@ import ru.arseniy.library.dto.MessageResponse;
 import ru.arseniy.library.dto.UpdateProfileRequest;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.model.ReadingHistory;
+import ru.arseniy.library.model.Role;
+import ru.arseniy.library.model.RoleType;
 import ru.arseniy.library.model.User;
 import ru.arseniy.library.repository.BookRepository;
 import ru.arseniy.library.repository.ReadingHistoryRepository;
+import ru.arseniy.library.repository.RoleRepository;
 import ru.arseniy.library.repository.UserRepository;
 import ru.arseniy.library.exception.ResourceNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -32,6 +36,9 @@ public class UserService {
     
     @Autowired
     private ReadingHistoryRepository readingHistoryRepository;
+    
+    @Autowired
+    private RoleRepository roleRepository;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -156,5 +163,132 @@ public class UserService {
         
         // Сохраняем обновленного пользователя
         return userRepository.save(user);
+    }
+
+    // =================== АДМИНИСТРАТИВНЫЕ МЕТОДЫ ===================
+
+    /**
+     * Получает список всех пользователей (только для администраторов)
+     */
+    public Page<User> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable);
+    }
+
+    /**
+     * Назначает роль ADMIN пользователю (только для SUPERADMIN)
+     * @param userId ID пользователя
+     * @return сообщение о результате операции
+     */
+    @Transactional
+    public MessageResponse assignAdminRole(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+
+        // Проверяем, что пользователь не является суперадмином
+        if (isSuperAdmin(user)) {
+            throw new RuntimeException("Нельзя изменить роль суперадмина");
+        }
+
+        Role adminRole = roleRepository.findByName(RoleType.ROLE_ADMIN.getName())
+                .orElseThrow(() -> new RuntimeException("Роль ADMIN не найдена"));
+
+        // Проверяем, нет ли уже роли админа
+        if (user.getRoles().contains(adminRole)) {
+            return new MessageResponse("Пользователь уже имеет роль администратора");
+        }
+
+        user.getRoles().add(adminRole);
+        userRepository.save(user);
+
+        return new MessageResponse("Роль администратора успешно назначена пользователю " + user.getEmail());
+    }
+
+    /**
+     * Удаляет роль ADMIN у пользователя (только для SUPERADMIN)
+     * @param userId ID пользователя
+     * @return сообщение о результате операции
+     */
+    @Transactional
+    public MessageResponse removeAdminRole(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+
+        // Проверяем, что пользователь не является суперадмином
+        if (isSuperAdmin(user)) {
+            throw new RuntimeException("Нельзя изменить роль суперадмина");
+        }
+
+        Role adminRole = roleRepository.findByName(RoleType.ROLE_ADMIN.getName())
+                .orElseThrow(() -> new RuntimeException("Роль ADMIN не найдена"));
+
+        if (!user.getRoles().contains(adminRole)) {
+            return new MessageResponse("Пользователь не имеет роли администратора");
+        }
+
+        user.getRoles().remove(adminRole);
+        userRepository.save(user);
+
+        return new MessageResponse("Роль администратора удалена у пользователя " + user.getEmail());
+    }
+
+    /**
+     * Блокирует/разблокирует пользователя (только для SUPERADMIN)
+     * Примечание: пока что просто помечаем в базе, реальная блокировка будет реализована позже
+     */
+    @Transactional
+    public MessageResponse toggleUserBlock(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+
+        // Проверяем, что пользователь не является суперадмином
+        if (isSuperAdmin(user)) {
+            throw new RuntimeException("Нельзя заблокировать суперадмина");
+        }
+
+        // Для демонстрации пока что просто возвращаем сообщение
+        // В будущем здесь можно добавить поле isBlocked в модель User
+        return new MessageResponse("Функция блокировки пользователей будет реализована в следующих версиях");
+    }
+
+    /**
+     * Проверяет, является ли пользователь суперадмином
+     */
+    public boolean isSuperAdmin(User user) {
+        return user.getRoles().stream()
+                .anyMatch(role -> RoleType.ROLE_SUPERADMIN.getName().equals(role.getName()));
+    }
+
+    /**
+     * Проверяет, является ли пользователь администратором (включая суперадмина)
+     */
+    public boolean isAdmin(User user) {
+        return user.getRoles().stream()
+                .anyMatch(role -> RoleType.ROLE_ADMIN.getName().equals(role.getName()) ||
+                                RoleType.ROLE_SUPERADMIN.getName().equals(role.getName()));
+    }
+
+    /**
+     * Получает количество пользователей для статистики
+     */
+    public long getUserCount() {
+        return userRepository.count();
+    }
+
+    /**
+     * Получает количество администраторов для статистики
+     */
+    public long getAdminCount() {
+        Role adminRole = roleRepository.findByName(RoleType.ROLE_ADMIN.getName())
+                .orElse(null);
+        Role superAdminRole = roleRepository.findByName(RoleType.ROLE_SUPERADMIN.getName())
+                .orElse(null);
+
+        if (adminRole == null && superAdminRole == null) {
+            return 0;
+        }
+
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRoles().contains(adminRole) || user.getRoles().contains(superAdminRole))
+                .count();
     }
 }

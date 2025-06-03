@@ -339,4 +339,18 @@
   color: white;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 5px;
+}
+
+.reader-fullscreen-hint {
+  text-align: center;
+  margin-top: 8px;
+  color: #666;
+  font-style: italic;
+}
+
+.reader-fullscreen-hint small {
+  background-color: rgba(55, 105, 245, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(55, 105, 245, 0.2);
 } 

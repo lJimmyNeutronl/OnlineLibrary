@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookFormat, ReadingProgress } from '../../types';
 import PDFReader from './PDFReader';
-import EPUBReader from './EPUBReader';
 import FB2Reader from './FB2Reader';
 import bookService from '../../services/bookService';
 import Button from '../common/Button';
@@ -138,15 +137,6 @@ const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl }) => {
             initialProgress={initialProgress}
           />
         );
-      case BookFormat.EPUB:
-        return (
-          <EPUBReader
-            fileUrl={readerUrl}
-            bookId={bookId}
-            onProgressChange={handleProgressChange}
-            initialProgress={initialProgress}
-          />
-        );
       case BookFormat.FB2:
         return (
           <FB2Reader
@@ -176,16 +166,6 @@ const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl }) => {
                 className="format-button"
               >
                 PDF
-              </Button>
-              <Button 
-                type="primary" 
-                onClick={() => {
-                  setFormat(BookFormat.EPUB);
-                  bookService.saveBookFormatToLocalStorage(bookId, BookFormat.EPUB);
-                }}
-                className="format-button"
-              >
-                EPUB
               </Button>
               <Button 
                 type="primary" 

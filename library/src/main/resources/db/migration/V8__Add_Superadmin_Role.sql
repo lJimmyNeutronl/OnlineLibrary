@@ -1,0 +1,4 @@
+-- Добавление роли SUPERADMIN
+INSERT INTO roles (name) 
+VALUES ('ROLE_SUPERADMIN')
+ON CONFLICT (name) DO NOTHING; 

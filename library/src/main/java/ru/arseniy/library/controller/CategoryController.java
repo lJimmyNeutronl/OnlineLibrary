@@ -22,8 +22,29 @@ public class CategoryController {
     private CategoryService categoryService;
     
     @GetMapping
-    public ResponseEntity<List<CategoryDTO>> getAllCategories() {
-        List<Category> categories = categoryService.getAllCategories();
+    public ResponseEntity<List<CategoryDTO>> getAllCategories(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String isRoot) {
+        
+        List<Category> categories;
+        
+        // Фильтрация по типу категории
+        if ("true".equals(isRoot)) {
+            categories = categoryService.getRootCategories();
+        } else if ("false".equals(isRoot)) {
+            categories = categoryService.getAllSubcategories();
+        } else {
+            categories = categoryService.getAllCategories();
+        }
+        
+        // Фильтрация по поисковому запросу
+        if (q != null && !q.trim().isEmpty()) {
+            String searchQuery = q.toLowerCase().trim();
+            categories = categories.stream()
+                    .filter(category -> category.getName().toLowerCase().contains(searchQuery))
+                    .collect(Collectors.toList());
+        }
+        
         List<CategoryDTO> categoryDTOs = categories.stream()
                 .map(CategoryDTO::fromEntity)
                 .collect(Collectors.toList());

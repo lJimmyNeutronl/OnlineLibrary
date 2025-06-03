@@ -873,7 +873,6 @@ const bookService = {
   extensionToFormat(extension: string): BookFormat {
     const ext = extension.toLowerCase();
     if (ext === 'pdf') return BookFormat.PDF;
-    if (ext === 'epub') return BookFormat.EPUB;
     if (ext === 'fb2') return BookFormat.FB2;
     return BookFormat.UNKNOWN;
   },
@@ -1006,8 +1005,6 @@ const bookService = {
     // Определение по расширению в URL
     if (lowerUrl.endsWith('.pdf')) {
       return BookFormat.PDF;
-    } else if (lowerUrl.endsWith('.epub')) {
-      return BookFormat.EPUB;
     } else if (lowerUrl.endsWith('.fb2') || lowerUrl.endsWith('.fb2.zip')) {
       return BookFormat.FB2;
     }
@@ -1015,8 +1012,6 @@ const bookService = {
     // Проверка на наличие маркеров в URL
     if (lowerUrl.includes('pdf')) {
       return BookFormat.PDF;
-    } else if (lowerUrl.includes('epub')) {
-      return BookFormat.EPUB;
     } else if (lowerUrl.includes('fb2') || lowerUrl.includes('xml')) {
       return BookFormat.FB2;
     }

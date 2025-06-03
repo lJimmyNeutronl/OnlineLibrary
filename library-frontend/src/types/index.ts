@@ -66,7 +66,6 @@ export interface BookSearchParams {
 // Перечисление поддерживаемых форматов книг
 export enum BookFormat {
   PDF = 'pdf',
-  EPUB = 'epub',
   FB2 = 'fb2',
   UNKNOWN = 'unknown'
 }

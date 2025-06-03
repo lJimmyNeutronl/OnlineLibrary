@@ -17,6 +17,7 @@ import FavoritesPage from '@pages/books/favourite/FavoritesPage';
 import EditProfilePage from './pages/profile/EditProfilePage';
 import ChangePasswordPage from '@pages/profile/ChangePasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminApp from './admin/AdminApp';
 import './App.css';
 
 const App = () => {
@@ -36,6 +37,10 @@ const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Админ-панель (отдельный роут без MainLayout) */}
+        <Route path="/admin/*" element={<AdminApp />} />
+        
+        {/* Основные роуты приложения */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="login" element={<LoginPage />} />

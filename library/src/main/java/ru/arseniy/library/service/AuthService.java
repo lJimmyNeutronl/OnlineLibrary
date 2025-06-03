@@ -95,6 +95,11 @@ public class AuthService {
                                 .orElseThrow(() -> new RuntimeException("Ошибка: Роль не найдена."));
                         roles.add(adminRole);
                         break;
+                    case "superadmin":
+                        Role superAdminRole = roleRepository.findByName("ROLE_SUPERADMIN")
+                                .orElseThrow(() -> new RuntimeException("Ошибка: Роль не найдена."));
+                        roles.add(superAdminRole);
+                        break;
                     default:
                         Role userRole = roleRepository.findByName("ROLE_USER")
                                 .orElseThrow(() -> new RuntimeException("Ошибка: Роль не найдена."));
