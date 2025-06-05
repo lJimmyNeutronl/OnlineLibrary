@@ -6,7 +6,8 @@ import axios from 'axios';
 interface StatisticsData {
   totalUsers: number;
   adminCount?: number;
-  // Добавим позже статистику книг и категорий
+  totalBooks: number;
+  totalCategories: number;
 }
 
 const Dashboard = () => {
@@ -22,13 +23,32 @@ const Dashboard = () => {
           throw new Error('Нет токена авторизации');
         }
 
-        const response = await axios.get('http://localhost:8080/api/users/admin/statistics', {
+        // Получаем статистику пользователей
+        const usersResponse = await axios.get('http://localhost:8080/api/users/admin/statistics', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        setStatistics(response.data);
+        // Получаем количество книг
+        const booksResponse = await axios.get('http://localhost:8080/api/books?page=0&size=1', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Получаем количество категорий
+        const categoriesResponse = await axios.get('http://localhost:8080/api/categories', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setStatistics({
+          ...usersResponse.data,
+          totalBooks: booksResponse.data.totalElements || 0,
+          totalCategories: Array.isArray(categoriesResponse.data) ? categoriesResponse.data.length : 0,
+        });
       } catch (err: any) {
         console.error('Ошибка загрузки статистики:', err);
         setError(err.response?.data?.message || err.message || 'Ошибка загрузки статистики');
@@ -129,14 +149,14 @@ const Dashboard = () => {
 
         <StatCard
           title="Книги"
-          value="Скоро"
+          value={statistics?.totalBooks || 0}
           icon={<Book />}
           color="#2e7d32"
         />
 
         <StatCard
           title="Категории"
-          value="Скоро"
+          value={statistics?.totalCategories || 0}
           icon={<Category />}
           color="#9c27b0"
         />
@@ -171,13 +191,13 @@ const Dashboard = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" component="h3" gutterBottom>
-                Скоро будет доступно
+                Управление контентом
               </Typography>
               <Typography variant="body2" color="textSecondary">
                 • Управление книгами и категориями<br/>
-                • Модерация отзывов<br/>
-                • Расширенная статистика<br/>
-                • Системные настройки
+                • Добавление и редактирование книг<br/>
+                • Создание и изменение категорий<br/>
+                • Просмотр статистики контента
               </Typography>
             </CardContent>
           </Card>

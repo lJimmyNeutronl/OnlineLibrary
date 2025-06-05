@@ -203,7 +203,7 @@ public class BookController {
     }
     
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<BookDTO> createBook(
             @RequestBody BookDTO bookDTO,
             @RequestParam(required = false) List<Integer> categoryIds) {
@@ -214,7 +214,7 @@ public class BookController {
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<BookDTO> updateBook(
             @PathVariable Integer id,
             @RequestBody BookDTO bookDTO,
@@ -226,7 +226,7 @@ public class BookController {
     }
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> deleteBook(@PathVariable Integer id) {
         bookService.deleteBook(id);
         return ResponseEntity.ok().build();

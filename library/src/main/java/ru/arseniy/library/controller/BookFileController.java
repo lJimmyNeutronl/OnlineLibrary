@@ -43,7 +43,7 @@ public class BookFileController {
      * @return сообщение о результате операции
      */
     @PostMapping("/{id}/file")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> uploadBookFile(@PathVariable Integer id, @RequestParam("file") MultipartFile file) {
         try {
             Book book = bookService.uploadBookFile(id, file);
@@ -67,7 +67,7 @@ public class BookFileController {
      * @return сообщение о результате операции
      */
     @PostMapping("/{id}/cover")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> uploadBookCover(@PathVariable Integer id, @RequestParam("file") MultipartFile file) {
         try {
             Book book = bookService.uploadBookCover(id, file);

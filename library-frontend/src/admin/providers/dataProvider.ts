@@ -8,25 +8,66 @@ const dataProvider: DataProvider = {
   getList: async (resource, params) => {
     const { page = 1, perPage = 10 } = params.pagination || {};
     const { field = 'id', order = 'ASC' } = params.sort || {};
+    const { filter = {} } = params;
     
     let url = '';
+    let queryParams = new URLSearchParams();
+
+    // Добавляем пагинацию и сортировку
+    queryParams.append('page', String(page - 1));
+    queryParams.append('size', String(perPage));
+    queryParams.append('sortBy', field);
+    queryParams.append('direction', order.toLowerCase());
 
     switch (resource) {
       case 'users':
-        url = `${API_URL}/users/admin/all?page=${page - 1}&size=${perPage}&sortBy=${field}&direction=${order.toLowerCase()}`;
+        url = `${API_URL}/users/admin/all`;
         break;
       case 'books':
-        url = `${API_URL}/books?page=${page - 1}&size=${perPage}&sortBy=${field}&direction=${order.toLowerCase()}`;
+        // Если есть поисковый запрос, используем эндпоинт search
+        if (filter.q) {
+          url = `${API_URL}/books/search`;
+          queryParams.append('query', filter.q);
+        } else {
+          url = `${API_URL}/books`;
+        }
+        // Добавляем остальные фильтры для книг
+        if (filter.language) {
+          queryParams.append('language', filter.language);
+        }
+        if (filter.yearFrom) {
+          queryParams.append('yearFrom', String(filter.yearFrom));
+        }
+        if (filter.yearTo) {
+          queryParams.append('yearTo', String(filter.yearTo));
+        }
+        if (filter.minRating) {
+          queryParams.append('minRating', String(filter.minRating));
+        }
         break;
       case 'categories':
-        url = `${API_URL}/categories`;
+        // Используем эндпоинт с количеством книг для админ панели
+        url = `${API_URL}/categories/book-count`;
+        // Категории могут не поддерживать пагинацию, но добавим поиск
+        if (filter.q) {
+          queryParams.append('q', filter.q);
+        }
+        if (filter.isRoot) {
+          queryParams.append('isRoot', filter.isRoot);
+        }
+        // Убираем пагинацию для категорий
+        queryParams.delete('page');
+        queryParams.delete('size');
+        queryParams.delete('sortBy');
+        queryParams.delete('direction');
         break;
       default:
         throw new Error(`Неизвестный ресурс: ${resource}`);
     }
 
     try {
-      const response = await axios.get(url, {
+      const fullUrl = `${url}?${queryParams.toString()}`;
+      const response = await axios.get(fullUrl, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -141,13 +182,15 @@ const dataProvider: DataProvider = {
     switch (resource) {
       case 'books':
         url = `${API_URL}/books`;
+        
+        // Убираем readonly поля из данных
+        const { rating, ratingsCount, categoryIds, ...cleanBookData } = params.data;
+        requestData = cleanBookData;
+        
         // Если есть categoryIds, добавляем их как query параметры
-        if (params.data.categoryIds && Array.isArray(params.data.categoryIds)) {
-          const categoryIdsParam = params.data.categoryIds.map((id: any) => `categoryIds=${id}`).join('&');
+        if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
+          const categoryIdsParam = categoryIds.map((id: any) => `categoryIds=${id}`).join('&');
           queryParams = `?${categoryIdsParam}`;
-          // Удаляем categoryIds из тела запроса
-          const { categoryIds, ...bookData } = params.data;
-          requestData = bookData;
         }
         break;
       case 'categories':
@@ -217,13 +260,15 @@ const dataProvider: DataProvider = {
         break;
       case 'books':
         url = `${API_URL}/books/${params.id}`;
+        
+        // Убираем readonly поля из данных
+        const { rating, ratingsCount, categoryIds, ...cleanBookData } = params.data;
+        requestData = cleanBookData;
+        
         // Если есть categoryIds, добавляем их как query параметры
-        if (params.data.categoryIds && Array.isArray(params.data.categoryIds)) {
-          const categoryIdsParam = params.data.categoryIds.map((id: any) => `categoryIds=${id}`).join('&');
+        if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
+          const categoryIdsParam = categoryIds.map((id: any) => `categoryIds=${id}`).join('&');
           queryParams = `?${categoryIdsParam}`;
-          // Удаляем categoryIds из тела запроса
-          const { categoryIds, ...bookData } = params.data;
-          requestData = bookData;
         }
         break;
       case 'categories':

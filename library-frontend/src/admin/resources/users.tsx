@@ -12,11 +12,17 @@ import {
   useUpdate,
   useNotify,
   useRefresh,
+  usePermissions,
 } from 'react-admin';
 import { Chip, Box } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import BlockIcon from '@mui/icons-material/Block';
+
+// Функция для проверки, является ли пользователь суперадмином
+const isSuperAdminUser = (permissions: string[]): boolean => {
+  return permissions.includes('ROLE_SUPERADMIN');
+};
 
 // Компонент для отображения ролей пользователя
 const UserRoles = () => {
@@ -44,6 +50,12 @@ const AssignAdminButton = () => {
   const [update, { isLoading }] = useUpdate();
   const notify = useNotify();
   const refresh = useRefresh();
+  const { permissions } = usePermissions();
+
+  // Проверяем, является ли текущий пользователь суперадмином
+  if (!permissions || !isSuperAdminUser(permissions)) {
+    return null; // Скрываем кнопку для обычных админов
+  }
 
   if (!record) return null;
 
@@ -92,6 +104,12 @@ const RemoveAdminButton = () => {
   const [update, { isLoading }] = useUpdate();
   const notify = useNotify();
   const refresh = useRefresh();
+  const { permissions } = usePermissions();
+
+  // Проверяем, является ли текущий пользователь суперадмином
+  if (!permissions || !isSuperAdminUser(permissions)) {
+    return null; // Скрываем кнопку для обычных админов
+  }
 
   if (!record) return null;
 
@@ -140,6 +158,12 @@ const ToggleBlockButton = () => {
   const [update, { isLoading }] = useUpdate();
   const notify = useNotify();
   const refresh = useRefresh();
+  const { permissions } = usePermissions();
+
+  // Проверяем, является ли текущий пользователь суперадмином
+  if (!permissions || !isSuperAdminUser(permissions)) {
+    return null; // Скрываем кнопку для обычных админов
+  }
 
   if (!record) return null;
 
@@ -183,6 +207,13 @@ const ToggleBlockButton = () => {
 
 // Кнопки действий для списка пользователей
 const UserActions = () => {
+  const { permissions } = usePermissions();
+
+  // Если у пользователя нет прав суперадмина, не показываем никаких кнопок
+  if (!permissions || !isSuperAdminUser(permissions)) {
+    return null;
+  }
+
   return (
     <Box display="flex" gap={1}>
       <AssignAdminButton />
@@ -213,22 +244,29 @@ export const UserList = () => (
 );
 
 // Показ пользователя
-export const UserShow = () => (
-  <Show title="Пользователь">
-    <SimpleShowLayout>
-      <TextField source="id" label="ID" />
-      <TextField source="firstName" label="Имя" />
-      <TextField source="lastName" label="Фамилия" />
-      <EmailField source="email" label="Email" />
-      <UserRoles />
-      <DateField source="registrationDate" label="Дата регистрации" showTime />
-      <DateField source="lastLoginDate" label="Последний вход" showTime />
-      
-      <TopToolbar>
-        <AssignAdminButton />
-        <RemoveAdminButton />
-        <ToggleBlockButton />
-      </TopToolbar>
-    </SimpleShowLayout>
-  </Show>
-);
+export const UserShow = () => {
+  const { permissions } = usePermissions();
+
+  return (
+    <Show title="Пользователь">
+      <SimpleShowLayout>
+        <TextField source="id" label="ID" />
+        <TextField source="firstName" label="Имя" />
+        <TextField source="lastName" label="Фамилия" />
+        <EmailField source="email" label="Email" />
+        <UserRoles />
+        <DateField source="registrationDate" label="Дата регистрации" showTime />
+        <DateField source="lastLoginDate" label="Последний вход" showTime />
+        
+        {/* Показываем TopToolbar только для суперадминов */}
+        {permissions && isSuperAdminUser(permissions) && (
+          <TopToolbar>
+            <AssignAdminButton />
+            <RemoveAdminButton />
+            <ToggleBlockButton />
+          </TopToolbar>
+        )}
+      </SimpleShowLayout>
+    </Show>
+  );
+};

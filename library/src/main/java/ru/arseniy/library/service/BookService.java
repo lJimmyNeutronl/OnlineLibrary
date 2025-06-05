@@ -36,8 +36,26 @@ public class BookService {
     }
     
     public Book getBookById(Integer id) {
-        return bookRepository.findById(id)
+        Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Книга с ID " + id + " не найдена"));
+        
+        // Обогащаем книгу информацией о рейтинге
+        Double averageRating = ratingRepository.getAverageRatingByBookId(book.getId());
+        Long ratingCount = ratingRepository.countRatingsByBookId(book.getId());
+        
+        if (averageRating != null) {
+            book.setRating(averageRating);
+        } else {
+            book.setRating(0.0);
+        }
+        
+        if (ratingCount != null) {
+            book.setRatingsCount(ratingCount.intValue());
+        } else {
+            book.setRatingsCount(0);
+        }
+        
+        return book;
     }
     
     public Page<Book> searchBooks(String query, Pageable pageable) {

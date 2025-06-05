@@ -76,35 +76,12 @@ export const CategoryList = () => (
         }}
       />
       <FunctionField 
-        label="Родительская категория" 
+        label="Количество книг" 
         render={(record: any) => {
-          if (!record.parentCategoryId) {
-            return <Typography variant="body2" className="empty-field-text">—</Typography>;
-          }
-          return (
-            <ReferenceField 
-              source="parentCategoryId" 
-              reference="categories" 
-              link={false}
-              record={record}
-            >
-              <TextField source="name" />
-            </ReferenceField>
-          );
+          // CategoryWithCountDTO возвращает поле bookCount
+          return record.bookCount !== undefined ? record.bookCount : 0;
         }}
       />
-      <TextField source="description" label="Описание" />
-      <NumberField source="booksCount" label="Количество книг" />
-      <FunctionField 
-        label="Подкатегории" 
-        render={(record: any) => {
-          if (record.parentCategoryId) {
-            return <Typography variant="body2" className="empty-field-text">—</Typography>;
-          }
-          return record.subcategoriesCount || 0;
-        }}
-      />
-      <DateField source="createdAt" label="Создано" showTime />
     </Datagrid>
   </List>
 );
@@ -187,8 +164,12 @@ export const CategoryShow = () => (
           );
         }}
       />
-      <TextField source="description" label="Описание" />
-      <NumberField source="booksCount" label="Количество книг" />
+      <FunctionField 
+        label="Количество книг" 
+        render={(record: any) => {
+          return record.bookCount !== undefined ? record.bookCount : 0;
+        }}
+      />
       <DateField source="createdAt" label="Создано" showTime />
       <DateField source="updatedAt" label="Обновлено" showTime />
     </SimpleShowLayout>

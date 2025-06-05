@@ -98,11 +98,33 @@ const BookCoverField = () => {
   );
 };
 
-// Компонент для отображения рейтинга
+// Компонент для отображения рейтинга в списке
 const RatingField = () => {
   const record = useRecordContext();
   if (!record) return null;
   
+  const rating = record.rating ? parseFloat(record.rating).toFixed(1) : 'Нет оценок';
+  const ratingsCount = record.ratingsCount || 0;
+  
+  return (
+    <Box>
+      <Typography variant="body2">
+        ⭐ {rating}
+      </Typography>
+      <Typography variant="caption" color="textSecondary">
+        ({ratingsCount} оценок)
+      </Typography>
+    </Box>
+  );
+};
+
+// Компонент для отображения рейтинга в детальном просмотре
+const DetailedRatingField = () => {
+  const record = useRecordContext();
+  
+  if (!record) return null;
+  
+  // Используем ту же логику, что и в RatingField
   const rating = record.rating ? parseFloat(record.rating).toFixed(1) : 'Нет оценок';
   const ratingsCount = record.ratingsCount || 0;
   
@@ -253,6 +275,22 @@ export const BookEdit = () => (
         </Box>
         
         <Box sx={{ width: '100%' }}>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <TextInput 
+              source="rating" 
+              label="Рейтинг"
+              disabled
+              helperText="Рейтинг рассчитывается автоматически на основе оценок пользователей"
+              sx={{ width: '200px' }}
+            />
+            <TextInput 
+              source="ratingsCount" 
+              label="Количество оценок"
+              disabled
+              sx={{ width: '200px' }}
+            />
+          </Box>
+          
           <TextInput source="fileUrl" label="URL файла книги" validate={required()} fullWidth />
           <TextInput source="coverImageUrl" label="URL обложки" fullWidth />
           <ReferenceArrayInput
@@ -340,7 +378,7 @@ export const BookShow = () => (
                     <Typography variant="caption" color="text.secondary">
                       Рейтинг
                     </Typography>
-                    <RatingField />
+                    <DetailedRatingField />
                   </Box>
                 </Box>
               </Paper>
