@@ -3,21 +3,21 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from './hooks/reduxHooks';
 import { loadCurrentUser } from './store/slices/authSlice';
 import MainLayout from './components/layouts/MainLayout';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import BooksPage from './pages/BooksPage';
-import BookDetailPage from './pages/BookDetailPage';
+import HomePage from '@pages/home/HomePage';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import BooksPage from '@pages/books/catalog/BooksPage';
+import BookDetailPage from '@pages/books/detail/BookDetailPage';
 import BookReaderPage from './pages/BookReaderPage';
-import CategoriesPage from './pages/CategoriesPage';
-import CategoryBooksPage from './pages/CategoryBooksPage';
-import SearchResultsPage from './pages/SearchResultsPage';
-import ProfilePage from './pages/ProfilePage';
-import FavoritesPage from './pages/FavoritesPage';
-import EditProfilePage from './pages/EditProfilePage';
-import ChangePasswordPage from './pages/ChangePasswordPage';
-import NotFoundPage from './pages/NotFoundPage';
+import CategoriesPage from '@pages/categories/CategoriesPage';
+import CategoryBooksPage from './pages/categories/CategoryBooksPage';
+import SearchResultsPage from '@pages/search/SearchResultsPage';
+import ProfilePage from './pages/profile/ProfilePage';
+import FavoritesPage from '@pages/books/favourite/FavoritesPage';
+import EditProfilePage from './pages/profile/EditProfilePage';
+import ChangePasswordPage from '@pages/profile/ChangePasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminApp from './admin/AdminApp';
 import './App.css';
 
 const App = () => {
@@ -37,6 +37,10 @@ const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Админ-панель (отдельный роут без MainLayout) */}
+        <Route path="/admin/*" element={<AdminApp />} />
+        
+        {/* Основные роуты приложения */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="login" element={<LoginPage />} />
@@ -67,7 +71,7 @@ const App = () => {
               <ChangePasswordPage />
             </ProtectedRoute>
           } />
-          <Route path="*" element={<NotFoundPage />} />
+          
         </Route>
       </Routes>
     </Router>

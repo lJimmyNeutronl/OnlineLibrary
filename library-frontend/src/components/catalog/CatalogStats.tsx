@@ -1,54 +1,90 @@
 import React from 'react';
-import { FiBook, FiUsers, FiBookOpen, FiTag } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import { FiBook, FiGrid, FiList, FiFilter } from 'react-icons/fi';
+import { Button } from '../common';
 import './CatalogStats.css';
 
 interface CatalogStatsProps {
   totalBooks: number;
-  totalAuthors: number;
-  totalGenres: number;
-  readCount: number;
+  currentCount: number;
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
+  hasActiveFilters: boolean;
+  loading?: boolean;
 }
 
 const CatalogStats: React.FC<CatalogStatsProps> = ({
   totalBooks,
-  totalAuthors,
-  totalGenres,
-  readCount
+  currentCount,
+  viewMode,
+  onViewModeChange,
+  hasActiveFilters,
+  loading = false
 }) => {
+  const fadeIn = {
+    hidden: { opacity: 0, y: -10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+  };
+
   return (
-    <div className="catalog-stats">
-      <div className="stat-item">
-        <div className="stat-icon">
-          <FiBook />
+    <motion.div 
+      className="catalog-stats"
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+    >
+      <div className="stats-info">
+        <div className="stats-main">
+          <FiBook className="stats-icon" />
+          <div className="stats-text">
+            {loading ? (
+              <span className="stats-loading">Загрузка...</span>
+            ) : (
+              <>
+                <span className="stats-count">
+                  {hasActiveFilters ? (
+                    <>
+                      Найдено <strong>{currentCount}</strong> из {totalBooks} книг
+                    </>
+                  ) : (
+                    <>
+                      Всего <strong>{totalBooks}</strong> {totalBooks === 1 ? 'книга' : totalBooks < 5 ? 'книги' : 'книг'}
+                    </>
+                  )}
+                </span>
+                {hasActiveFilters && (
+                  <span className="stats-filter-indicator">
+                    <FiFilter size={12} />
+                    Применены фильтры
+                  </span>
+                )}
+              </>
+            )}
+          </div>
         </div>
-        <div className="stat-value">{totalBooks}</div>
-        <div className="stat-label">Книг в коллекции</div>
       </div>
-      
-      <div className="stat-item">
-        <div className="stat-icon">
-          <FiUsers />
+
+      <div className="stats-controls">
+        <div className="view-mode-toggle" data-active={viewMode}>
+          <Button
+            type={viewMode === 'grid' ? 'primary' : 'default'}
+            size="small"
+            onClick={() => onViewModeChange('grid')}
+            className="view-mode-btn"
+          >
+            <FiGrid />
+          </Button>
+          <Button
+            type={viewMode === 'list' ? 'primary' : 'default'}
+            size="small"
+            onClick={() => onViewModeChange('list')}
+            className="view-mode-btn"
+          >
+            <FiList />
+          </Button>
         </div>
-        <div className="stat-value">{totalAuthors}</div>
-        <div className="stat-label">Авторов</div>
       </div>
-      
-      <div className="stat-item">
-        <div className="stat-icon">
-          <FiTag />
-        </div>
-        <div className="stat-value">{totalGenres}</div>
-        <div className="stat-label">Жанров</div>
-      </div>
-      
-      <div className="stat-item">
-        <div className="stat-icon">
-          <FiBookOpen />
-        </div>
-        <div className="stat-value">{readCount}</div>
-        <div className="stat-label">Прочитано</div>
-      </div>
-    </div>
+    </motion.div>
   );
 };
 

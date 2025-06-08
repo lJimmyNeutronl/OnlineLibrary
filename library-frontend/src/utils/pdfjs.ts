@@ -1,42 +1,28 @@
 import { pdfjs } from 'react-pdf';
 
-// Импортируем pdfjs-dist для инициализации GlobalWorkerOptions
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Инициализируем библиотеку
-if (typeof window !== 'undefined' && 'Worker' in window) {
-  // Устанавливаем путь к воркеру (в двух форматах для совместимости)
-  const workerPath = '/pdfjs-dist/pdf.worker.min.js';
-  const workerPathMjs = '/pdfjs/pdf.worker.min.mjs';
-  
-  // Пробуем различные пути для совместимости с разными версиями
+// Настройка PDF.js с корректным worker'ом
+if (typeof window !== 'undefined') {
   try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
-    console.log('[PDFjs Config] Worker path установлен (pdfjs-dist):', workerPath);
+    // Используем CDN worker для совместимости с версией react-pdf
+    const workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
     
-    // Для совместимости с react-pdf
-    if (pdfjs) {
-      if (!pdfjs.GlobalWorkerOptions) {
-        // @ts-ignore - подавляем ошибку TS, если свойство не определено
-        pdfjs.GlobalWorkerOptions = {};
-      }
-      pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
-      console.log('[PDFjs Config] Worker path установлен (react-pdf):', workerPath);
-    }
+    console.log('[PDFjs Config] PDF.js версия:', pdfjs.version);
+    console.log('[PDFjs Config] Worker установлен:', workerSrc);
+    
   } catch (error) {
-    console.error('[PDFjs Config] Ошибка при установке worker path:', error);
+    console.error('[PDFjs Config] Ошибка настройки PDF.js:', error);
     
-    // Запасной вариант - использовать MJS файл
+    // Fallback на статический CDN path
     try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = workerPathMjs;
-      if (pdfjs && pdfjs.GlobalWorkerOptions) {
-        pdfjs.GlobalWorkerOptions.workerSrc = workerPathMjs;
-      }
-      console.log('[PDFjs Config] Использован запасной worker path:', workerPathMjs);
+      pdfjs.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      console.log('[PDFjs Config] Использован fallback worker');
     } catch (fallbackError) {
-      console.error('[PDFjs Config] Критическая ошибка при установке worker path:', fallbackError);
+      console.error('[PDFjs Config] Критическая ошибка:', fallbackError);
     }
   }
+} else {
+  console.log('[PDFjs Config] Серверная среда, настройка не требуется');
 }
 
 export default pdfjs; 

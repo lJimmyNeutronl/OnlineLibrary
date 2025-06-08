@@ -8,22 +8,29 @@ export interface User {
   roles: string[];
 }
 
+// Импортируем типы категорий из отдельного файла
+export type { Category, CategoryWithCount, CategoryWithSubcategories } from './category';
+import type { Category } from './category';
+
 export interface Book {
   id: number;
   title: string;
   author: string;
   description: string;
-  coverImageUrl: string;
-  fileUrl: string;
+  isbn?: string;
+  publicationYear?: number;
+  publisher?: string;
+  language?: string;
+  pageCount?: number;
+  fileUrl?: string;
+  coverImageUrl?: string;
+  uploadDate?: string;
   categories: Category[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Category {
-  id: number;
-  name: string;
-  description: string;
+  reviewsCount?: number;
+  rating?: number;
+  ratingsCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ReadingHistory {
@@ -50,12 +57,15 @@ export interface BookSearchParams {
   direction?: 'asc' | 'desc';
   query?: string;
   includeSubcategories?: boolean;
+  yearFrom?: number;
+  yearTo?: number;
+  language?: string;
+  minRating?: number;
 } 
 
 // Перечисление поддерживаемых форматов книг
 export enum BookFormat {
   PDF = 'pdf',
-  EPUB = 'epub',
   FB2 = 'fb2',
   UNKNOWN = 'unknown'
 }

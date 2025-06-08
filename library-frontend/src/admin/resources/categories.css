@@ -1,0 +1,16 @@
+.subcategory-chip {
+  margin: 2px;
+}
+
+.category-type-chip {
+  font-size: 0.75rem;
+}
+
+.parent-category-text {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.empty-field-text {
+  color: rgba(0, 0, 0, 0.6);
+  font-style: italic;
+} 

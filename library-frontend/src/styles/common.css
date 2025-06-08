@@ -118,4 +118,39 @@
 .back-button-icon {
   margin-right: 4px;
 }
+
+/* Общие стили для заголовков страниц */
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+/* Стили для тегов */
+.tag-blue {
+  margin-left: 12px;
+  background-color: rgba(55, 105, 245, 0.1);
+  color: #3769f5;
+  border: 1px solid rgba(55, 105, 245, 0.3);
+  font-size: 14px;
+  font-weight: bold;
+  padding: 0 10px;
+} 
+
+/* Адаптивные стили для заголовков */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.8rem;
+  }
+}
  

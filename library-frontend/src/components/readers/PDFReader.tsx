@@ -9,23 +9,26 @@ import Button from '../common/Button';
 import { AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineFullscreen } from 'react-icons/ai';
 import './Reader.css';
 
-// Проверка инициализации воркера (для диагностики)
-console.log('PDF.js используется версия:', pdfjs.version);
-console.log('PDF.js GlobalWorkerOptions доступен:', Boolean(pdfjs.GlobalWorkerOptions));
-console.log('PDF.js worker path:', pdfjs.GlobalWorkerOptions?.workerSrc || 'не установлен');
+// Дополнительная проверка и настройка worker'а
+if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+  const fallbackWorkerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+  pdfjs.GlobalWorkerOptions.workerSrc = fallbackWorkerSrc;
+}
 
 interface PDFReaderProps {
   fileUrl: string;
   bookId: number;
   onProgressChange: (progress: ReadingProgress) => void;
   initialProgress?: ReadingProgress | null;
+  onBookInfo?: (info: { totalPages: number }) => void;
 }
 
 const PDFReader: React.FC<PDFReaderProps> = ({ 
   fileUrl, 
   bookId, 
   onProgressChange, 
-  initialProgress 
+  initialProgress,
+  onBookInfo
 }) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(initialProgress?.currentPage || 1);
@@ -35,6 +38,7 @@ const PDFReader: React.FC<PDFReaderProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   // Мемоизация опций для компонента Document
   const documentOptions = useMemo(() => ({
@@ -53,8 +57,6 @@ const PDFReader: React.FC<PDFReaderProps> = ({
         if (!fileUrl) {
           throw new Error('URL файла не предоставлен');
         }
-
-        console.log('Загрузка PDF из источника:', fileUrl);
         
         // Проверяем корректность URL и добавляем CORS прокси, если файл внешний
         let pdfUrl = fileUrl;
@@ -63,8 +65,6 @@ const PDFReader: React.FC<PDFReaderProps> = ({
         // возможно нам нужно использовать CORS прокси
         if ((fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) &&
             !fileUrl.includes('localhost')) {
-          
-          console.log('Внешний URL обнаружен, проверяем доступность напрямую');
           
           try {
             // Пробуем загрузить файл напрямую
@@ -90,7 +90,8 @@ const PDFReader: React.FC<PDFReaderProps> = ({
 
   useEffect(() => {
     // Сохраняем прогресс чтения при изменении страницы
-    if (numPages && pageNumber) {
+    // НЕ отправляем прогресс при первоначальной загрузке
+    if (numPages && pageNumber && !isInitialLoad) {
       const progress: ReadingProgress = {
         bookId,
         currentPage: pageNumber,
@@ -100,19 +101,29 @@ const PDFReader: React.FC<PDFReaderProps> = ({
       };
       onProgressChange(progress);
     }
-  }, [pageNumber, numPages, bookId, onProgressChange]);
+  }, [pageNumber, numPages, bookId, onProgressChange, isInitialLoad]);
 
   // Обработчик успешной загрузки документа
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    console.log('PDF успешно загружен, количество страниц:', numPages);
     setNumPages(numPages);
     setIsLoading(false);
     setError(null);
+    
+    // Передаем информацию о количестве страниц в родительский компонент
+    if (onBookInfo) {
+      onBookInfo({ totalPages: numPages });
+    }
     
     // Восстанавливаем прогресс чтения, если он существует
     if (initialProgress?.currentPage) {
       setPageNumber(initialProgress.currentPage);
     }
+    
+    // Снимаем флаг первоначальной загрузки после небольшой задержки
+    // чтобы дать время для восстановления прогресса
+    setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 100);
   };
 
   const onDocumentLoadError = (error: Error) => {
@@ -120,7 +131,6 @@ const PDFReader: React.FC<PDFReaderProps> = ({
     
     // Если PDF не загрузился и мы еще не превысили лимит попыток
     if (retryCount < 2) {
-      console.log(`Попытка №${retryCount + 1} загрузки PDF...`);
       setRetryCount(prev => prev + 1);
       return;
     }
@@ -130,8 +140,15 @@ const PDFReader: React.FC<PDFReaderProps> = ({
   };
 
   // Навигация по страницам
-  const goToPrevPage = () => setPageNumber(prev => Math.max(prev - 1, 1));
-  const goToNextPage = () => setPageNumber(prev => numPages ? Math.min(prev + 1, numPages) : prev);
+  const goToPrevPage = () => {
+    setIsInitialLoad(false); // Снимаем флаг при пользовательском действии
+    setPageNumber(prev => Math.max(prev - 1, 1));
+  };
+  
+  const goToNextPage = () => {
+    setIsInitialLoad(false); // Снимаем флаг при пользовательском действии
+    setPageNumber(prev => numPages ? Math.min(prev + 1, numPages) : prev);
+  };
 
   // Масштабирование
   const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3.0));

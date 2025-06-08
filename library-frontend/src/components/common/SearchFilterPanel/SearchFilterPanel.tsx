@@ -1,228 +1,300 @@
-import React, { useState, useEffect } from 'react';
-import { Input, Button, Select, Row, Col } from '../../common';
-import { BsSearch } from 'react-icons/bs';
-import { FiFilter, FiGrid, FiList } from 'react-icons/fi';
-import Typography from '../Typography';
-import './search-filter-panel.css';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Input, Button, Select, Row, Col } from '@/components/common';
+import { BsSearch, BsFilterLeft } from 'react-icons/bs';
+import { FiGrid, FiList, FiX, FiChevronUp, FiChevronDown, FiShuffle } from 'react-icons/fi';
+import { HiSparkles } from 'react-icons/hi';
+import Typography from '@/components/common/Typography';
+import styles from './SearchFilterPanel.module.css';
 
 const { Title } = Typography;
 
-export interface YearFilter {
-  min: number;
-  max: number;
-}
-
 export type ViewMode = 'grid' | 'list';
-export type SortOption = 'title' | 'author' | 'year' | 'relevance';
+export type SortOption = 'year' | 'relevance' | 'rating' | 'uploadDate';
+export type SortDirection = 'asc' | 'desc';
 
 export interface SearchFilterPanelProps<T> {
   data: T[];
   onFilteredDataChange: (filteredData: T[]) => void;
-  onSortChange: (option: SortOption) => void;
+  onSortChange: (option: SortOption, direction: SortDirection) => void;
   onViewModeChange: (mode: ViewMode) => void;
   searchQuery: string;
   sortBy: SortOption;
+  sortDirection?: SortDirection;
   viewMode: ViewMode;
   totalItems?: number;
   onResetPage?: () => void;
+  onSearchQueryChange?: (query: string) => void;
   filterByTitle?: (item: T, query: string) => boolean;
-  filterByYear?: (item: T, min: number, max: number) => boolean;
+  searchMode?: 'local' | 'global';
 }
 
-function SearchFilterPanel<T>({
+function SearchFilterPanel<T extends Record<string, any>>({
   data,
   onFilteredDataChange,
   onSortChange,
   onViewModeChange,
   searchQuery: initialSearchQuery = '',
   sortBy,
+  sortDirection = 'desc',
   viewMode,
   totalItems,
   onResetPage,
-  filterByTitle = (item: any, query: string) => 
-    item.title?.toLowerCase().includes(query.toLowerCase()) || 
-    item.author?.toLowerCase().includes(query.toLowerCase()),
-  filterByYear = (item: any, min: number, max: number) => 
-    item.publicationYear !== undefined && 
-    item.publicationYear >= min && 
-    item.publicationYear <= max
+  onSearchQueryChange,
+  filterByTitle,
+  searchMode = 'local',
 }: SearchFilterPanelProps<T>) {
-  const [showFilters, setShowFilters] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearchQuery);
-  const [yearFilter, setYearFilter] = useState<YearFilter | null>(null);
-  const [filteredData, setFilteredData] = useState<T[]>([]);
+  const [currentSortDirection, setCurrentSortDirection] = useState<SortDirection>(sortDirection);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
-  // Обработчик изменения поискового запроса
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
+  // Мемоизируем функцию фильтрации по умолчанию
+  const defaultFilterByTitle = useCallback((item: T, query: string) => 
+    item.title?.toLowerCase().includes(query.toLowerCase()) || 
+    item.author?.toLowerCase().includes(query.toLowerCase()), []);
 
-  // Обработчик отправки поискового запроса
-  const handleSearchSubmit = () => {
-    applyFilters();
-    if (onResetPage) onResetPage();
-  };
+  // Используем переданную функцию или функцию по умолчанию
+  const memoizedFilterByTitle = useMemo(() => 
+    filterByTitle || defaultFilterByTitle, 
+    [filterByTitle, defaultFilterByTitle]
+  );
 
-  // Переключение отображения фильтров
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
-  };
+  const getSortOptions = useMemo(() => {
+    const baseOptions = [
+      { value: 'rating' as SortOption, label: 'По рейтингу', icon: <HiSparkles /> },
+      { value: 'year' as SortOption, label: 'По году', icon: <FiShuffle /> },
+      { value: 'uploadDate' as SortOption, label: 'По дате добавления', icon: <FiShuffle /> },
+    ];
 
-  // Обработчик изменения фильтра по году
-  const handleYearFilterChange = (type: 'min' | 'max', value: number) => {
-    if (type === 'min') {
-      setYearFilter(prev => ({ min: value, max: prev?.max || new Date().getFullYear() }));
-    } else {
-      setYearFilter(prev => ({ min: prev?.min || 1970, max: value }));
+    if (searchQuery.trim()) {
+      return [
+        { value: 'relevance' as SortOption, label: 'По релевантности', icon: <BsSearch /> },
+        ...baseOptions
+      ];
     }
-  };
 
-  // Обработчик сброса всех фильтров
-  const handleResetFilters = () => {
-    setSearchQuery('');
-    setYearFilter(null);
-    onFilteredDataChange([]);
-    if (onResetPage) onResetPage();
-  };
+    return baseOptions;
+  }, [searchQuery]);
 
-  // Функция применения фильтров
-  const applyFilters = () => {
+  // Определяем направление сортировки по умолчанию для каждого типа
+  const getDefaultDirection = useCallback((sortOption: SortOption): SortDirection => {
+    switch (sortOption) {
+      case 'year':
+      case 'rating':
+      case 'uploadDate':
+      case 'relevance':
+        return 'desc'; // Новые/высокие первыми
+      default:
+        return 'desc';
+    }
+  }, []);
+
+  // Локальная фильтрация данных (только для режима 'local')
+  useEffect(() => {
+    if (searchMode !== 'local') return;
+
     let filtered = [...data];
     
-    // Применяем поисковый фильтр
     if (searchQuery.trim() !== '') {
-      filtered = filtered.filter(item => filterByTitle(item, searchQuery));
+      filtered = filtered.filter(item => memoizedFilterByTitle(item, searchQuery));
     }
     
-    // Применяем фильтр по году
-    if (yearFilter) {
-      filtered = filtered.filter(item => filterByYear(item, yearFilter.min, yearFilter.max));
-    }
-    
-    // Если нет активных фильтров, возвращаем пустой массив (что означает "показать все")
-    if (searchQuery.trim() === '' && !yearFilter) {
-      setFilteredData([]);
+    if (searchQuery.trim() === '') {
       onFilteredDataChange([]);
     } else {
-      setFilteredData(filtered);
       onFilteredDataChange(filtered);
     }
-  };
+  }, [data, searchQuery, onFilteredDataChange, memoizedFilterByTitle, searchMode]);
 
-  // Применяем фильтры при изменении параметров
-  useEffect(() => {
-    applyFilters();
-  }, [yearFilter, data]);
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
 
-  // Обновляем поисковый запрос, если изменился initialSearchQuery
+    if (onResetPage) onResetPage();
+    
+    // Для глобального поиска вызываем onSearchQueryChange
+    if (searchMode === 'global' && onSearchQueryChange) {
+      onSearchQueryChange(value);
+    }
+  }, [onResetPage, onSearchQueryChange, searchMode]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (onResetPage) onResetPage();
+    }
+  }, [onResetPage]);
+
+  const handleSortChange = useCallback((option: SortOption) => {
+    if (option === 'relevance' && !searchQuery.trim()) {
+      const newDirection = getDefaultDirection('rating');
+      setCurrentSortDirection(newDirection);
+      onSortChange('rating', newDirection);
+    } else {
+      const newDirection = getDefaultDirection(option);
+      setCurrentSortDirection(newDirection);
+      onSortChange(option, newDirection);
+    }
+    if (onResetPage) onResetPage();
+  }, [searchQuery, getDefaultDirection, onSortChange, onResetPage]);
+
+  const toggleSortDirection = useCallback(() => {
+    const newDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    setCurrentSortDirection(newDirection);
+    onSortChange(sortBy, newDirection);
+    if (onResetPage) onResetPage();
+  }, [currentSortDirection, sortBy, onSortChange, onResetPage]);
+
+  const currentSortBy = useMemo(() => {
+    if (sortBy === 'relevance' && !searchQuery.trim()) {
+      return 'rating';
+    }
+    return sortBy;
+  }, [sortBy, searchQuery]);
+
+  // Синхронизация с внешним searchQuery только при изменении
   useEffect(() => {
-    setSearchQuery(initialSearchQuery);
+    if (initialSearchQuery !== searchQuery) {
+      setSearchQuery(initialSearchQuery);
+    }
   }, [initialSearchQuery]);
 
-  const currentYear = new Date().getFullYear();
-  const yearsArray = Array.from({ length: 50 }, (_, i) => ({ 
-    value: currentYear - i, 
-    label: (currentYear - i).toString() 
-  }));
+  // Синхронизация направления сортировки
+  useEffect(() => {
+    if (sortDirection !== currentSortDirection) {
+      setCurrentSortDirection(sortDirection);
+    }
+  }, [sortDirection]);
+
+  // Функция для получения иконки направления сортировки
+  const getSortDirectionIcon = () => {
+    return currentSortDirection === 'asc' ? <FiChevronUp /> : <FiChevronDown />;
+  };
+
+  // Получаем текущую опцию сортировки для отображения
+  const currentSortOption = getSortOptions.find(opt => opt.value === currentSortBy);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+    if (onResetPage) onResetPage();
+    if (searchMode === 'global' && onSearchQueryChange) {
+      onSearchQueryChange('');
+    }
+  }, [onResetPage, onSearchQueryChange, searchMode]);
 
   return (
-    <div className="search-filter-panel">
-      <div className="search-filter-toolbar">
-        <div className="search-filter-left">
-          <Input 
-            placeholder="Поиск по названию или автору" 
-            prefix={<BsSearch color="#3769f5" />} 
-            className="search-input"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            onBlur={handleSearchSubmit}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}
-          />
-          <Button 
-            icon={<FiFilter />} 
-            onClick={toggleFilters}
-            className={`filter-button ${showFilters ? 'active' : ''}`}
+    <div className={styles.searchFilterPanel}>
+      {/* Главная панель поиска */}
+      <div className={styles.mainSearchPanel}>
+        <div className={styles.searchSection}>
+          <div className={styles.modernSearchContainer}>
+            <div className={styles.searchIconWrapper}>
+              <BsSearch />
+            </div>
+            <Input 
+              placeholder={searchMode === 'global' 
+                ? "Найдите свою следующую любимую книгу..." 
+                : "Поиск в текущей категории..."
+              } 
+              className={styles.modernSearchInput}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+            />
+            {searchQuery && (
+              <Button 
+                type="text" 
+                size="small"
+                icon={<FiX />}
+                onClick={handleClearSearch}
+                className={styles.modernClearButton}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className={styles.middleSection}>
+          {/* Информация о результатах */}
+          {totalItems !== undefined && (
+            <div className={styles.inlineResultsInfo}>
+              <div className={styles.inlineResultsCount}>
+                <HiSparkles className={styles.inlineResultsIcon} />
+                <span>
+                  {totalItems === 0 ? 'Ничего не найдено' : 
+                   totalItems === 1 ? 'Найдена 1 книга' :
+                   totalItems < 5 ? `Найдено ${totalItems} книги` :
+                   `Найдено ${totalItems} книг`}
+                </span>
+              </div>
+              {searchQuery && (
+                <div className={styles.inlineActiveSearch}>
+                  по запросу "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.quickActions}>
+          <Button
+            icon={<BsFilterLeft />}
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`${styles.filterToggle} ${isExpanded ? styles.active : ''}`}
+            type="default"
           >
             Фильтры
           </Button>
-        </div>
-        
-        <div className="search-filter-right">
-          <span className="sort-label">Сортировка:</span>
-          <Select 
-            defaultValue="relevance" 
-            className="sort-select"
-            onChange={(value: SortOption) => {
-              onSortChange(value);
-              if (onResetPage) onResetPage();
-            }}
-            value={sortBy}
-            options={[
-              { value: 'relevance', label: 'По релевантности' },
-              { value: 'title', label: 'По названию' },
-              { value: 'author', label: 'По автору' },
-              { value: 'year', label: 'По году' },
-            ]}
-          />
           
-          <div className="view-mode-buttons">
+          <div className={styles.viewModeSection}>
             <Button 
               icon={<FiGrid />} 
               onClick={() => onViewModeChange('grid')}
               type={viewMode === 'grid' ? 'primary' : 'default'}
+              className={styles.viewModeButton}
             />
             <Button 
               icon={<FiList />} 
               onClick={() => onViewModeChange('list')}
               type={viewMode === 'list' ? 'primary' : 'default'}
+              className={styles.viewModeButton}
             />
           </div>
         </div>
       </div>
-      
-      {showFilters && (
-        <div className="filter-panel">
-          <Title level={5}>Фильтры</Title>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={8}>
-              <div className="year-filter">
-                <div className="year-filter-label">Год издания</div>
-                <div className="year-filter-inputs">
-                  <Select 
-                    placeholder="От" 
-                    className="year-select"
-                    value={yearFilter?.min}
-                    onChange={(value: number) => handleYearFilterChange('min', value)}
-                    options={yearsArray}
-                  />
-                  <span>-</span>
-                  <Select 
-                    placeholder="До" 
-                    className="year-select"
-                    value={yearFilter?.max}
-                    onChange={(value: number) => handleYearFilterChange('max', value)}
-                    options={yearsArray}
-                  />
-                </div>
+
+      {/* Расширенная панель фильтров */}
+      <div className={`${styles.advancedFilters} ${isExpanded ? styles.expanded : ''}`}>
+        <div className={styles.filterRow}>
+          <div className={styles.sortSection}>
+            <span className={styles.filterLabel}>
+              <BsFilterLeft />
+              Сортировка
+            </span>
+            <div className={styles.sortControls}>
+              <div className={styles.selectWrapper}>
+                <Select 
+                  className={styles.modernSortSelect}
+                  onChange={handleSortChange}
+                  value={currentSortBy}
+                  options={getSortOptions.map(opt => ({
+                    value: opt.value,
+                    label: (
+                      <div className={styles.sortOptionLabel}>
+                        {opt.icon}
+                        <span>{opt.label}</span>
+                      </div>
+                    )
+                  }))}
+                />
               </div>
-            </Col>
-            
-            <Col xs={24} md={16}>
-              <div className="filter-actions">
-                <Button className="reset-button" onClick={handleResetFilters}>
-                  Сбросить
-                </Button>
-                <Button type="primary" onClick={() => {
-                  setShowFilters(false);
-                  applyFilters();
-                }}>
-                  Применить
-                </Button>
-              </div>
-            </Col>
-          </Row>
+              <Button 
+                type="default"
+                icon={getSortDirectionIcon()}
+                onClick={toggleSortDirection}
+                className={styles.modernSortDirection}
+              />
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

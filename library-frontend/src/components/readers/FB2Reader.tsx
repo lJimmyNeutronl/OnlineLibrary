@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ReadingProgress, BookFormat } from '../../types';
 import Button from '../common/Button';
 import { AiOutlineZoomIn, AiOutlineZoomOut, AiOutlineFullscreen } from 'react-icons/ai';
@@ -12,13 +12,15 @@ interface FB2ReaderProps {
   bookId: number;
   onProgressChange: (progress: ReadingProgress) => void;
   initialProgress?: ReadingProgress | null;
+  onBookInfo?: (info: { totalPages: number }) => void;
 }
 
 const FB2Reader: React.FC<FB2ReaderProps> = ({
   fileUrl,
   bookId,
   onProgressChange,
-  initialProgress
+  initialProgress,
+  onBookInfo
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [content, setContent] = useState<string>('');
@@ -28,6 +30,60 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(initialProgress?.currentPage || 1);
   const [totalPages, setTotalPages] = useState<number>(0);
+  
+  // Функция для более точного расчета количества страниц
+  const calculateTotalPages = useCallback(() => {
+    if (!containerRef.current || !content) return 0;
+    
+    const container = containerRef.current;
+    const { clientHeight, scrollHeight } = container;
+    
+    if (scrollHeight <= clientHeight) {
+      return 1;
+    }
+    
+    // Учитываем перекрытие между страницами (10% для плавности чтения)
+    const pageHeight = clientHeight * 0.9;
+    const totalContentHeight = scrollHeight - clientHeight;
+    const calculatedPages = Math.ceil(totalContentHeight / pageHeight) + 1;
+    
+    return Math.max(1, calculatedPages);
+  }, [content]);
+  
+  // Пересчет страниц при изменении размера шрифта или загрузке контента
+  useEffect(() => {
+    if (!isLoading && content && containerRef.current) {
+      // Небольшая задержка для завершения рендеринга
+      const timer = setTimeout(() => {
+        const newTotalPages = calculateTotalPages();
+        setTotalPages(newTotalPages);
+        
+        // Передаем информацию о количестве страниц в родительский компонент
+        if (onBookInfo && newTotalPages > 0) {
+          onBookInfo({ totalPages: newTotalPages });
+        }
+        
+        // Корректируем текущую страницу если она стала больше общего количества
+        setCurrentPage(prev => Math.min(prev, newTotalPages));
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [content, fontSize, isLoading, calculateTotalPages, onBookInfo]);
+
+  // Обработчик изменения размера окна
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isLoading && content) {
+        const newTotalPages = calculateTotalPages();
+        setTotalPages(newTotalPages);
+        setCurrentPage(prev => Math.min(prev, newTotalPages));
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [content, isLoading, calculateTotalPages]);
   
   // Загрузка и парсинг FB2 файла
   useEffect(() => {
@@ -52,7 +108,11 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
           
           if (fb2Entry) {
             const writer = new zip.TextWriter();
-            textContent = await fb2Entry.getData(writer);
+            if (fb2Entry.getData) {
+              textContent = await fb2Entry.getData(writer);
+            } else {
+              throw new Error('Метод getData недоступен для FB2 файла');
+            }
           } else {
             throw new Error('FB2 файл не найден в архиве');
           }
@@ -76,25 +136,6 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
         const htmlContent = await convertFB2ToHTML(xmlDoc);
         setContent(htmlContent);
         
-        // Устанавливаем общее количество страниц (примерно)
-        // Один экран ~= 2000 символов
-        const contentLength = textContent.length;
-        const estimatedPages = Math.max(1, Math.ceil(contentLength / 2000));
-        setTotalPages(estimatedPages);
-        
-        // Восстанавливаем прогресс чтения
-        if (initialProgress?.currentPage && initialProgress.format === BookFormat.FB2) {
-          // Scroll to position based on percentage
-          const percent = initialProgress.currentPage / initialProgress.totalPages;
-          setTimeout(() => {
-            if (containerRef.current) {
-              const scrollHeight = containerRef.current.scrollHeight;
-              containerRef.current.scrollTop = scrollHeight * percent;
-              setCurrentPage(initialProgress.currentPage);
-            }
-          }, 100);
-        }
-        
         setIsLoading(false);
       } catch (err) {
         console.error('Ошибка при загрузке FB2:', err);
@@ -104,7 +145,23 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
     };
     
     fetchFB2();
-  }, [fileUrl, initialProgress]);
+  }, [fileUrl]);
+  
+  // Восстановление прогресса чтения после загрузки контента
+  useEffect(() => {
+    if (!isLoading && content && initialProgress?.currentPage && initialProgress.format === BookFormat.FB2) {
+      setTimeout(() => {
+        if (containerRef.current && totalPages > 0) {
+          const targetPage = Math.min(initialProgress.currentPage, totalPages);
+          const percent = (targetPage - 1) / Math.max(1, totalPages - 1);
+          const container = containerRef.current;
+          const maxScroll = container.scrollHeight - container.clientHeight;
+          container.scrollTop = maxScroll * percent;
+          setCurrentPage(targetPage);
+        }
+      }, 200);
+    }
+  }, [isLoading, content, totalPages, initialProgress]);
   
   // Конвертация из FB2 (XML) в HTML
   const convertFB2ToHTML = async (xmlDoc: Document): Promise<string> => {
@@ -161,20 +218,27 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
   
   // Отслеживание прокрутки для определения текущей страницы
   useEffect(() => {
-    if (!containerRef.current || isLoading) return;
+    if (!containerRef.current || isLoading || totalPages === 0) return;
     
     const handleScroll = () => {
-      if (containerRef.current) {
+      if (containerRef.current && totalPages > 0) {
         const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-        const scrollPercent = scrollTop / (scrollHeight - clientHeight);
-        const currentPage = Math.max(1, Math.round(scrollPercent * totalPages));
+        const maxScroll = scrollHeight - clientHeight;
         
-        setCurrentPage(currentPage);
+        if (maxScroll <= 0) {
+          setCurrentPage(1);
+          return;
+        }
+        
+        const scrollPercent = scrollTop / maxScroll;
+        const calculatedPage = Math.max(1, Math.min(Math.round(scrollPercent * (totalPages - 1)) + 1, totalPages));
+        
+        setCurrentPage(calculatedPage);
         
         // Сохраняем прогресс чтения
         const progress: ReadingProgress = {
           bookId,
-          currentPage,
+          currentPage: calculatedPage,
           totalPages,
           lastReadDate: new Date().toISOString(),
           format: BookFormat.FB2
@@ -199,19 +263,34 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
   }, [fontSize]);
   
   // Навигация по страницам (прокрутка)
-  const goToPrevPage = () => {
+  const goToPrevPage = useCallback(() => {
     if (containerRef.current) {
       const { clientHeight } = containerRef.current;
       containerRef.current.scrollTop -= clientHeight * 0.9;
     }
-  };
+  }, []);
   
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     if (containerRef.current) {
       const { clientHeight } = containerRef.current;
       containerRef.current.scrollTop += clientHeight * 0.9;
     }
-  };
+  }, []);
+
+  // Небольшая прокрутка вверх/вниз
+  const scrollUp = useCallback(() => {
+    if (containerRef.current) {
+      const { clientHeight } = containerRef.current;
+      containerRef.current.scrollTop -= clientHeight * 0.3;
+    }
+  }, []);
+
+  const scrollDown = useCallback(() => {
+    if (containerRef.current) {
+      const { clientHeight } = containerRef.current;
+      containerRef.current.scrollTop += clientHeight * 0.3;
+    }
+  }, []);
   
   // Изменение масштаба
   const zoomIn = () => {
@@ -255,10 +334,21 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
   // Обработка нажатий клавиш
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Стрелки влево-вправо и PageUp/PageDown работают всегда
       if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
         goToPrevPage();
       } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
         goToNextPage();
+      }
+      // Стрелки вверх-вниз работают только в полноэкранном режиме
+      else if (isFullscreen && e.key === 'ArrowUp') {
+        e.preventDefault();
+        scrollUp();
+      } else if (isFullscreen && e.key === 'ArrowDown') {
+        e.preventDefault();
+        scrollDown();
       }
     };
     
@@ -266,8 +356,8 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
-  
+  }, [isFullscreen, goToPrevPage, goToNextPage, scrollUp, scrollDown]);
+
   return (
     <div id="fb2-reader-container" className="reader-container">
       <div className="reader-toolbar">
@@ -355,6 +445,11 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
             Следующая →
           </Button>
         </div>
+        {isFullscreen && (
+          <div className="reader-fullscreen-hint">
+            <small>💡 В полноэкранном режиме: ↑↓ для прокрутки, ←→ для страниц</small>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,19 +1,6 @@
 import API from './api';
-import { mockCategories } from '../mocks/booksData';
-
-export interface Category {
-  id: number;
-  name: string;
-  parentCategoryId: number | null;
-}
-
-export interface CategoryWithCount extends Category {
-  bookCount: number;
-}
-
-export interface CategoryWithSubcategories extends Category {
-  subcategories: Category[];
-}
+import { getCached, updateCache, isValidCache } from '../utils/cache';
+import type { Category, CategoryWithCount, CategoryWithSubcategories } from '../types/category';
 
 // Кэши для категорий
 let allCategoriesCache: Category[] | null = null;
@@ -22,57 +9,57 @@ let categoryHierarchyCache: CategoryWithSubcategories[] | null = null;
 let subcategoriesCache: Record<number, Category[]> = {};
 let categoriesWithBookCountCache: CategoryWithCount[] | null = null;
 
-// Время жизни кэша в миллисекундах (5 минут)
-const CACHE_TTL = 5 * 60 * 1000;
-
 // Временные метки последнего обновления кэшей
 let allCategoriesTimestamp = 0;
 let rootCategoriesTimestamp = 0;
 let categoryHierarchyTimestamp = 0;
+let subcategoriesTimestamps: Record<number, number> = {};
 let categoriesWithBookCountTimestamp = 0;
+
+/**
+ * Сброс всех кэшей и временных меток
+ */
+function resetAllCaches(): void {
+  allCategoriesCache = null;
+  rootCategoriesCache = null;
+  categoryHierarchyCache = null;
+  categoriesWithBookCountCache = null;
+  subcategoriesCache = {};
+  subcategoriesTimestamps = {};
+
+  allCategoriesTimestamp = 0;
+  rootCategoriesTimestamp = 0;
+  categoryHierarchyTimestamp = 0;
+  categoriesWithBookCountTimestamp = 0;
+}
 
 const categoryService = {
   // Функция для очистки всех кэшей
-  clearCache() {
-    allCategoriesCache = null;
-    rootCategoriesCache = null;
-    categoryHierarchyCache = null;
-    subcategoriesCache = {};
-    categoriesWithBookCountCache = null;
-    
-    allCategoriesTimestamp = 0;
-    rootCategoriesTimestamp = 0;
-    categoryHierarchyTimestamp = 0;
-    categoriesWithBookCountTimestamp = 0;
-  },
-  
-  // Проверка актуальности кэша
-  isValidCache(timestamp: number): boolean {
-    return Date.now() - timestamp < CACHE_TTL;
+  clearCache(): void {
+    resetAllCaches();
   },
   
   // Получение всех категорий
   async getAllCategories(): Promise<Category[]> {
     try {
       // Проверяем, есть ли актуальные данные в кэше
-      if (allCategoriesCache && this.isValidCache(allCategoriesTimestamp)) {
+      const cached = getCached(allCategoriesCache, allCategoriesTimestamp);
+      if (cached) {
         console.log('Используем кэшированные данные для всех категорий');
-        return allCategoriesCache;
+        return cached;
       }
       
       const response = await API.get('/categories');
       
       // Обновляем кэш и временную метку
-      allCategoriesCache = response.data;
-      allCategoriesTimestamp = Date.now();
+      const { data, timestamp } = updateCache(response.data);
+      allCategoriesCache = data;
+      allCategoriesTimestamp = timestamp;
       
-      return response.data;
+      return data;
     } catch (error) {
-      console.error('Ошибка при получении категорий, используем мок данные:', error);
-      // Используем мок данные при ошибке API
-      allCategoriesCache = mockCategories;
-      allCategoriesTimestamp = Date.now();
-      return mockCategories;
+      console.error('Ошибка при получении категорий:', error);
+      throw new Error('Не удалось загрузить категории');
     }
   },
 
@@ -80,25 +67,23 @@ const categoryService = {
   async getRootCategories(): Promise<Category[]> {
     try {
       // Проверяем, есть ли актуальные данные в кэше
-      if (rootCategoriesCache && this.isValidCache(rootCategoriesTimestamp)) {
+      const cached = getCached(rootCategoriesCache, rootCategoriesTimestamp);
+      if (cached) {
         console.log('Используем кэшированные данные для корневых категорий');
-        return rootCategoriesCache;
+        return cached;
       }
       
       const response = await API.get('/categories/root');
       
       // Обновляем кэш и временную метку
-      rootCategoriesCache = response.data;
-      rootCategoriesTimestamp = Date.now();
+      const { data, timestamp } = updateCache(response.data);
+      rootCategoriesCache = data;
+      rootCategoriesTimestamp = timestamp;
       
-      return response.data;
+      return data;
     } catch (error) {
-      console.error('Ошибка при получении корневых категорий, используем мок данные:', error);
-      // Фильтруем мок данные по корневым категориям (где parentCategoryId === null)
-      const rootCategories = mockCategories.filter(category => category.parentCategoryId === null);
-      rootCategoriesCache = rootCategories;
-      rootCategoriesTimestamp = Date.now();
-      return rootCategories;
+      console.error('Ошибка при получении корневых категорий:', error);
+      throw new Error('Не удалось загрузить корневые категории');
     }
   },
 
@@ -106,23 +91,21 @@ const categoryService = {
   async getSubcategories(categoryId: number): Promise<Category[]> {
     try {
       // Проверяем, есть ли актуальные данные в кэше
-      if (subcategoriesCache[categoryId] && this.isValidCache(Date.now())) {
+      if (subcategoriesCache[categoryId] && isValidCache(subcategoriesTimestamps[categoryId])) {
         console.log(`Используем кэшированные данные для подкатегорий категории ${categoryId}`);
         return subcategoriesCache[categoryId];
       }
       
       const response = await API.get(`/categories/${categoryId}/subcategories`);
       
-      // Обновляем кэш подкатегорий
+      // Обновляем кэш подкатегорий и временную метку
       subcategoriesCache[categoryId] = response.data;
+      subcategoriesTimestamps[categoryId] = Date.now();
       
       return response.data;
     } catch (error) {
-      console.error(`Ошибка при получении подкатегорий для категории ${categoryId}, используем мок данные:`, error);
-      // Фильтруем мок данные по подкатегориям (где parentCategoryId === categoryId)
-      const subcategories = mockCategories.filter(category => category.parentCategoryId === categoryId);
-      subcategoriesCache[categoryId] = subcategories;
-      return subcategories;
+      console.error(`Ошибка при получении подкатегорий для категории ${categoryId}:`, error);
+      throw new Error(`Не удалось загрузить подкатегории для категории ${categoryId}`);
     }
   },
 
@@ -140,12 +123,7 @@ const categoryService = {
       const response = await API.get(`/categories/${categoryId}`);
       return response.data;
     } catch (error) {
-      console.error(`Ошибка при получении категории с ID ${categoryId}, используем мок данные:`, error);
-      // Ищем категорию в мок данных
-      const category = mockCategories.find(cat => cat.id === categoryId);
-      if (category) {
-        return category;
-      }
+      console.error(`Ошибка при получении категории с ID ${categoryId}:`, error);
       throw new Error(`Категория с ID ${categoryId} не найдена`);
     }
   },
@@ -154,69 +132,52 @@ const categoryService = {
   async getCategoriesWithBookCount(): Promise<CategoryWithCount[]> {
     try {
       // Проверяем, есть ли актуальные данные в кэше
-      if (categoriesWithBookCountCache && this.isValidCache(categoriesWithBookCountTimestamp)) {
+      const cached = getCached(categoriesWithBookCountCache, categoriesWithBookCountTimestamp);
+      if (cached) {
         console.log('Используем кэшированные данные для категорий с количеством книг');
-        return categoriesWithBookCountCache;
+        return cached;
       }
       
       // Попробуем получить данные с сервера
-      const response = await API.get('/categories/book-count');
-      
-      // Если запрос успешен, обновляем кэш
-      categoriesWithBookCountCache = response.data;
-      categoriesWithBookCountTimestamp = Date.now();
-      
-      return response.data;
-    } catch (error) {
-      console.error('Ошибка при получении категорий с количеством книг:', error);
-      
       try {
-        // Если основной эндпоинт недоступен, попробуем получить все категории
-        // и вычислить количество книг через запрос к эндпоинту книг по категории
-        const categories = await this.getAllCategories();
-        const categoriesWithCount: CategoryWithCount[] = [];
+        const response = await API.get('/categories/book-count');
         
-        for (const category of categories) {
-          try {
-            // Получаем количество книг для категории через API книг
-            const booksResponse = await API.get(`/books/category/${category.id}`, {
-              params: { page: 0, size: 1 } // Запрашиваем только 1 книгу для экономии трафика
-            });
-            
-            // Формируем объект категории с количеством книг
-            categoriesWithCount.push({
-              ...category,
-              bookCount: booksResponse.data.totalElements || 0
-            });
-          } catch (categoryError) {
-            // Если не удалось получить количество книг для этой категории, ставим 0
-            categoriesWithCount.push({
-              ...category,
-              bookCount: 0
-            });
-          }
-        }
+        // Если запрос успешен, обновляем кэш
+        const { data, timestamp } = updateCache(response.data);
+        categoriesWithBookCountCache = data;
+        categoriesWithBookCountTimestamp = timestamp;
+        
+        return data;
+      } catch (apiError) {
+        console.warn('Основной эндпоинт /categories/book-count недоступен, используем альтернативный метод');
+        
+        // Если основной эндпоинт недоступен, получаем все категории
+        // и вычисляем количество книг параллельно
+        const categories = await this.getAllCategories();
+        
+        const categoriesWithCount = await Promise.all(
+          categories.map(async (category): Promise<CategoryWithCount> => {
+            try {
+              const res = await API.get(`/books/category/${category.id}`, { 
+                params: { page: 0, size: 1 } 
+              });
+              return { ...category, bookCount: res.data.totalElements || 0 };
+            } catch {
+              return { ...category, bookCount: 0 };
+            }
+          })
+        );
         
         // Обновляем кэш и временную метку
-        categoriesWithBookCountCache = categoriesWithCount;
-        categoriesWithBookCountTimestamp = Date.now();
+        const { data, timestamp } = updateCache(categoriesWithCount);
+        categoriesWithBookCountCache = data;
+        categoriesWithBookCountTimestamp = timestamp;
         
-        return categoriesWithCount;
-      } catch (fallbackError) {
-        console.error('Критическая ошибка при попытке получить количество книг для категорий:', fallbackError);
-        
-        // В случае полного сбоя, используем категории с нулевым количеством книг
-        const categoriesWithZeroCount = (await this.getAllCategories()).map(category => ({
-          ...category,
-          bookCount: 0
-        }));
-        
-        // Обновляем кэш 
-        categoriesWithBookCountCache = categoriesWithZeroCount;
-        categoriesWithBookCountTimestamp = Date.now();
-        
-        return categoriesWithZeroCount;
+        return data;
       }
+    } catch (error) {
+      console.error('Критическая ошибка при получении категорий с количеством книг:', error);
+      throw new Error('Не удалось загрузить категории с количеством книг');
     }
   },
 
@@ -224,15 +185,16 @@ const categoryService = {
   async getCategoryHierarchy(): Promise<CategoryWithSubcategories[]> {
     try {
       // Проверяем, есть ли актуальные данные в кэше
-      if (categoryHierarchyCache && this.isValidCache(categoryHierarchyTimestamp)) {
+      const cached = getCached(categoryHierarchyCache, categoryHierarchyTimestamp);
+      if (cached) {
         console.log('Используем кэшированные данные для иерархии категорий');
-        return categoryHierarchyCache;
+        return cached;
       }
       
       const rootCategories = await this.getRootCategories();
       
       const categoriesWithSubcategories = await Promise.all(
-        rootCategories.map(async (rootCategory) => {
+        rootCategories.map(async (rootCategory): Promise<CategoryWithSubcategories> => {
           const subcategories = await this.getSubcategories(rootCategory.id);
           return {
             ...rootCategory,
@@ -242,36 +204,14 @@ const categoryService = {
       );
       
       // Обновляем кэш и временную метку
-      categoryHierarchyCache = categoriesWithSubcategories;
-      categoryHierarchyTimestamp = Date.now();
+      const { data, timestamp } = updateCache(categoriesWithSubcategories);
+      categoryHierarchyCache = data;
+      categoryHierarchyTimestamp = timestamp;
       
-      return categoriesWithSubcategories;
+      return data;
     } catch (error) {
-      console.error('Ошибка при получении иерархии категорий, используем мок данные:', error);
-      
-      try {
-        // Используем мок данные
-        const rootCategories = mockCategories.filter(category => category.parentCategoryId === null);
-        
-        const categoriesWithSubcategories = rootCategories.map(rootCategory => {
-          const subcategories = mockCategories.filter(
-            category => category.parentCategoryId === rootCategory.id
-          );
-          return {
-            ...rootCategory,
-            subcategories
-          };
-        });
-        
-        // Обновляем кэш и временную метку
-        categoryHierarchyCache = categoriesWithSubcategories;
-        categoryHierarchyTimestamp = Date.now();
-        
-        return categoriesWithSubcategories;
-      } catch (innerError) {
-        console.error('Критическая ошибка при работе с мок данными:', innerError);
-        throw innerError;
-      }
+      console.error('Ошибка при получении иерархии категорий:', error);
+      throw new Error('Не удалось загрузить иерархию категорий');
     }
   }
 };

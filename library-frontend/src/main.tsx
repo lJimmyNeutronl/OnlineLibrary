@@ -6,8 +6,15 @@ import App from './App.tsx'
 import './index.css'
 import { setupFavoritesMocks } from './mocks/booksMock'
 
+// Глобальная настройка PDF.js
+import './utils/pdfjs'
+
 // Инициализация мок-данных (только для разработки)
 setupFavoritesMocks()
+
+// Делаем store доступным глобально для админ-панели
+// @ts-ignore
+window.__REDUX_STORE__ = store;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

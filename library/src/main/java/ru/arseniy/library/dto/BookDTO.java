@@ -30,6 +30,8 @@ public class BookDTO {
     private String coverImageUrl;
     private LocalDateTime uploadDate;
     private Set<CategoryDTO> categories = new HashSet<>();
+    private Double rating;
+    private Integer ratingsCount;
     
     /**
      * Конвертирует модель Book в BookDTO
@@ -55,6 +57,8 @@ public class BookDTO {
         bookDTO.setFileUrl(book.getFileUrl());
         bookDTO.setCoverImageUrl(book.getCoverImageUrl());
         bookDTO.setUploadDate(book.getUploadDate());
+        bookDTO.setRating(book.getRating());
+        bookDTO.setRatingsCount(book.getRatingsCount());
         
         // Преобразуем категории, избегая циклических ссылок
         if (book.getCategories() != null) {
@@ -90,6 +94,8 @@ public class BookDTO {
         book.setFileUrl(bookDTO.getFileUrl());
         book.setCoverImageUrl(bookDTO.getCoverImageUrl());
         book.setUploadDate(bookDTO.getUploadDate());
+        book.setRating(bookDTO.getRating());
+        book.setRatingsCount(bookDTO.getRatingsCount());
         
         return book;
     }

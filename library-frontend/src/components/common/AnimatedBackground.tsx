@@ -1,9 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  FaBook, 
   FaBookOpen, 
-  FaBookReader, 
   FaPencilAlt, 
   FaGraduationCap, 
   FaFeatherAlt, 

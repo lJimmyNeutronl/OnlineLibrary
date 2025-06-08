@@ -9,7 +9,8 @@ import {
   FiUser, 
   FiLogIn, 
   FiLogOut,
-  FiHeart
+  FiHeart,
+  FiSettings
 } from 'react-icons/fi';
 import { AiFillHeart } from 'react-icons/ai';
 import logoImg from '../../assets/images/image.png';
@@ -19,6 +20,11 @@ const AppHeader = () => {
   const dispatch = useAppDispatch();
   const { token, user } = useAppSelector(state => state.auth);
   const isAuthenticated = !!token;
+
+  // Проверка, является ли пользователь администратором
+  const isAdmin = user?.roles?.some((role: string) => 
+    role === 'ROLE_ADMIN' || role === 'ROLE_SUPERADMIN'
+  );
 
   const handleLogout = () => {
     dispatch(logout());
@@ -147,6 +153,36 @@ const AppHeader = () => {
               >
                 <AiFillHeart style={{ ...iconStyle, marginRight: 0, color: '#ff4d4f', fontSize: '22px' }} />
               </button>
+              
+              {/* Кнопка админ-панели (показывать только для администраторов) */}
+              {isAdmin && (
+                <button 
+                  className="btn-header"
+                  style={{ 
+                    background: 'transparent', 
+                    border: 'none',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    padding: '8px 12px',
+                    fontSize: '16px',
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                  onClick={() => window.open('/admin', '_blank')}
+                  title="Админ-панель"
+                >
+                  <FiSettings style={iconStyle} /> Админ
+                </button>
+              )}
+              
               <button 
                 className="btn-header"
                 style={{ 

@@ -22,8 +22,29 @@ public class CategoryController {
     private CategoryService categoryService;
     
     @GetMapping
-    public ResponseEntity<List<CategoryDTO>> getAllCategories() {
-        List<Category> categories = categoryService.getAllCategories();
+    public ResponseEntity<List<CategoryDTO>> getAllCategories(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String isRoot) {
+        
+        List<Category> categories;
+        
+        // Фильтрация по типу категории
+        if ("true".equals(isRoot)) {
+            categories = categoryService.getRootCategories();
+        } else if ("false".equals(isRoot)) {
+            categories = categoryService.getAllSubcategories();
+        } else {
+            categories = categoryService.getAllCategories();
+        }
+        
+        // Фильтрация по поисковому запросу
+        if (q != null && !q.trim().isEmpty()) {
+            String searchQuery = q.toLowerCase().trim();
+            categories = categories.stream()
+                    .filter(category -> category.getName().toLowerCase().contains(searchQuery))
+                    .collect(Collectors.toList());
+        }
+        
         List<CategoryDTO> categoryDTOs = categories.stream()
                 .map(CategoryDTO::fromEntity)
                 .collect(Collectors.toList());
@@ -31,9 +52,29 @@ public class CategoryController {
     }
     
     @GetMapping("/book-count")
-    public ResponseEntity<List<CategoryWithCountDTO>> getCategoriesWithBookCount() {
+    public ResponseEntity<List<CategoryWithCountDTO>> getCategoriesWithBookCount(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String isRoot) {
+        
         Map<Integer, Integer> bookCountMap = categoryService.getCategoriesBookCount();
-        List<Category> categories = categoryService.getAllCategories();
+        List<Category> categories;
+        
+        // Фильтрация по типу категории
+        if ("true".equals(isRoot)) {
+            categories = categoryService.getRootCategories();
+        } else if ("false".equals(isRoot)) {
+            categories = categoryService.getAllSubcategories();
+        } else {
+            categories = categoryService.getAllCategories();
+        }
+        
+        // Фильтрация по поисковому запросу
+        if (q != null && !q.trim().isEmpty()) {
+            String searchQuery = q.toLowerCase().trim();
+            categories = categories.stream()
+                    .filter(category -> category.getName().toLowerCase().contains(searchQuery))
+                    .collect(Collectors.toList());
+        }
         
         List<CategoryWithCountDTO> result = categories.stream()
                 .map(category -> CategoryWithCountDTO.fromEntity(
@@ -70,7 +111,7 @@ public class CategoryController {
     }
     
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<CategoryDTO> createCategory(
             @RequestBody CategoryDTO categoryDTO,
             @RequestParam(required = false) Integer parentId) {
@@ -81,7 +122,7 @@ public class CategoryController {
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<CategoryDTO> updateCategory(
             @PathVariable Integer id,
             @RequestBody CategoryDTO categoryDTO,
@@ -93,7 +134,7 @@ public class CategoryController {
     }
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> deleteCategory(@PathVariable Integer id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.ok().build();

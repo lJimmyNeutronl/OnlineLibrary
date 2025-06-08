@@ -15,8 +15,20 @@ interface AuthState {
   error: string | null;
 }
 
+// Функция для получения данных пользователя из localStorage
+const getUserFromLocalStorage = () => {
+  try {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (error) {
+    console.error('Ошибка парсинга данных пользователя из localStorage:', error);
+    localStorage.removeItem('user');
+    return null;
+  }
+};
+
 const initialState: AuthState = {
-  user: null,
+  user: getUserFromLocalStorage(),
   token: localStorage.getItem('token'),
   isLoading: false,
   error: null,
@@ -227,8 +239,9 @@ const authSlice = createSlice({
       state.token = null;
       state.error = null;
       
-      // Удаляем токен из localStorage
+      // Удаляем токен и данные пользователя из localStorage
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
     clearError: (state) => {
       state.error = null;
@@ -244,6 +257,9 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        
+        // Сохраняем данные пользователя в localStorage
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
@@ -257,6 +273,9 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        
+        // Сохраняем данные пользователя в localStorage
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
@@ -271,6 +290,9 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        
+        // Сохраняем данные пользователя в localStorage
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(loadCurrentUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -278,6 +300,9 @@ const authSlice = createSlice({
         // Если не удалось загрузить пользователя, то очищаем состояние
         state.user = null;
         state.token = null;
+        
+        // Также очищаем данные пользователя из localStorage
+        localStorage.removeItem('user');
       });
   },
 });

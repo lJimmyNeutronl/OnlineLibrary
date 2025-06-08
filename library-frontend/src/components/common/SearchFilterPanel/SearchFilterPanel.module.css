@@ -1,0 +1,583 @@
+/* Основной контейнер */
+.searchFilterPanel {
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Главная панель поиска */
+.mainSearchPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, rgba(142, 84, 233, 0.03) 100%);
+  border: 1px solid rgba(55, 105, 245, 0.1);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(55, 105, 245, 0.08), 0 2px 8px rgba(142, 84, 233, 0.04);
+  backdrop-filter: blur(10px);
+  gap: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.mainSearchPanel:hover {
+  box-shadow: 0 8px 32px rgba(55, 105, 245, 0.12), 0 4px 16px rgba(142, 84, 233, 0.08);
+  border-color: rgba(55, 105, 245, 0.2);
+}
+
+/* Секция поиска */
+.searchSection {
+  flex: 1;
+  max-width: 600px;
+}
+
+.modernSearchContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 2px solid rgba(55, 105, 245, 0.1);
+  border-radius: 50px;
+  padding: 0 20px;
+  height: 56px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(55, 105, 245, 0.08);
+}
+
+.modernSearchContainer:hover {
+  border-color: rgba(55, 105, 245, 0.3);
+  box-shadow: 0 4px 20px rgba(55, 105, 245, 0.15);
+}
+
+.modernSearchContainer:focus-within {
+  border-color: #3769f5;
+  box-shadow: 0 4px 20px rgba(55, 105, 245, 0.25);
+  transform: translateY(-1px);
+}
+
+.searchIconWrapper {
+  display: flex;
+  align-items: center;
+  color: #3769f5;
+  font-size: 20px;
+  margin-right: 16px;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.modernSearchContainer:focus-within .searchIconWrapper {
+  opacity: 1;
+}
+
+.modernSearchInput {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 16px;
+  color: #2d3748;
+  padding: 0 !important;
+  box-shadow: none !important;
+  height: auto !important;
+}
+
+.modernSearchInput input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.modernSearchInput .input-wrapper {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.modernSearchInput .input-wrapper input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.modernSearchInput::placeholder {
+  color: #a0aec0;
+  font-weight: 400;
+}
+
+.modernClearButton {
+  margin-left: 12px;
+  color: #a0aec0;
+  transition: all 0.3s ease;
+  padding: 8px !important;
+  border-radius: 50% !important;
+}
+
+.modernClearButton:hover {
+  color: #3769f5;
+  background: rgba(55, 105, 245, 0.1) !important;
+}
+
+/* Средняя секция - результаты поиска */
+.middleSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 200px;
+}
+
+.inlineResultsInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(55, 105, 245, 0.08) 0%, rgba(142, 84, 233, 0.06) 100%);
+  border: 1px solid rgba(55, 105, 245, 0.15);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.inlineResultsCount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.inlineResultsIcon {
+  color: #8e54e9;
+  font-size: 16px;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.inlineActiveSearch {
+  color: #718096;
+  font-style: italic;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Быстрые действия */
+.quickActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.filterToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px !important;
+  border-radius: 12px !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 2px solid rgba(55, 105, 245, 0.1) !important;
+  background: white !important;
+  color: #4a5568 !important;
+}
+
+.filterToggle:hover {
+  border-color: rgba(142, 84, 233, 0.3) !important;
+  background: rgba(142, 84, 233, 0.05) !important;
+  transform: translateY(-1px);
+}
+
+.filterToggle.active {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%) !important;
+  border-color: #3769f5 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(55, 105, 245, 0.3);
+}
+
+.viewModeSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(55, 105, 245, 0.05) 0%, rgba(142, 84, 233, 0.03) 100%);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(55, 105, 245, 0.1);
+}
+
+.viewModeButton {
+  padding: 10px 12px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  transition: all 0.3s ease;
+  font-size: 16px;
+}
+
+.viewModeButton[data-type="default"] {
+  background: transparent !important;
+  color: #718096 !important;
+}
+
+.viewModeButton[data-type="primary"] {
+  background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(55, 105, 245, 0.3);
+}
+
+/* Расширенные фильтры */
+.advancedFilters {
+  opacity: 0;
+  visibility: hidden;
+  max-height: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, rgba(142, 84, 233, 0.02) 100%);
+  border-radius: 16px;
+  margin-top: 16px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  position: relative;
+  z-index: 3;
+  overflow: visible;
+}
+
+.advancedFilters.expanded {
+  opacity: 1;
+  visibility: visible;
+  max-height: 300px;
+  padding: 20px 24px;
+  border-color: rgba(55, 105, 245, 0.1);
+  box-shadow: 0 4px 20px rgba(55, 105, 245, 0.08);
+  overflow: visible;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.sortSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 100;
+}
+
+.filterLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.sortControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 200;
+}
+
+/* Стили для кастомного Select компонента */
+.selectWrapper {
+  position: relative;
+  z-index: 9999;
+  isolation: isolate;
+}
+
+.modernSortSelect {
+  min-width: 200px !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(55, 105, 245, 0.1) !important;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 300 !important;
+}
+
+.modernSortSelect:hover {
+  border-color: rgba(55, 105, 245, 0.3) !important;
+}
+
+.modernSortSelect:focus {
+  border-color: #3769f5 !important;
+  box-shadow: 0 0 0 3px rgba(55, 105, 245, 0.1) !important;
+}
+
+/* Стили для dropdown кастомного Select */
+.modernSortSelect .select-dropdown {
+  z-index: 9999 !important;
+  position: absolute !important;
+  top: calc(100% + 4px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: white !important;
+  border: 1px solid rgba(55, 105, 245, 0.2) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(55, 105, 245, 0.15) !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+/* Глобальные стили для кастомного select */
+:global(.custom-select .select-dropdown) {
+  z-index: 9999 !important;
+  position: absolute !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(55, 105, 245, 0.2) !important;
+  box-shadow: 0 8px 32px rgba(55, 105, 245, 0.15) !important;
+}
+
+:global(.custom-select .select-option:hover) {
+  background: rgba(55, 105, 245, 0.05) !important;
+}
+
+.modernSortDirection {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(55, 105, 245, 0.1) !important;
+  background: white !important;
+  color: #4a5568 !important;
+  transition: all 0.3s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+.modernSortDirection:hover {
+  border-color: #8e54e9 !important;
+  color: #8e54e9 !important;
+  background: rgba(142, 84, 233, 0.05) !important;
+  transform: translateY(-1px);
+}
+
+.sortOptionLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+/* Анимации */
+@keyframes sparkle {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.1); 
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+  .mainSearchPanel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .searchSection {
+    max-width: none;
+  }
+
+  .middleSection {
+    justify-content: flex-start;
+    min-width: auto;
+  }
+
+  .quickActions {
+    justify-content: space-between;
+  }
+
+  .modernSortSelect {
+    min-width: 160px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainSearchPanel {
+    padding: 16px 20px;
+    border-radius: 12px;
+  }
+
+  .modernSearchContainer {
+    height: 48px;
+    padding: 0 16px;
+  }
+
+  .searchIconWrapper {
+    margin-right: 12px;
+    font-size: 18px;
+  }
+
+  .modernSearchInput {
+    font-size: 15px;
+  }
+
+  .middleSection {
+    margin: 8px 0;
+  }
+
+  .inlineResultsInfo {
+    padding: 6px 12px;
+  }
+
+  .inlineResultsCount {
+    font-size: 13px;
+  }
+
+  .inlineActiveSearch {
+    font-size: 11px;
+  }
+
+  .filterToggle {
+    padding: 10px 16px !important;
+    font-size: 14px;
+  }
+
+  .viewModeButton {
+    padding: 8px 10px !important;
+  }
+
+  .advancedFilters.expanded {
+    padding: 16px 20px;
+  }
+
+  .filterRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .sortSection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filterLabel {
+    min-width: auto;
+    justify-content: center;
+  }
+
+  .sortControls {
+    justify-content: space-between;
+  }
+
+  .modernSortSelect {
+    min-width: auto !important;
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .mainSearchPanel {
+    padding: 12px 16px;
+  }
+
+  .modernSearchContainer {
+    height: 44px;
+    padding: 0 12px;
+  }
+
+  .searchIconWrapper {
+    margin-right: 8px;
+    font-size: 16px;
+  }
+
+  .modernSearchInput {
+    font-size: 14px;
+  }
+
+  .viewModeSection {
+    padding: 3px;
+  }
+
+  .viewModeButton {
+    padding: 6px 8px !important;
+    font-size: 14px;
+  }
+
+  .inlineResultsInfo {
+    padding: 4px 8px;
+  }
+
+  .inlineResultsCount {
+    font-size: 12px;
+  }
+
+  .inlineActiveSearch {
+    font-size: 10px;
+  }
+}
+
+/* Стили страницы категорий */
+.categoryPageContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.categoryPageContent {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(55, 105, 245, 0.1);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .searchFilterToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchFilterLeft,
+  .searchFilterRight {
+    width: 100%;
+  }
+
+  .searchInput {
+    width: 100%;
+  }
+
+  .searchFilterRight {
+    margin-top: 10px;
+    justify-content: space-between;
+  }
+
+  .viewModeButtons {
+    margin-left: 0;
+  }
+  
+  .categoryPageContainer {
+    padding: 20px 16px;
+  }
+  
+  .categoryPageContent {
+    padding: 20px 16px;
+  }
+
+  .sortControls {
+    display: flex;
+    gap: 4px;
+  }
+
+  .sortSelect {
+    width: 150px !important;
+    min-width: 150px;
+  }
+} 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './ReviewList.css';
 import Typography from '../common/Typography';
 import api from '../../services/api';
@@ -21,8 +21,10 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
   const [error, setError] = useState<string | null>(null);
   const [expandedReviews, setExpandedReviews] = useState<Record<number, boolean>>({});
 
-  // Функция загрузки отзывов
-  const fetchReviews = async () => {
+  // Стабильная функция загрузки отзывов
+  const fetchReviews = useCallback(async () => {
+    if (!bookId) return;
+    
     try {
       setLoading(true);
       const reviewsData = await bookService.getBookReviews(bookId);
@@ -48,21 +50,24 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (bookId) {
-      fetchReviews();
-    }
   }, [bookId]);
+
+  // Первоначальная загрузка отзывов
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   // Слушатель события добавления нового отзыва
   useEffect(() => {
     const handleReviewAdded = (event: Event) => {
       const customEvent = event as CustomEvent;
       // Проверяем, что событие относится к текущей книге
-      if (customEvent.detail && customEvent.detail.review && customEvent.detail.review.bookId === bookId) {
-      fetchReviews();
+      if (customEvent.detail && customEvent.detail.bookId === bookId) {
+        // Перезагружаем отзывы только если событие для текущей книги
+        fetchReviews();
+      } else if (!customEvent.detail) {
+        // Если нет детальной информации, перезагружаем отзывы для текущей книги
+        fetchReviews();
       }
     };
     
@@ -71,7 +76,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ bookId }) => {
     return () => {
       document.removeEventListener('review-added', handleReviewAdded);
     };
-  }, [bookId]);
+  }, [bookId, fetchReviews]);
 
   const toggleExpandReview = (reviewId: number) => {
     setExpandedReviews(prev => ({

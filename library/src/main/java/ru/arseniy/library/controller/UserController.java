@@ -31,7 +31,7 @@ public class UserController {
     private UserService userService;
     
     @GetMapping("/me")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<User> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -40,7 +40,7 @@ public class UserController {
     }
     
     @PutMapping("/update")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<User> updateProfile(@Valid @RequestBody UpdateProfileRequest updateProfileRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -50,7 +50,7 @@ public class UserController {
     }
     
     @PostMapping("/change-password")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -65,14 +65,14 @@ public class UserController {
     }
     
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<User> getUserById(@PathVariable Integer id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
     
     @GetMapping("/favorites")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<Set<Book>> getCurrentUserFavorites() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -81,7 +81,7 @@ public class UserController {
     }
     
     @PostMapping("/favorites/{bookId}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> addBookToFavorites(@PathVariable Integer bookId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -90,7 +90,7 @@ public class UserController {
     }
     
     @DeleteMapping("/favorites/{bookId}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> removeBookFromFavorites(@PathVariable Integer bookId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -99,10 +99,10 @@ public class UserController {
     }
     
     @PostMapping("/reading-history/{bookId}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<ReadingHistory> updateReadingHistory(
             @PathVariable Integer bookId,
-            @RequestParam(defaultValue = "false") Boolean isCompleted,
+            @RequestParam(required = false) Boolean isCompleted,
             @RequestParam(required = false) Integer lastReadPage) {
         
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -112,7 +112,7 @@ public class UserController {
     }
     
     @GetMapping("/reading-history")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<Page<ReadingHistory>> getUserReadingHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -127,5 +127,116 @@ public class UserController {
         
         Page<ReadingHistory> readingHistory = userService.getUserReadingHistory(userDetails.getId(), pageable);
         return ResponseEntity.ok(readingHistory);
+    }
+
+    @DeleteMapping("/reading-history")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<MessageResponse> clearReadingHistory() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        userService.clearUserReadingHistory(userDetails.getId());
+        return ResponseEntity.ok(new MessageResponse("История чтения успешно очищена"));
+    }
+
+    // =================== АДМИНИСТРАТИВНЫЕ МЕТОДЫ ===================
+
+    /**
+     * Получение списка всех пользователей (для администраторов)
+     */
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<Page<User>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "registrationDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        
+        Sort.Direction sortDirection = direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        
+        Page<User> users = userService.getAllUsers(pageable);
+        return ResponseEntity.ok(users);
+    }
+
+    /**
+     * Назначение роли ADMIN пользователю (только для SUPERADMIN)
+     */
+    @PostMapping("/admin/assign-admin/{userId}")
+    @PreAuthorize("hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<MessageResponse> assignAdminRole(@PathVariable Integer userId) {
+        try {
+            MessageResponse response = userService.assignAdminRole(userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Удаление роли ADMIN у пользователя (только для SUPERADMIN)
+     */
+    @DeleteMapping("/admin/remove-admin/{userId}")
+    @PreAuthorize("hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<MessageResponse> removeAdminRole(@PathVariable Integer userId) {
+        try {
+            MessageResponse response = userService.removeAdminRole(userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Блокировка/разблокировка пользователя (только для SUPERADMIN)
+     */
+    @PutMapping("/admin/toggle-block/{userId}")
+    @PreAuthorize("hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<MessageResponse> toggleUserBlock(@PathVariable Integer userId) {
+        try {
+            MessageResponse response = userService.toggleUserBlock(userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * Получение статистики пользователей (для администраторов)
+     */
+    @GetMapping("/admin/statistics")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<?> getUserStatistics() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        User currentUser = userService.getUserById(userDetails.getId());
+        
+        long totalUsers = userService.getUserCount();
+        
+        // Информация об администраторах доступна только суперадмину
+        if (userService.isSuperAdmin(currentUser)) {
+            long adminCount = userService.getAdminCount();
+            return ResponseEntity.ok(new AdminStatistics(totalUsers, adminCount));
+        } else {
+            return ResponseEntity.ok(new UserStatistics(totalUsers));
+        }
+    }
+
+    // DTO классы для статистики
+    public static class UserStatistics {
+        public final long totalUsers;
+
+        public UserStatistics(long totalUsers) {
+            this.totalUsers = totalUsers;
+        }
+    }
+
+    public static class AdminStatistics extends UserStatistics {
+        public final long adminCount;
+
+        public AdminStatistics(long totalUsers, long adminCount) {
+            super(totalUsers);
+            this.adminCount = adminCount;
+        }
     }
 }
