@@ -42,3 +42,5 @@ build/
 
 ### Cursor ###
 .cursor/upload_test.html
+.cursor/
+library/task_ai.md
