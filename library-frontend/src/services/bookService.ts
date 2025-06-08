@@ -338,7 +338,6 @@ const bookService = {
     try {
       // Проверяем, есть ли актуальные данные в кэше
       if (popularBooksCache && this.isValidCache(popularBooksTimestamp)) {
-        console.log('Используем кэшированные данные для популярных книг');
         return popularBooksCache.slice(0, limit);
       }
       
@@ -944,8 +943,7 @@ const bookService = {
       try {
         await API.post(`/users/reading-history/${progress.bookId}`, null, {
           params: {
-          lastReadPage: progress.currentPage,
-          isCompleted: progress.currentPage >= progress.totalPages
+            lastReadPage: progress.currentPage
           }
         });
       } catch (error) {

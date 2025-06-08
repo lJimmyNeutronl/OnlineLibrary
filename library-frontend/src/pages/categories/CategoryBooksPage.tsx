@@ -200,7 +200,7 @@ const CategoryBooksPage = () => {
                 </Link>
               </Breadcrumb.Item>
             )}
-            <Breadcrumb.Item>
+            <Breadcrumb.Item style={{ color: '#8e54e9' }}>
               {category?.name ?? 'Загрузка...'}
             </Breadcrumb.Item>
           </Breadcrumb>

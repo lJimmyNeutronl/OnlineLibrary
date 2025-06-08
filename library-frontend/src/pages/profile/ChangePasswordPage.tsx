@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link} from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaKey, FaArrowLeft, FaSave, FaLock, FaEye, FaEyeSlash, FaInfoCircle } from 'react-icons/fa';
 import { useAppSelector, useAppDispatch } from '@hooks/reduxHooks';
@@ -144,13 +144,13 @@ const ChangePasswordPage = () => {
       >
         {/* Хлебные крошки */}
         <Breadcrumb style={{ margin: '16px 0' }}>
-          <BreadcrumbItem onClick={() => navigate('/')}>
-            Главная
+          <BreadcrumbItem>
+            <Link to="/">Главная</Link>
           </BreadcrumbItem>
-          <BreadcrumbItem onClick={() => navigate('/profile')}>
-            Профиль
+          <BreadcrumbItem>
+            <Link to="/profile">Профиль</Link>
           </BreadcrumbItem>
-          <BreadcrumbItem>Смена пароля</BreadcrumbItem>
+          <BreadcrumbItem style={{ color: '#8e54e9' }}>Смена пароля</BreadcrumbItem>
         </Breadcrumb>
       
         {/* Основной контент */}

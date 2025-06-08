@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BookFormat, ReadingProgress } from '../../types';
 import PDFReader from './PDFReader';
 import FB2Reader from './FB2Reader';
 import bookService from '../../services/bookService';
+import userService from '../../services/userService';
 import Button from '../common/Button';
 import Typography from '../common/Typography';
 import { AiOutlineWarning } from 'react-icons/ai';
@@ -12,27 +13,28 @@ const { Title, Paragraph } = Typography;
 interface ReaderSelectorProps {
   bookId: number;
   fileUrl?: string;
+  onBookInfo?: (info: { totalPages: number }) => void;
 }
 
-const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl }) => {
+const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl, onBookInfo }) => {
   const [format, setFormat] = useState<BookFormat>(BookFormat.UNKNOWN);
   const [readerUrl, setReaderUrl] = useState<string>('');
   const [initialProgress, setInitialProgress] = useState<ReadingProgress | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastSentProgress, setLastSentProgress] = useState<ReadingProgress | null>(null);
+  const [lastSentTime, setLastSentTime] = useState<number>(0);
 
   useEffect(() => {
     const loadBookFile = async () => {
       try {
         setIsLoading(true);
-        console.log('Загрузка книги с ID:', bookId);
         
         // Если fileUrl не задан, получаем URL файла книги по API
         let url = fileUrl;
         if (!url) {
           try {
             url = await bookService.getBookFileUrl(bookId);
-            console.log('Получен URL файла книги:', url);
             
             // Проверка валидности URL
             if (!url || !url.trim()) {
@@ -48,34 +50,27 @@ const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl }) => {
         
         // Определяем формат книги по URL
         let bookFormat = bookService.getBookFormat(url);
-        console.log('Начальное определение формата:', bookFormat);
         
         // Если формат все еще UNKNOWN, пробуем взять из localStorage
         if (bookFormat === BookFormat.UNKNOWN) {
           const savedFormat = bookService.getBookFormatFromLocalStorage(bookId);
           if (savedFormat) {
-            console.log('Формат взят из localStorage:', savedFormat);
             bookFormat = savedFormat;
           } else if (url) {
             // Попытка определить формат по расширению в URL
             const extension = bookService.getFileExtension(url);
             if (extension) {
-              console.log('Определен формат по расширению в URL:', extension);
               bookFormat = bookService.extensionToFormat(extension);
             }
           }
         }
         
-        console.log('Итоговый определенный формат книги:', bookFormat);
-        
         // Получаем сохраненный прогресс чтения
         const progress = bookService.getReadingProgress(bookId);
         if (progress) {
-          console.log('Загружен сохраненный прогресс чтения:', progress);
           // Если формат еще не определен, но есть в прогрессе, используем его
           if (bookFormat === BookFormat.UNKNOWN && progress.format !== BookFormat.UNKNOWN) {
             bookFormat = progress.format;
-            console.log('Формат определен из сохраненного прогресса чтения:', bookFormat);
           }
         }
         
@@ -100,7 +95,40 @@ const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl }) => {
       bookService.saveBookFormatToLocalStorage(bookId, progress.format);
     }
     
+    // Локальное сохранение прогресса
     bookService.saveReadingProgress(progress);
+    
+    // Отправка прогресса на сервер с защитой от слишком частых обновлений
+    const now = Date.now();
+    const timeSinceLastSent = now - lastSentTime;
+    
+    // Отправляем на сервер только если:
+    // 1. Прошло больше 3 секунд с последней отправки
+    // 2. Или изменилась страница (но не чаще чем раз в секунду)
+    const shouldSendToServer = 
+      timeSinceLastSent > 3000 || 
+      (lastSentProgress?.currentPage !== progress.currentPage && timeSinceLastSent > 1000);
+
+    if (shouldSendToServer) {
+      setLastSentTime(now);
+      setLastSentProgress(progress);
+      
+      const sendProgressToServer = async () => {
+        try {
+          // Используем updateReadingProgress для обычного прогресса (НЕ передает isCompleted)
+          await userService.updateReadingProgress(
+            bookId, 
+            progress.currentPage
+          );
+        } catch (error) {
+          console.error('Ошибка при отправке прогресса чтения на сервер:', error);
+          // Не показываем ошибку пользователю, так как локальное сохранение работает
+        }
+      };
+
+      // Отправляем прогресс на сервер асинхронно
+      sendProgressToServer();
+    }
   };
 
   // Отображение соответствующего ридера в зависимости от формата
@@ -135,6 +163,7 @@ const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl }) => {
             bookId={bookId}
             onProgressChange={handleProgressChange}
             initialProgress={initialProgress}
+            onBookInfo={onBookInfo}
           />
         );
       case BookFormat.FB2:
@@ -144,6 +173,7 @@ const ReaderSelector: React.FC<ReaderSelectorProps> = ({ bookId, fileUrl }) => {
             bookId={bookId}
             onProgressChange={handleProgressChange}
             initialProgress={initialProgress}
+            onBookInfo={onBookInfo}
           />
         );
       default:

@@ -690,11 +690,3 @@
 .isFavorite:hover {
   background-color: rgba(255, 71, 87, 0.1);
 }
-
-.notFavorite {
-  /* Стили для кнопки не в избранном */
-}
-
-.reviewsCancelButton {
-  /* Стили для кнопки отмены */
-} 

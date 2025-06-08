@@ -1,8 +1,10 @@
 .book-reader-page {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 64px);
+  height: 100vh;
   background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  margin-top: -64px;
+  padding-top: 64px;
 }
 
 .book-reader-header {
@@ -13,6 +15,7 @@
   justify-content: space-between;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .book-reader-nav {
@@ -64,7 +67,18 @@
   display: flex;
   flex-direction: column;
   padding: 0;
-  min-height: calc(100vh - 120px);
+  margin: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+.book-reader-content .reader-selector {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Адаптивность */

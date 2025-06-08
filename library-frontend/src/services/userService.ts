@@ -69,9 +69,7 @@ const userService = {
   // Обновление профиля пользователя
   async updateProfile(data: UserProfileUpdateData): Promise<User> {
     try {
-      console.log('Отправляем запрос на обновление профиля:', data);
       const response = await API.put('/users/update', data);
-      console.log('Профиль успешно обновлен:', response.data);
       return response.data;
     } catch (error) {
       console.error('Ошибка при обновлении профиля:', error);
@@ -97,16 +95,50 @@ const userService = {
 
   // Получение истории чтения пользователя
   async getReadingHistory(): Promise<ReadingHistoryItem[]> {
-    const response = await API.get('/users/reading-history');
+    const response = await API.get('/users/reading-history', {
+      params: {
+        page: 0,
+        size: 1000, // Получаем большое количество для отображения всей истории
+        sortBy: 'lastReadDate',
+        direction: 'desc'
+      }
+    });
+    
+    // API возвращает Page<ReadingHistory>, нам нужен массив content
+    return response.data.content || [];
+  },
+
+  // Обновление прогресса чтения (БЕЗ изменения статуса isCompleted)
+  async updateReadingProgress(bookId: number, lastReadPage: number): Promise<ReadingHistoryItem> {
+    const response = await API.post(`/users/reading-history/${bookId}`, null, {
+      params: { lastReadPage } // НЕ передаем isCompleted!
+    });
+    
     return response.data;
   },
 
-  // Обновление истории чтения
-  async updateReadingHistory(bookId: number, isCompleted: boolean = false): Promise<ReadingHistoryItem> {
-    const response = await API.post(`/users/reading-history/${bookId}`, null, {
-      params: { isCompleted }
-    });
-    return response.data;
+  // Начало чтения книги (добавление в историю чтения)
+  async startReadingBook(bookId: number): Promise<ReadingHistoryItem> {
+    try {
+      // Сначала проверяем, есть ли уже эта книга в истории
+      const history = await this.getReadingHistory();
+      const existingItem = history.find(item => item.book.id === bookId);
+      
+      if (existingItem) {
+        // Если книга уже в истории, НЕ отправляем запрос на сервер
+        // Просто возвращаем существующие данные без изменений
+        return existingItem;
+      } else {
+        // Если книги нет в истории, создаем новую запись как не прочитанную
+        const response = await API.post(`/users/reading-history/${bookId}`, null, {
+          params: { isCompleted: false }
+        });
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении истории чтения:', error);
+      throw error;
+    }
   },
 
   // Получение истории активности пользователя
@@ -133,6 +165,16 @@ const userService = {
         };
       }
       throw error;
+    }
+  },
+
+  // Очистка истории чтения пользователя
+  async clearReadingHistory(): Promise<void> {
+    try {
+      await API.delete('/users/reading-history');
+    } catch (error) {
+      console.error('Ошибка при очистке истории чтения:', error);
+      throw new Error('Не удалось очистить историю чтения');
     }
   }
 };

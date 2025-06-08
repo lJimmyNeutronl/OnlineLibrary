@@ -102,7 +102,7 @@ public class UserController {
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<ReadingHistory> updateReadingHistory(
             @PathVariable Integer bookId,
-            @RequestParam(defaultValue = "false") Boolean isCompleted,
+            @RequestParam(required = false) Boolean isCompleted,
             @RequestParam(required = false) Integer lastReadPage) {
         
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -127,6 +127,16 @@ public class UserController {
         
         Page<ReadingHistory> readingHistory = userService.getUserReadingHistory(userDetails.getId(), pageable);
         return ResponseEntity.ok(readingHistory);
+    }
+
+    @DeleteMapping("/reading-history")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<MessageResponse> clearReadingHistory() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        userService.clearUserReadingHistory(userDetails.getId());
+        return ResponseEntity.ok(new MessageResponse("История чтения успешно очищена"));
     }
 
     // =================== АДМИНИСТРАТИВНЫЕ МЕТОДЫ ===================

@@ -29,7 +29,7 @@ const DEFAULT_FILTERS: CatalogFilters = {
 
 const DEFAULT_PAGINATION = {
   page: 0,
-  size: 12,
+  size: 15,
 };
 
 export const useCatalogFilters = () => {

@@ -133,7 +133,17 @@ public class UserService {
         readingHistory.setUser(user);
         readingHistory.setBook(book);
         readingHistory.setLastReadDate(LocalDateTime.now());
+        
+        // ВАЖНО: НЕ перезаписываем isCompleted если книга уже помечена как прочитанная
+        // Это предотвращает случайную "отметку" прочитанной книги как непрочитанной
+        if (isCompleted != null) {
+            // Если явно передается isCompleted, устанавливаем его
         readingHistory.setIsCompleted(isCompleted);
+        } else if (readingHistory.getId() == null) {
+            // Если это новая запись и isCompleted не передан, устанавливаем false
+            readingHistory.setIsCompleted(false);
+        }
+        // Если запись существует и isCompleted не передан - оставляем как есть
         
         // Устанавливаем номер последней прочитанной страницы
         if (lastReadPage != null) {
@@ -145,6 +155,18 @@ public class UserService {
     
     public Page<ReadingHistory> getUserReadingHistory(Integer userId, Pageable pageable) {
         return readingHistoryRepository.findByUserId(userId, pageable);
+    }
+
+    /**
+     * Очищает всю историю чтения пользователя
+     * @param userId ID пользователя
+     */
+    @Transactional
+    public void clearUserReadingHistory(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+        
+        readingHistoryRepository.deleteByUserId(userId);
     }
 
     /**

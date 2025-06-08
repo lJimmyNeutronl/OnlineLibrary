@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUser, FaArrowLeft, FaSave, FaUserEdit } from 'react-icons/fa';
 import { useAppSelector, useAppDispatch } from '@hooks/reduxHooks';
@@ -100,13 +100,13 @@ const EditProfilePage = () => {
       >
         {/* Хлебные крошки */}
         <Breadcrumb style={{ margin: '16px 0' }}>
-          <Breadcrumb.Item onClick={() => navigate('/')}>
-            Главная
+          <Breadcrumb.Item>
+            <Link to="/">Главная</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item onClick={() => navigate('/profile')}>
-            Профиль
+          <Breadcrumb.Item>
+            <Link to="/profile">Профиль</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Редактирование профиля</Breadcrumb.Item>
+          <Breadcrumb.Item style={{ color: '#8e54e9' }}>Редактирование профиля</Breadcrumb.Item>
         </Breadcrumb>
         
         {/* Основной контент */}

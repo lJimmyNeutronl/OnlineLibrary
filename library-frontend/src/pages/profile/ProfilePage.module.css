@@ -51,6 +51,25 @@
   padding: 20px;
   margin-bottom: 30px;
   border: 1px solid rgba(55, 105, 245, 0.1);
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.statsCard [data-framer-component-type="motion.div"],
+.statsCard .stats-item > div {
+  will-change: transform;
+  transform: translateZ(0);
+  contain: layout style paint;
+  backface-visibility: hidden;
+}
+
+.statsCard .stats-item {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  isolation: isolate;
+  contain: layout style paint;
 }
 
 .statsIcon {
@@ -63,6 +82,9 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 10px;
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.3s ease;
 }
 
 .statsIconWarning {
@@ -75,6 +97,9 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 10px;
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.3s ease;
 }
 
 .statsIconPurple {
@@ -87,6 +112,9 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 10px;
+  will-change: transform;
+  transform: translateZ(0);
+  transition: transform 0.3s ease;
 }
 
 .statsNumber {
@@ -94,6 +122,8 @@
   font-weight: 700;
   margin: 5px 0;
   color: #3769f5;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .statsLabel {
@@ -101,6 +131,8 @@
   font-weight: 600;
   letter-spacing: 1px;
   color: #636e72;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .favoritesEmptyContainer {
@@ -113,9 +145,60 @@
   margin-top: 20px;
 }
 
+.clearHistoryButton {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.clearHistoryButton .clear-history-button {
+  background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 118, 117, 0.3);
+}
+
+.clearHistoryButton .clear-history-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 118, 117, 0.4);
+  background: linear-gradient(135deg, #d63031 0%, #b71c1c 100%);
+}
+
+.clearHistoryButton .clear-history-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 118, 117, 0.3);
+}
+
 .loadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 40px;
+}
+
+.historyEmptyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.historyEmptyContainer .history-empty-button {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.historyEmptyContainer .history-empty-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 } 

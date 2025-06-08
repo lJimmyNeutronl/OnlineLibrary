@@ -12,13 +12,15 @@ interface FB2ReaderProps {
   bookId: number;
   onProgressChange: (progress: ReadingProgress) => void;
   initialProgress?: ReadingProgress | null;
+  onBookInfo?: (info: { totalPages: number }) => void;
 }
 
 const FB2Reader: React.FC<FB2ReaderProps> = ({
   fileUrl,
   bookId,
   onProgressChange,
-  initialProgress
+  initialProgress,
+  onBookInfo
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [content, setContent] = useState<string>('');
@@ -56,13 +58,18 @@ const FB2Reader: React.FC<FB2ReaderProps> = ({
         const newTotalPages = calculateTotalPages();
         setTotalPages(newTotalPages);
         
+        // Передаем информацию о количестве страниц в родительский компонент
+        if (onBookInfo && newTotalPages > 0) {
+          onBookInfo({ totalPages: newTotalPages });
+        }
+        
         // Корректируем текущую страницу если она стала больше общего количества
         setCurrentPage(prev => Math.min(prev, newTotalPages));
       }, 100);
       
       return () => clearTimeout(timer);
     }
-  }, [content, fontSize, isLoading, calculateTotalPages]);
+  }, [content, fontSize, isLoading, calculateTotalPages, onBookInfo]);
 
   // Обработчик изменения размера окна
   useEffect(() => {

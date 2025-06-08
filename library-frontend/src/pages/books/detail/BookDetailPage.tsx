@@ -233,13 +233,13 @@ const BookDetailPage = () => {
             <Breadcrumb.Item>
               <span 
                 onClick={(e) => handleCategoryClick(e, book.categories[0].id)}
-                style={{ cursor: 'pointer', color: '#1890ff' }}
+                style={{ cursor: 'pointer', color: '#3769f5' }}
               >
                 {book.categories[0].name}
               </span>
             </Breadcrumb.Item>
           )}
-          <Breadcrumb.Item>
+          <Breadcrumb.Item style={{ color: '#8e54e9' }}>
             {book.title.length > 40 ? `${book.title.substring(0, 40)}...` : book.title}
           </Breadcrumb.Item>
         </Breadcrumb>

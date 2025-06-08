@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiUser, FiBook, FiHeart } from 'react-icons/fi';
-import { FaBookOpen, FaBookReader, FaUserEdit, FaKey, FaSignOutAlt } from 'react-icons/fa';
+import { FaBookOpen, FaBookReader, FaUserEdit, FaKey, FaSignOutAlt, FaTrash } from 'react-icons/fa';
 import { useAppSelector, useAppDispatch } from '@hooks/reduxHooks';
 import { logout } from '@store/slices/authSlice';
 import userService, { 
@@ -11,7 +11,6 @@ import userService, {
 } from '@services/userService';
 import BookCarousel from '@components/book-card/BookCarousel';
 
-// Импортируем наши пользовательские компоненты
 import { 
   Typography,
   Row,
@@ -64,7 +63,40 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   );
 };
 
-const ProfilePage = () => {
+// Мемоизированный компонент для статистического элемента
+const StatsItem = memo<{
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+  iconClassName: string;
+}>(({ icon, value, label, iconClassName }) => (
+  <motion.div 
+    whileHover={{ 
+      translateY: -5,
+      transition: { 
+        duration: 0.2, 
+        ease: "easeOut",
+        type: "tween" // Используем tween вместо spring для лучшей производительности
+      }
+    }}
+    initial={{ translateY: 0 }}
+    style={{
+      // Принудительное создание композитного слоя
+      willChange: 'transform',
+      transform: 'translateZ(0)'
+    }}
+  >
+    <div className={iconClassName}>
+      {icon}
+    </div>
+    <h2 className={styles.statsNumber}>{value}</h2>
+    <div className={styles.statsLabel}>{label}</div>
+  </motion.div>
+));
+
+StatsItem.displayName = 'StatsItem';
+
+const ProfilePage = memo(() => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { token, user } = useAppSelector(state => state.auth);
@@ -80,13 +112,50 @@ const ProfilePage = () => {
     readingHistory: true
   });
 
-  // Форматирование даты
-  const formatDate = (iso: string) => 
+  // Форматирование даты - мемоизируем функцию
+  const formatDate = useCallback((iso: string) => 
     new Date(iso).toLocaleDateString('ru-RU', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
-    });
+    }), []);
+
+  // Функция для обновления данных профиля
+  const refreshProfileData = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    try {
+      console.log('ProfilePage: Начинаем обновление данных профиля...');
+      setLoading({ favorites: true, readingHistory: true });
+      
+      const [favorites, history] = await Promise.all([
+        userService.getFavorites(),
+        userService.getReadingHistory()
+      ]);
+
+      console.log('ProfilePage: Получены новые данные:', {
+        favorites: favorites.length,
+        history: history.length,
+        completedBooks: history.filter(item => item.isCompleted).length,
+        inProgressBooks: history.filter(item => !item.isCompleted).length
+      });
+
+      setProfileData({
+        favorites: Array.isArray(favorites) ? favorites : [],
+        readingHistory: Array.isArray(history) ? history : []
+      });
+      
+      console.log('ProfilePage: Данные профиля успешно обновлены');
+    } catch (error) {
+      console.error('Ошибка загрузки данных профиля:', error);
+      message.error('Не удалось загрузить данные профиля');
+    } finally {
+      setLoading({
+        favorites: false,
+        readingHistory: false
+      });
+    }
+  }, [isAuthenticated]);
 
   // Загрузка всех данных профиля
   useEffect(() => {
@@ -121,17 +190,91 @@ const ProfilePage = () => {
     loadAllData();
   }, [isAuthenticated, navigate]);
 
+  // Отдельный useEffect для слушателя событий обновления профиля
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const handleProfileUpdate = () => {
+      console.log('Получено событие обновления профиля');
+      
+      // Очищаем предыдущий таймер если он есть
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      // Добавляем дебаунсинг для предотвращения частых обновлений
+      timeoutId = setTimeout(() => {
+        refreshProfileData();
+      }, 300); // Уменьшаем задержку с 500 до 300мс
+    };
+
+    window.addEventListener('profileUpdate', handleProfileUpdate);
+    
+    return () => {
+      window.removeEventListener('profileUpdate', handleProfileUpdate);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isAuthenticated, refreshProfileData]);
+
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
-  // Расчет статистических данных
-  const stats = useMemo(() => ({
-    readBooksCount: profileData.readingHistory.filter(item => item.isCompleted).length,
-    inProgressCount: profileData.readingHistory.filter(item => !item.isCompleted).length,
-    favoritesCount: profileData.favorites.length
-  }), [profileData]);
+  // Обработчик очистки истории чтения
+  const handleClearReadingHistory = useCallback(async () => {
+    if (!window.confirm('Вы уверены, что хотите очистить всю историю чтения? Это действие нельзя отменить.')) {
+      return;
+    }
+
+    try {
+      setLoading(prev => ({ ...prev, readingHistory: true }));
+      
+      await userService.clearReadingHistory();
+      
+      // Обновляем локальное состояние
+      setProfileData(prev => ({
+        ...prev,
+        readingHistory: []
+      }));
+      
+      message.success('История чтения успешно очищена');
+      
+      // Отправляем событие обновления профиля для обновления других компонентов
+      window.dispatchEvent(new CustomEvent('profileUpdate'));
+    } catch (error) {
+      console.error('Ошибка при очистке истории чтения:', error);
+      message.error('Не удалось очистить историю чтения. Попробуйте еще раз.');
+    } finally {
+      setLoading(prev => ({ ...prev, readingHistory: false }));
+    }
+  }, []);
+
+  // Расчет статистических данных с оптимизацией
+  const stats = useMemo(() => {
+    // Кэшируем результаты фильтрации для избежания повторных вычислений
+    let readBooksCount = 0;
+    let inProgressCount = 0;
+    
+    // Используем один проход по массиву вместо трех отдельных filter()
+    for (const item of profileData.readingHistory) {
+      if (item.isCompleted) {
+        readBooksCount++;
+      } else {
+        inProgressCount++;
+      }
+    }
+    
+    return {
+      readBooksCount,
+      inProgressCount,
+      favoritesCount: profileData.favorites.length
+    };
+  }, [profileData.readingHistory, profileData.favorites.length]);
 
   if (!isAuthenticated || !user) {
     return null;
@@ -200,40 +343,28 @@ const ProfilePage = () => {
             {/* Статистика */}
             <Row className={styles.statsCard}>
               <Col span={8} className="stats-item">
-                <motion.div 
-                  whileHover={{ translateY: -5 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className={styles.statsIcon}>
-                    <FaBookReader size={24} />
-                  </div>
-                  <h2 className={styles.statsNumber}>{stats.readBooksCount}</h2>
-                  <div className={styles.statsLabel}>ПРОЧИТАНО</div>
-                </motion.div>
+                <StatsItem 
+                  icon={<FaBookReader size={24} />}
+                  value={stats.readBooksCount}
+                  label="ПРОЧИТАНО"
+                  iconClassName={styles.statsIcon}
+                />
               </Col>
               <Col span={8} className="stats-item">
-                <motion.div 
-                  whileHover={{ translateY: -5 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className={styles.statsIconWarning}>
-                    <FaBookOpen size={24} />
-                  </div>
-                  <h2 className={styles.statsNumber}>{stats.inProgressCount}</h2>
-                  <div className={styles.statsLabel}>В ПРОЦЕССЕ</div>
-                </motion.div>
+                <StatsItem 
+                  icon={<FaBookOpen size={24} />}
+                  value={stats.inProgressCount}
+                  label="В ПРОЦЕССЕ"
+                  iconClassName={styles.statsIconWarning}
+                />
               </Col>
               <Col span={8} className="stats-item">
-                <motion.div 
-                  whileHover={{ translateY: -5 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className={styles.statsIconPurple}>
-                    <FiHeart size={24} />
-                  </div>
-                  <h2 className={styles.statsNumber}>{stats.favoritesCount}</h2>
-                  <div className={styles.statsLabel}>ИЗБРАННОЕ</div>
-                </motion.div>
+                <StatsItem 
+                  icon={<FiHeart size={24} />}
+                  value={stats.favoritesCount}
+                  label="ИЗБРАННОЕ"
+                  iconClassName={styles.statsIconPurple}
+                />
               </Col>
             </Row>
             
@@ -284,26 +415,48 @@ const ProfilePage = () => {
               emptyText="У вас пока нет истории чтения"
             >
               {profileData.readingHistory.length === 0 ? (
-                <Empty 
-                  description="У вас пока нет истории чтения" 
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              ) : (
-                <div className="reading-history-list">
-                  {profileData.readingHistory.map((item) => (
-                    <div key={item.id} className="reading-history-item">
-                      <Link to={`/books/${item.book.id}`}>
-                        <h3>{item.book.title}</h3>
-                      </Link>
-                      <Text type="secondary">
-                        Последнее чтение: {formatDate(item.lastReadDate)}
-                      </Text>
-                      {item.isCompleted && (
-                        <Text type="success">Прочитано</Text>
-                      )}
-                    </div>
-                  ))}
+                <div className={styles.historyEmptyContainer}>
+                  <Empty 
+                    description="У вас пока нет истории чтения" 
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  />
+                  <Button 
+                    type="primary" 
+                    onClick={() => navigate('/books')}
+                    className="history-empty-button"
+                    icon={<FiBook />}
+                  >
+                    Найти книги для чтения
+                  </Button>
                 </div>
+              ) : (
+                <>
+                  <BookCarousel 
+                    books={profileData.readingHistory.map(item => ({
+                      id: item.book.id,
+                      title: item.book.title,
+                      author: item.book.author,
+                      coverImageUrl: item.book.coverImageUrl,
+                      rating: 0, // Рейтинг можно добавить позже если нужно
+                      description: null
+                    }))}
+                    className="profile-history-carousel"
+                  />
+                  {/* Показываем кнопку очистки только если есть история чтения */}
+                  {profileData.readingHistory.length > 0 && (
+                    <div className={styles.clearHistoryButton}>
+                      <Button 
+                        type="primary" 
+                        onClick={handleClearReadingHistory}
+                        className="clear-history-button"
+                        icon={<FaTrash />}
+                        disabled={loading.readingHistory}
+                      >
+                        {loading.readingHistory ? 'Очистка...' : 'Очистить историю чтения'}
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </ProfileSection>
           </Col>
@@ -311,6 +464,8 @@ const ProfilePage = () => {
       </motion.div>
     </AnimatedBackground>
   );
-};
+});
+
+ProfilePage.displayName = 'ProfilePage';
 
 export default ProfilePage; 

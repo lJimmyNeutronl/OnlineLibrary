@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AiOutlineArrowLeft, AiOutlineBook, AiOutlineInfoCircle, AiOutlineHeart } from 'react-icons/ai';
@@ -6,6 +6,7 @@ import { useAppSelector } from '../hooks/reduxHooks';
 import ReaderSelector from '../components/readers/ReaderSelector';
 import Button from '../components/common/Button';
 import bookService from '../services/bookService';
+import userService from '../services/userService';
 import { getFavoritesFromStorage, saveFavoritesToStorage } from '../mocks/booksMock';
 import './BookReaderPage.css';
 
@@ -51,6 +52,13 @@ const BookReaderPage = () => {
   const [bookTitle, setBookTitle] = useState<string>('');
   const [isAddingToFavorites, setIsAddingToFavorites] = useState<boolean>(false);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const [totalPages, setTotalPages] = useState<number | null>(null);
+  const hasStartedReading = useRef<boolean>(false);
+  
+  // Обработчик получения информации о количестве страниц из читалки
+  const handleBookInfo = (info: { totalPages: number }) => {
+    setTotalPages(info.totalPages);
+  };
   
   // Проверка аутентификации и загрузка информации о книге
   useEffect(() => {
@@ -59,7 +67,25 @@ const BookReaderPage = () => {
       navigate('/login', { state: { redirectTo: `/books/${bookId}/read` } });
       return;
     }
-    
+
+    // Автоматически добавляем книгу в историю чтения при открытии (только один раз)
+    const startReading = async () => {
+      if (!bookId || hasStartedReading.current) return;
+      
+      hasStartedReading.current = true;
+      
+      try {
+        await userService.startReadingBook(parseInt(bookId));
+        
+        // Отправляем событие обновления профиля
+        window.dispatchEvent(new CustomEvent('profileUpdate'));
+      } catch (error) {
+        console.error('Ошибка при добавлении книги в историю чтения:', error);
+      }
+    };
+
+    startReading();
+
     // Загрузка информации о книге
     const loadBookInfo = async () => {
       try {
@@ -170,7 +196,10 @@ const BookReaderPage = () => {
 
       <div className="book-reader-content">
         {bookId && (
-          <ReaderSelector bookId={parseInt(bookId)} />
+          <ReaderSelector 
+            bookId={parseInt(bookId)} 
+            onBookInfo={handleBookInfo}
+          />
         )}
       </div>
     </motion.div>

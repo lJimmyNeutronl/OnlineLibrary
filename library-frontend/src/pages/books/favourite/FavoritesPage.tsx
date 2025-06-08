@@ -132,7 +132,7 @@ const FavoritesPage = () => {
               <Breadcrumb.Item>
                 <a href="/">Главная</a>
               </Breadcrumb.Item>
-              <Breadcrumb.Item>Избранное</Breadcrumb.Item>
+              <Breadcrumb.Item style={{ color: '#8e54e9' }}>Избранное</Breadcrumb.Item>
             </Breadcrumb>
             
             <div className={styles.favoritesPageTitleRow}>

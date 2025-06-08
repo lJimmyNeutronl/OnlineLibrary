@@ -76,14 +76,14 @@ html, body {
   gap: 8px;
   color: #666;
   font-size: 0.95rem;
-  background: rgba(55, 105, 245, 0.05);
+  background: linear-gradient(135deg, rgba(55, 105, 245, 0.08) 0%, rgba(142, 84, 233, 0.06) 100%);
   padding: 8px 16px;
   border-radius: 20px;
-  border: 1px solid rgba(55, 105, 245, 0.1);
+  border: 1px solid rgba(142, 84, 233, 0.15);
 }
 
 .book-icon {
-  color: #3769f5;
+  color: #8e54e9;
   font-size: 1rem;
 }
 
@@ -92,8 +92,8 @@ html, body {
 }
 
 .books-count-text strong {
-  color: #3769f5;
-  font-weight: 600;
+  color: #8e54e9;
+  font-weight: 400;
 }
 
 .filters-actions {
@@ -293,8 +293,7 @@ html, body {
 .search-button {
   position: absolute;
   right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 10%;
   background: linear-gradient(135deg, #3769f5 0%, #8e54e9 100%);
   border: none;
   cursor: pointer;
@@ -302,7 +301,7 @@ html, body {
   height: 44px;
   border-radius: 50%;
   color: white;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   box-shadow: 0 2px 12px rgba(55, 105, 245, 0.3);
   display: flex;
   align-items: center;
@@ -311,13 +310,16 @@ html, body {
 }
 
 .search-button:hover {
-  transform: translateY(-50%);
-  box-shadow: 0 4px 16px rgba(55, 105, 245, 0.4);
+  transform: translateY(-50%) scale(1.05) !important;
+  box-shadow: 0 4px 16px rgba(55, 105, 245, 0.4) !important;
 }
 
 .search-button:active {
-  transform: translateY(-50%);
+  transform: translateY(-50%) scale(0.95) !important;
+  transition: all 0.1s ease !important;
 }
+
+
 
 /* Контент фильтров */
 .filters-content {
@@ -752,13 +754,8 @@ html, body {
   animation: none !important;
 }
 
-/* Исключение для кнопки поиска которая должна сохранить центрирование */
-.search-button,
-.search-button:hover,
-.search-button:focus,
-.search-button:active {
-  transform: translateY(-50%) !important;
-}
+/* Исключение для кнопки поиска которая должна сохранить центрирование и анимацию */
+
 
 /* Исправляем z-index для выпадающих меню */
 .sort-select .select-dropdown,

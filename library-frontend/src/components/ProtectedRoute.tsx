@@ -20,17 +20,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const checkAuth = async () => {
       // Если нет токена вообще - сразу считаем проверку выполненной
       if (!localToken) {
-        console.log('Защищенный маршрут: нет токена, требуется вход');
         setAuthChecked(true);
         return;
       }
       
       // Если есть токен, но нет данных пользователя и не идет загрузка
       if (localToken && !user && !isLoading && !authChecked) {
-        console.log('Защищенный маршрут: токен есть, загружаем данные пользователя');
         try {
           await dispatch(loadCurrentUser()).unwrap();
-          console.log('Защищенный маршрут: данные пользователя успешно загружены');
         } catch (error) {
           console.error('Защищенный маршрут: ошибка загрузки данных пользователя', error);
         } finally {
@@ -72,12 +69,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   // Если проверка завершена и нет токена или пользователя - перенаправляем на вход
   if (authChecked && (!localToken || !user)) {
-    console.log('Защищенный маршрут: перенаправление на страницу входа');
     return <Navigate to="/login" replace />;
   }
   
   // Если аутентификация прошла успешно - показываем защищенный контент
-  console.log('Защищенный маршрут: доступ разрешен');
   return <>{children}</>;
 };
 
