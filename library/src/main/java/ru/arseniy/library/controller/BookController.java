@@ -12,14 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import ru.arseniy.library.dto.BookDTO;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.service.BookService;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
-@Validated
 public class BookController {
     
     @Autowired

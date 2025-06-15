@@ -11,7 +11,6 @@ import ru.arseniy.library.dto.RatingDTO;
 import ru.arseniy.library.model.User;
 import ru.arseniy.library.service.RatingService;
 import ru.arseniy.library.service.UserService;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Map;
@@ -20,9 +19,8 @@ import java.util.Map;
  * Контроллер для работы с рейтингами книг
  */
 @RestController
-@RequestMapping("/api/ratings")
+@RequestMapping("/api/books")
 @RequiredArgsConstructor
-@Validated
 public class RatingController {
 
     private final RatingService ratingService;

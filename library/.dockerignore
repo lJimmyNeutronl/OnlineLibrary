@@ -1,25 +1,17 @@
+# Исключаем файлы и папки из Docker контекста
+
 # Maven
 target/
-!target/*.jar
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**
+!**/src/test/**
 
 # IDE
 .idea/
-*.iws
+.vscode/
 *.iml
 *.ipr
-.vscode/
-.settings/
-.project
-.classpath
+*.iws
 
 # OS
 .DS_Store
@@ -32,9 +24,6 @@ logs/
 # Temporary files
 *.tmp
 *.temp
-*.swp
-*.swo
-*~
 
 # Git
 .git/
@@ -44,10 +33,9 @@ logs/
 Dockerfile
 .dockerignore
 
+# Environment files (will be passed as env vars)
+.env
+
 # Documentation
 README.md
-*.md
-
-# Environment
-.env
-.env.local 
+*.md 

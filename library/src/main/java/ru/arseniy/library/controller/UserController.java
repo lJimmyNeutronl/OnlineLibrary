@@ -19,13 +19,11 @@ import ru.arseniy.library.model.ReadingHistory;
 import ru.arseniy.library.model.User;
 import ru.arseniy.library.security.services.UserDetailsImpl;
 import ru.arseniy.library.service.UserService;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.Set;
 
 @RestController
 @RequestMapping("/api/users")
-@Validated
 public class UserController {
     
     @Autowired

@@ -1,20 +1,16 @@
--- Инициализация базы данных для онлайн-библиотеки
--- Этот файл выполняется при первом запуске PostgreSQL контейнера
+-- Инициализационный скрипт для PostgreSQL базы данных онлайн-библиотеки
+-- Этот файл выполнится автоматически при первом запуске контейнера PostgreSQL
 
--- Создание расширений
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+SET CLIENT_ENCODING TO 'UTF8';
 
--- Установка часового пояса
-SET timezone = 'Europe/Moscow';
 
--- Создание пользователя приложения (если не существует)
+GRANT ALL PRIVILEGES ON DATABASE onlinelibrary TO arseniy;
+
+ALTER DATABASE onlinelibrary OWNER TO arseniy;
+
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'arseniy') THEN
-        CREATE USER arseniy WITH PASSWORD 'password';
-    END IF;
-END
-$$;
-
--- Предоставление прав пользователю
-GRANT ALL PRIVILEGES ON DATABASE onlinelibrary TO arseniy; 
+    RAISE NOTICE 'Database onlinelibrary initialized successfully!';
+    RAISE NOTICE 'User arseniy has been granted all privileges.';
+    RAISE NOTICE 'Flyway migrations will be applied automatically by Spring Boot.';
+END $$; 

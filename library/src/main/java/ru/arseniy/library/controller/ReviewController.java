@@ -11,7 +11,6 @@ import ru.arseniy.library.dto.ReviewDTO;
 import ru.arseniy.library.model.User;
 import ru.arseniy.library.service.ReviewService;
 import ru.arseniy.library.service.UserService;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Map;
@@ -20,8 +19,7 @@ import java.util.Map;
  * Контроллер для работы с отзывами к книгам
  */
 @RestController
-@RequestMapping("/api/reviews")
-@Validated
+@RequestMapping("/api/books")
 @RequiredArgsConstructor
 public class ReviewController {
 

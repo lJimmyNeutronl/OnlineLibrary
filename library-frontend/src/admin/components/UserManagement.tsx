@@ -23,12 +23,14 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  PersonAdd,
-  PersonRemove,
+  PersonAdd as PersonAddIcon,
+  PersonRemove as PersonRemoveIcon,
+  Block as BlockIcon,
   Search,
-  Block,
 } from '@mui/icons-material';
 import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 interface User {
   id: number;
@@ -47,8 +49,6 @@ interface UserPage {
   number: number;
   size: number;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -299,7 +299,7 @@ const UserManagement = () => {
                                   color="primary"
                                   onClick={() => handleOpenDialog(user, 'addAdmin')}
                                 >
-                                  <PersonAdd />
+                                  <PersonAddIcon />
                                 </IconButton>
                               </Tooltip>
                             ) : (
@@ -309,7 +309,7 @@ const UserManagement = () => {
                                   color="warning"
                                   onClick={() => handleOpenDialog(user, 'removeAdmin')}
                                 >
-                                  <PersonRemove />
+                                  <PersonRemoveIcon />
                                 </IconButton>
                               </Tooltip>
                             )}
@@ -320,7 +320,7 @@ const UserManagement = () => {
                                 color="error"
                                 onClick={() => handleOpenDialog(user, 'block')}
                               >
-                                <Block />
+                                <BlockIcon />
                               </IconButton>
                             </Tooltip>
                           </>

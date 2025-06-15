@@ -1,51 +1,49 @@
-# Multi-stage build для Spring Boot приложения
+# Dockerfile для Spring Boot приложения
+# Multi-stage build для оптимизации размера образа
+
+# Stage 1: Build
 FROM maven:3.9.6-eclipse-temurin-21 AS build
 
-# Установка рабочей директории
 WORKDIR /app
 
-# Копирование файлов Maven
+# Копируем файлы Maven для кеширования зависимостей
 COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
 COPY mvnw.cmd .
 
-# Загрузка зависимостей (кэширование слоя)
-RUN mvn dependency:go-offline -B
+# Скачиваем зависимости (будет закешировано, если pom.xml не изменился)
+RUN ./mvnw dependency:go-offline -B
 
-# Копирование исходного кода
-COPY src ./src
+# Копируем исходный код
+COPY src src
 
-# Сборка приложения
-RUN mvn clean package -DskipTests -B
+# Собираем приложение
+RUN ./mvnw clean package -DskipTests
 
-# Runtime stage
+# Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
 
-# Установка curl для health checks
-RUN apk add --no-cache curl
+WORKDIR /app
 
-# Создание непривилегированного пользователя
+# Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S spring && \
     adduser -u 1001 -S spring -G spring
 
-# Установка рабочей директории
-WORKDIR /app
-
-# Копирование JAR файла из build stage
+# Копируем JAR файл из stage build
 COPY --from=build /app/target/*.jar app.jar
 
-# Изменение владельца файлов
-RUN chown -R spring:spring /app
+# Устанавливаем владельца файлов
+RUN chown spring:spring app.jar
 
-# Переключение на непривилегированного пользователя
+# Переключаемся на пользователя spring
 USER spring
 
-# Настройка JVM для контейнера
-ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-
-# Открытие порта
+# Открываем порт
 EXPOSE 8080
+
+# Настройки JVM для контейнера
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
 
 # Команда запуска
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"] 

@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.arseniy.library.service.FileStorageService;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.validation.annotation.Validated;
 
 import java.io.InputStream;
 import java.util.Optional;
@@ -23,7 +21,6 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api/files")
-@Validated
 @RequiredArgsConstructor
 @Slf4j
 public class FileController {

@@ -39,6 +39,7 @@ build/
 
 ### Environment Variables ###
 .env
+*.env
 
 ### Cursor ###
 .cursor/upload_test.html

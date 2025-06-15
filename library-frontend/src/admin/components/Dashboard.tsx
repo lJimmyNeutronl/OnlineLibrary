@@ -3,14 +3,14 @@ import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/mater
 import { People, Book, Category, AdminPanelSettings } from '@mui/icons-material';
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
 interface StatisticsData {
   totalUsers: number;
   adminCount?: number;
   totalBooks: number;
   totalCategories: number;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const Dashboard = () => {
   const [statistics, setStatistics] = useState<StatisticsData | null>(null);
@@ -25,17 +25,26 @@ const Dashboard = () => {
           throw new Error('Нет токена авторизации');
         }
 
-        const [usersResponse, booksResponse, categoriesResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/users/admin/statistics`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API_BASE_URL}/books?page=0&size=1`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`${API_BASE_URL}/categories`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ]);
+        // Получаем статистику пользователей
+        const usersResponse = await axios.get(`${API_BASE_URL}/users/admin/statistics`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Получаем количество книг
+        const booksResponse = await axios.get(`${API_BASE_URL}/books?page=0&size=1`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        // Получаем количество категорий
+        const categoriesResponse = await axios.get(`${API_BASE_URL}/categories`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         setStatistics({
           ...usersResponse.data,
