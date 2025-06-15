@@ -24,6 +24,8 @@ export default defineConfig({
         },
       },
     },
+    // Используем esbuild вместо terser для минификации
+    minify: 'esbuild',
   },
   server: {
     fs: {

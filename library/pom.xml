@@ -143,6 +143,18 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
 <artifactId>spring-test</artifactId>
 <scope>compile</scope>
 </dependency>
+
+<!-- iText для создания PDF файлов -->
+<dependency>
+<groupId>com.itextpdf</groupId>
+<artifactId>kernel</artifactId>
+<version>7.2.5</version>
+</dependency>
+<dependency>
+<groupId>com.itextpdf</groupId>
+<artifactId>layout</artifactId>
+<version>7.2.5</version>
+</dependency>
 </dependencies>
 
 <build>

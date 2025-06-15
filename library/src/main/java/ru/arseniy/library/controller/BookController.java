@@ -12,13 +12,14 @@ import org.springframework.web.bind.annotation.*;
 import ru.arseniy.library.dto.BookDTO;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.service.BookService;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:5173", maxAge = 3600, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/books")
+@Validated
 public class BookController {
     
     @Autowired

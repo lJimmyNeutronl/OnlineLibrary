@@ -258,6 +258,10 @@ public class BookFileServiceImpl implements BookFileService {
                 return "pdf";
             case "application/epub+zip":
                 return "epub";
+            case "application/x-fictionbook+xml":
+                return "fb2";
+            case "text/xml":
+                return "fb2";
             case "image/jpeg":
                 return "jpg";
             case "image/png":

@@ -18,7 +18,7 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
     Page<Book> findByAuthorContainingIgnoreCase(String author, Pageable pageable);
     
     /**
-     * Находит книги из указанной категории и всех её подкатегорий первого уровня
+     * Находит книги из указанной категории и всех её подкатегорий
      */
     @Query("SELECT DISTINCT b FROM Book b JOIN b.categories c " +
            "WHERE c.id = :categoryId OR " +

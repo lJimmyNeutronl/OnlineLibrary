@@ -9,12 +9,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 import ru.arseniy.library.dto.MessageResponse;
 import ru.arseniy.library.exception.ResourceNotFoundException;
 import ru.arseniy.library.model.Book;
 import ru.arseniy.library.service.BookService;
+import org.springframework.validation.annotation.Validated;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,14 +23,11 @@ import java.util.Optional;
 /**
  * Контроллер для работы с файлами книг
  */
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true", 
-             allowedHeaders = {"Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"}, 
-             exposedHeaders = {"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials", "Access-Control-Allow-Methods"},
-             methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS, RequestMethod.HEAD, RequestMethod.PUT, RequestMethod.DELETE})
 @RestController
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class BookFileController {
 
     private final BookService bookService;
@@ -253,7 +250,7 @@ public class BookFileController {
             case "epub":
                 return "application/epub+zip";
             case "fb2":
-                return "application/xml";
+                return "application/x-fictionbook+xml";
             case "txt":
                 return "text/plain";
             case "jpg":
@@ -286,6 +283,10 @@ public class BookFileController {
             return "application/pdf";
         } else if (lowerUrl.endsWith(".epub")) {
             return "application/epub+zip";
+        } else if (lowerUrl.endsWith(".fb2")) {
+            return "application/x-fictionbook+xml";
+        } else if (lowerUrl.endsWith(".txt")) {
+            return "text/plain";
         } else if (lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg")) {
             return "image/jpeg";
         } else if (lowerUrl.endsWith(".png")) {

@@ -20,7 +20,9 @@ public class FileConstants {
      */
     public static final String[] ALLOWED_BOOK_CONTENT_TYPES = {
             "application/pdf",
-            "application/epub+zip"
+            "application/epub+zip",
+            "application/x-fictionbook+xml", // FB2 формат
+            "text/xml" // Альтернативный MIME-тип для FB2
     };
     
     /**

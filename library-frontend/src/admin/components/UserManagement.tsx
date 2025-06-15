@@ -48,6 +48,8 @@ interface UserPage {
   size: number;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ const UserManagement = () => {
         throw new Error('Нет токена авторизации');
       }
 
-      const response = await axios.get(`http://localhost:8080/api/users/admin/all`, {
+      const response = await axios.get(`${API_BASE_URL}/users/admin/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -136,14 +138,14 @@ const UserManagement = () => {
 
       switch (actionType) {
         case 'addAdmin':
-          endpoint = `http://localhost:8080/api/users/admin/assign-admin/${selectedUser.id}`;
+          endpoint = `${API_BASE_URL}/users/admin/assign-admin/${selectedUser.id}`;
           break;
         case 'removeAdmin':
-          endpoint = `http://localhost:8080/api/users/admin/remove-admin/${selectedUser.id}`;
+          endpoint = `${API_BASE_URL}/users/admin/remove-admin/${selectedUser.id}`;
           method = 'DELETE';
           break;
         case 'block':
-          endpoint = `http://localhost:8080/api/users/admin/toggle-block/${selectedUser.id}`;
+          endpoint = `${API_BASE_URL}/users/admin/toggle-block/${selectedUser.id}`;
           break;
       }
 

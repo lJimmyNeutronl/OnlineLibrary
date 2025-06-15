@@ -10,6 +10,8 @@ interface StatisticsData {
   totalCategories: number;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 const Dashboard = () => {
   const [statistics, setStatistics] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,26 +25,17 @@ const Dashboard = () => {
           throw new Error('Нет токена авторизации');
         }
 
-        // Получаем статистику пользователей
-        const usersResponse = await axios.get('http://localhost:8080/api/users/admin/statistics', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Получаем количество книг
-        const booksResponse = await axios.get('http://localhost:8080/api/books?page=0&size=1', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        // Получаем количество категорий
-        const categoriesResponse = await axios.get('http://localhost:8080/api/categories', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const [usersResponse, booksResponse, categoriesResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/users/admin/statistics`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_BASE_URL}/books?page=0&size=1`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API_BASE_URL}/categories`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
 
         setStatistics({
           ...usersResponse.data,
