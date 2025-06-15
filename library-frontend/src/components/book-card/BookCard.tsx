@@ -45,7 +45,7 @@ const BookCard: React.FC<BookCardProps> = ({
   const [bookRating, setBookRating] = useState<number>(rating);
   
   // Путь к изображению-плейсхолдеру
-  const placeholderImage = '/src/assets/images/placeholder.png';
+  const placeholderImage = '/placeholder.png';
   
   // Обработчик ошибки загрузки изображения
   const handleImageError = () => {

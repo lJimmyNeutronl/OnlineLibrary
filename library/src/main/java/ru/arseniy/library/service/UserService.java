@@ -19,10 +19,8 @@ import ru.arseniy.library.repository.ReadingHistoryRepository;
 import ru.arseniy.library.repository.RoleRepository;
 import ru.arseniy.library.repository.UserRepository;
 import ru.arseniy.library.exception.ResourceNotFoundException;
-
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -134,17 +132,11 @@ public class UserService {
         readingHistory.setBook(book);
         readingHistory.setLastReadDate(LocalDateTime.now());
         
-        // ВАЖНО: НЕ перезаписываем isCompleted если книга уже помечена как прочитанная
-        // Это предотвращает случайную "отметку" прочитанной книги как непрочитанной
         if (isCompleted != null) {
-            // Если явно передается isCompleted, устанавливаем его
         readingHistory.setIsCompleted(isCompleted);
         } else if (readingHistory.getId() == null) {
-            // Если это новая запись и isCompleted не передан, устанавливаем false
             readingHistory.setIsCompleted(false);
         }
-        // Если запись существует и isCompleted не передан - оставляем как есть
-        
         // Устанавливаем номер последней прочитанной страницы
         if (lastReadPage != null) {
             readingHistory.setLastReadPage(lastReadPage);
@@ -186,8 +178,6 @@ public class UserService {
         // Сохраняем обновленного пользователя
         return userRepository.save(user);
     }
-
-    // =================== АДМИНИСТРАТИВНЫЕ МЕТОДЫ ===================
 
     /**
      * Получает список всех пользователей (только для администраторов)
@@ -255,7 +245,6 @@ public class UserService {
 
     /**
      * Блокирует/разблокирует пользователя (только для SUPERADMIN)
-     * Примечание: пока что просто помечаем в базе, реальная блокировка будет реализована позже
      */
     @Transactional
     public MessageResponse toggleUserBlock(Integer userId) {
@@ -267,9 +256,40 @@ public class UserService {
             throw new RuntimeException("Нельзя заблокировать суперадмина");
         }
 
-        // Для демонстрации пока что просто возвращаем сообщение
-        // В будущем здесь можно добавить поле isBlocked в модель User
-        return new MessageResponse("Функция блокировки пользователей будет реализована в следующих версиях");
+        // Переключаем статус блокировки
+        boolean newEnabledStatus = !user.getEnabled();
+        user.setEnabled(newEnabledStatus);
+        userRepository.save(user);
+
+        String action = newEnabledStatus ? "разблокирован" : "заблокирован";
+        return new MessageResponse("Пользователь " + user.getEmail() + " " + action);
+    }
+
+    /**
+     * Удаляет пользователя (только для SUPERADMIN)
+     * Выполняет каскадное удаление всех связанных данных
+     */
+    @Transactional
+    public MessageResponse deleteUser(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+
+        // Проверяем, что пользователь не является суперадмином
+        if (isSuperAdmin(user)) {
+            throw new RuntimeException("Нельзя удалить суперадмина");
+        }
+
+        String userEmail = user.getEmail();
+        
+        // Каскадное удаление происходит автоматически благодаря настройкам в модели User:
+        // - readingHistory (cascade = CascadeType.ALL, orphanRemoval = true)
+        // - reviews (cascade = CascadeType.ALL, orphanRemoval = true)
+        // - ratings (cascade = CascadeType.ALL, orphanRemoval = true)
+        // - favorites (связь many-to-many, удаляется автоматически)
+        
+        userRepository.delete(user);
+        
+        return new MessageResponse("Пользователь " + userEmail + " успешно удален");
     }
 
     /**

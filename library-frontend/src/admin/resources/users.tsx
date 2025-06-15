@@ -13,6 +13,8 @@ import {
   useNotify,
   useRefresh,
   usePermissions,
+  useDelete,
+  useRedirect,
 } from 'react-admin';
 import { Chip, Box } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -41,6 +43,22 @@ const UserRoles = () => {
         />
       ))}
     </Box>
+  );
+};
+
+// Компонент для отображения статуса пользователя
+const UserStatus = () => {
+  const record = useRecordContext();
+  if (!record) return null;
+
+  const isBlocked = record.enabled === false;
+
+  return (
+    <Chip
+      label={isBlocked ? 'Заблокирован' : 'Активен'}
+      size="small"
+      color={isBlocked ? 'error' : 'success'}
+    />
   );
 };
 
@@ -171,6 +189,8 @@ const ToggleBlockButton = () => {
 
   if (isSuperAdmin) return null;
 
+  const isBlocked = record.enabled === false;
+
   const handleToggleBlock = () => {
     update(
       'users',
@@ -197,10 +217,66 @@ const ToggleBlockButton = () => {
       disabled={isLoading}
       startIcon={<BlockIcon />}
       variant="outlined"
-      color="secondary"
+      color={isBlocked ? "success" : "secondary"}
       size="small"
     >
-      Блокировать
+      {isBlocked ? 'Разблокировать' : 'Заблокировать'}
+    </Button>
+  );
+};
+
+// Кнопка для удаления пользователя
+const DeleteUserButton = () => {
+  const record = useRecordContext();
+  const [deleteOne, { isLoading }] = useDelete();
+  const notify = useNotify();
+  const redirect = useRedirect();
+  const { permissions } = usePermissions();
+
+  // Проверяем, является ли текущий пользователь суперадмином
+  if (!permissions || !isSuperAdminUser(permissions)) {
+    return null; // Скрываем кнопку для обычных админов
+  }
+
+  if (!record) return null;
+
+  const isSuperAdmin = record.roles?.some((role: any) => role.name === 'ROLE_SUPERADMIN');
+
+  if (isSuperAdmin) return null;
+
+  const handleDeleteUser = () => {
+    if (window.confirm(`Вы уверены, что хотите удалить пользователя ${record.firstName} ${record.lastName}? Это действие нельзя отменить.`)) {
+      deleteOne(
+        'users',
+        {
+          id: record.id,
+          previousData: record,
+        },
+        {
+          onSuccess: () => {
+            notify('Пользователь удален', { type: 'success' });
+            // Перенаправляем на список пользователей, чтобы избежать попыток загрузки удаленного пользователя
+            redirect('/admin/users');
+          },
+          onError: (error: any) => {
+            console.error('Ошибка удаления пользователя:', error);
+            notify('Ошибка удаления пользователя', { type: 'error' });
+          },
+        }
+      );
+    }
+  };
+
+  return (
+    <Button
+      onClick={handleDeleteUser}
+      disabled={isLoading}
+      startIcon={<PersonRemoveIcon />}
+      variant="outlined"
+      color="error"
+      size="small"
+    >
+      Удалить
     </Button>
   );
 };
@@ -219,6 +295,7 @@ const UserActions = () => {
       <AssignAdminButton />
       <RemoveAdminButton />
       <ToggleBlockButton />
+      <DeleteUserButton />
     </Box>
   );
 };
@@ -236,6 +313,7 @@ export const UserList = () => (
       <TextField source="lastName" label="Фамилия" />
       <EmailField source="email" label="Email" />
       <UserRoles />
+      <UserStatus />
       <DateField source="registrationDate" label="Дата регистрации" showTime />
       <DateField source="lastLoginDate" label="Последний вход" showTime />
       <UserActions />
@@ -255,6 +333,7 @@ export const UserShow = () => {
         <TextField source="lastName" label="Фамилия" />
         <EmailField source="email" label="Email" />
         <UserRoles />
+        <UserStatus />
         <DateField source="registrationDate" label="Дата регистрации" showTime />
         <DateField source="lastLoginDate" label="Последний вход" showTime />
         
@@ -264,6 +343,7 @@ export const UserShow = () => {
             <AssignAdminButton />
             <RemoveAdminButton />
             <ToggleBlockButton />
+            <DeleteUserButton />
           </TopToolbar>
         )}
       </SimpleShowLayout>

@@ -7,7 +7,7 @@ import { Spin, Button } from '@components/common';
 import AnimatedBackground from '@components/common/AnimatedBackground';
 import SectionHeader from '@components/common/SectionHeader';
 import SearchInput from '@components/search/SearchInput';
-import BookCard from '@components/book-card/BookCard';
+import { BookList } from '@components/book-card';
 
 // Сервисы и типы
 import bookService, { Book } from '@services/bookService';
@@ -17,7 +17,6 @@ import { CategoryWithCount } from '../../types/category';
 // Константы и стили
 import { ANIMATIONS, CATEGORY_ICONS, DATA_LIMITS, TEXTS } from '../../constants/homePage';
 import styles from './HomePage.module.css';
-import '../../components/book-card/BookCard.css';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -130,25 +129,7 @@ const LatestBooksSection: React.FC<LatestBooksSectionProps> = ({ books, loading 
       </div>
     ) : (
       <div className={styles.booksSection}>
-        <div className="book-grid">
-          {books.map((book) => (
-            <motion.div 
-              key={book.id} 
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              <BookCard
-                id={book.id}
-                title={book.title}
-                author={book.author}
-                coverImageUrl={book.coverImageUrl || '/src/assets/images/placeholder.png'}
-                publicationYear={book.publicationYear}
-                showRating={true}
-                rating={book.rating || 0}
-              />
-            </motion.div>
-          ))}
-        </div>
+        <BookList books={books} viewMode="grid" />
       </div>
     )}
   </div>

@@ -201,6 +201,20 @@ public class UserController {
     }
 
     /**
+     * Удаление пользователя (только для SUPERADMIN)
+     */
+    @DeleteMapping("/admin/delete/{userId}")
+    @PreAuthorize("hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<MessageResponse> deleteUser(@PathVariable Integer userId) {
+        try {
+            MessageResponse response = userService.deleteUser(userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
+    /**
      * Получение статистики пользователей (для администраторов)
      */
     @GetMapping("/admin/statistics")

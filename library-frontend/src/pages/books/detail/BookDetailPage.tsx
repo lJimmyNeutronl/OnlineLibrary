@@ -26,7 +26,7 @@ import ReviewList from '@components/reviews/ReviewList';
 const { Title, Paragraph, Text } = Typography;
 
 // Путь к плейсхолдеру
-const PLACEHOLDER_IMAGE = '/src/assets/images/placeholder.png';
+const PLACEHOLDER_IMAGE = '/placeholder.png';
 
 const BookDetailPage = () => {
   const { bookId } = useParams<{ bookId: string }>();

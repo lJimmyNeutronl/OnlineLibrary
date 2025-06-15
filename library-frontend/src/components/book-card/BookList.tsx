@@ -61,7 +61,7 @@ const BookList: React.FC<BookListProps> = ({
                 id={book.id}
                 title={book.title}
                 author={book.author}
-                coverImageUrl={book.coverImageUrl || '/src/assets/images/placeholder.png'}
+                coverImageUrl={book.coverImageUrl || '/placeholder.png'}
                 publicationYear={book.publicationYear}
                 showRating={true}
                 rating={book.rating || 0}
@@ -92,7 +92,7 @@ const BookList: React.FC<BookListProps> = ({
                     }}
                   >
                     <img 
-                      src={book.coverImageUrl || '/src/assets/images/placeholder.png'} 
+                      src={book.coverImageUrl || '/placeholder.png'} 
                       alt={book.title} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

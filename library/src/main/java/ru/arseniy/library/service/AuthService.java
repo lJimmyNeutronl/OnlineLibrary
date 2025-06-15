@@ -42,6 +42,14 @@ public class AuthService {
     private JwtUtils jwtUtils;
 
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
+        // Сначала проверяем, не заблокирован ли пользователь
+        User user = userRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        
+        if (!user.getEnabled()) {
+            throw new RuntimeException("Вы заблокированы");
+        }
+        
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
@@ -54,7 +62,6 @@ public class AuthService {
                 .collect(Collectors.toList());
         
         // Обновление времени последнего входа
-        User user = userRepository.findByEmail(userDetails.getEmail()).orElseThrow();
         user.setLastLoginDate(LocalDateTime.now());
         userRepository.save(user);
 
@@ -79,6 +86,7 @@ public class AuthService {
         user.setLastName(signUpRequest.getLastName());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
         user.setRegistrationDate(LocalDateTime.now());
+        user.setEnabled(true); // По умолчанию пользователь активен
 
         Set<String> strRoles = signUpRequest.getRoles();
         Set<Role> roles = new HashSet<>();

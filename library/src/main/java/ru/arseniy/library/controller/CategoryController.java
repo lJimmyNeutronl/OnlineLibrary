@@ -111,12 +111,9 @@ public class CategoryController {
     
     @PostMapping
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
-    public ResponseEntity<CategoryDTO> createCategory(
-            @RequestBody CategoryDTO categoryDTO,
-            @RequestParam(required = false) Integer parentId) {
-        
+    public ResponseEntity<CategoryDTO> createCategory(@RequestBody CategoryDTO categoryDTO) {
         Category category = CategoryDTO.toEntity(categoryDTO);
-        Category createdCategory = categoryService.createCategory(category, parentId);
+        Category createdCategory = categoryService.createCategory(category, categoryDTO.getParentCategoryId());
         return ResponseEntity.ok(CategoryDTO.fromEntity(createdCategory));
     }
     
@@ -124,18 +121,32 @@ public class CategoryController {
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<CategoryDTO> updateCategory(
             @PathVariable Integer id,
-            @RequestBody CategoryDTO categoryDTO,
-            @RequestParam(required = false) Integer parentId) {
+            @RequestBody CategoryDTO categoryDTO) {
         
         Category category = CategoryDTO.toEntity(categoryDTO);
-        Category updatedCategory = categoryService.updateCategory(id, category, parentId);
+        Category updatedCategory = categoryService.updateCategory(id, category, categoryDTO.getParentCategoryId());
         return ResponseEntity.ok(CategoryDTO.fromEntity(updatedCategory));
     }
     
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPERADMIN')")
     public ResponseEntity<?> deleteCategory(@PathVariable Integer id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.ok().build();
+        try {
+            categoryService.deleteCategory(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    @DeleteMapping("/{id}/force")
+    @PreAuthorize("hasRole('ROLE_SUPERADMIN')")
+    public ResponseEntity<?> forceDeleteCategory(@PathVariable Integer id) {
+        try {
+            categoryService.forceDeleteCategory(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

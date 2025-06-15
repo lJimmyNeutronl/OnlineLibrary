@@ -21,11 +21,20 @@ import {
   SelectInput,
   ReferenceField,
   FunctionField,
+  useRecordContext,
+  useNotify,
+  usePermissions,
+  Button,
 } from 'react-admin';
 import {
   Chip,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import './categories.css';
 
 // Фильтры для списка категорий
@@ -91,7 +100,6 @@ export const CategoryCreate = () => (
   <Create>
     <SimpleForm>
       <TextInput source="name" label="Название" validate={required()} fullWidth />
-      <TextInput source="description" label="Описание" multiline rows={3} fullWidth />
       <ReferenceInput 
         source="parentCategoryId" 
         reference="categories" 
@@ -108,25 +116,35 @@ export const CategoryCreate = () => (
 );
 
 // Редактирование категории
-export const CategoryEdit = () => (
-  <Edit>
-    <SimpleForm>
-      <TextInput source="name" label="Название" validate={required()} fullWidth />
-      <TextInput source="description" label="Описание" multiline rows={3} fullWidth />
-      <ReferenceInput 
-        source="parentCategoryId" 
-        reference="categories" 
-        label="Родительская категория"
-        filter={{ parentCategoryId: null }} // Показываем только родительские категории
-      >
-        <SelectInput 
-          optionText="name" 
-          emptyText="Сделать родительской категорией"
-        />
-      </ReferenceInput>
-    </SimpleForm>
-  </Edit>
-);
+export const CategoryEdit = () => {
+  const { permissions } = usePermissions();
+  
+  return (
+    <Edit>
+      <SimpleForm>
+        <TextInput source="name" label="Название" validate={required()} fullWidth />
+        <ReferenceInput 
+          source="parentCategoryId" 
+          reference="categories" 
+          label="Родительская категория"
+          filter={{ parentCategoryId: null }} // Показываем только родительские категории
+        >
+          <SelectInput 
+            optionText="name" 
+            emptyText="Сделать родительской категорией"
+          />
+        </ReferenceInput>
+      </SimpleForm>
+      
+      {/* Показываем кнопку принудительного удаления только для суперадминов */}
+      {permissions && isSuperAdminUser(permissions) && (
+        <TopToolbar>
+          <ForceDeleteButton />
+        </TopToolbar>
+      )}
+    </Edit>
+  );
+};
 
 // Просмотр категории
 export const CategoryShow = () => (
@@ -174,4 +192,93 @@ export const CategoryShow = () => (
       <DateField source="updatedAt" label="Обновлено" showTime />
     </SimpleShowLayout>
   </Show>
-); 
+);
+
+// Функция для проверки, является ли пользователь суперадмином
+const isSuperAdminUser = (permissions: string[]): boolean => {
+  return permissions.includes('ROLE_SUPERADMIN');
+};
+
+// Кнопка принудительного удаления для суперадминов
+const ForceDeleteButton = () => {
+  const record = useRecordContext();
+  const notify = useNotify();
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+
+  if (!record) return null;
+
+  const handleForceDelete = () => {
+    const url = `/api/categories/${record.id}/force`;
+    
+    fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(async (response) => {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка принудительного удаления категории');
+      }
+      notify('Категория принудительно удалена со всеми подкатегориями', { type: 'success' });
+      setDialogOpen(false);
+      // Перенаправляем на список категорий
+      window.location.href = '/admin/categories';
+    })
+    .catch((error) => {
+      notify(error.message, { type: 'error' });
+      setDialogOpen(false);
+    });
+  };
+
+  return (
+    <>
+      <Button
+        onClick={() => setDialogOpen(true)}
+        startIcon={<DeleteForeverIcon />}
+        variant="contained"
+        color="error"
+        size="small"
+      >
+        Принудительное удаление
+      </Button>
+
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Принудительное удаление категории "{record.name}"</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" gutterBottom color="error">
+            <strong>ВНИМАНИЕ!</strong> Это действие нельзя отменить.
+          </Typography>
+          
+          <Typography variant="body2" gutterBottom>
+            Принудительное удаление:
+          </Typography>
+          <ul>
+            <li>Удалит категорию "{record.name}"</li>
+            <li>Удалит все её подкатегории</li>
+            <li>Уберет связи с книгами (сами книги останутся)</li>
+          </ul>
+          
+          <Typography variant="body2" color="textSecondary" mt={2}>
+            Используйте эту функцию только если обычное удаление не работает из-за наличия подкатегорий или книг.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>
+            Отмена
+          </Button>
+          <Button 
+            onClick={handleForceDelete}
+            color="error"
+            variant="contained"
+            startIcon={<DeleteForeverIcon />}
+          >
+            Принудительно удалить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}; 

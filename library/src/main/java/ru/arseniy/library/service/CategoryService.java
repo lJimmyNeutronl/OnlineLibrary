@@ -125,6 +125,32 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Категория с ID " + id + " не найдена"));
         
+        // Проверяем, есть ли подкатегории
+        List<Category> subcategories = categoryRepository.findByParentCategoryId(id);
+        if (!subcategories.isEmpty()) {
+            throw new RuntimeException("Невозможно удалить категорию: у неё есть " + subcategories.size() + " подкатегорий. " +
+                    "Сначала удалите или переместите подкатегории.");
+        }
+        
+        // Проверяем, есть ли книги в этой категории
+        if (!category.getBooks().isEmpty()) {
+            throw new RuntimeException("Невозможно удалить категорию: в ней содержится " + category.getBooks().size() + " книг. " +
+                    "Сначала переместите книги в другие категории или удалите их.");
+        }
+        
+        categoryRepository.delete(category);
+    }
+    
+    /**
+     * Принудительное удаление категории со всеми подкатегориями и связями с книгами
+     * ВНИМАНИЕ: Этот метод удаляет категорию, все её подкатегории и убирает связи с книгами
+     * Сами книги при этом не удаляются, только связи с категориями
+     */
+    public void forceDeleteCategory(Integer id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Категория с ID " + id + " не найдена"));
+        
+        // Благодаря каскадному удалению на уровне БД, все подкатегории и связи с книгами удалятся автоматически
         categoryRepository.delete(category);
     }
 }

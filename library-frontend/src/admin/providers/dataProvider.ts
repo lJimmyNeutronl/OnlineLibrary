@@ -122,6 +122,13 @@ const dataProvider: DataProvider = {
       return { data: response.data };
     } catch (error: any) {
       console.error('Ошибка getOne:', error);
+      
+      // Если ресурс не найден (404), возвращаем более понятную ошибку
+      if (error.response?.status === 404) {
+        throw new Error(`${resource === 'users' ? 'Пользователь' : resource === 'books' ? 'Книга' : 'Запись'} не найден(а)`);
+      }
+      
+      // Для других ошибок возвращаем общее сообщение
       throw new Error(error.response?.data?.message || 'Ошибка получения записи');
     }
   },
@@ -257,6 +264,8 @@ const dataProvider: DataProvider = {
             throw new Error(error.response?.data?.message || 'Ошибка блокировки пользователя');
           }
         }
+        // Если нет специального действия, выбрасываем ошибку
+        throw new Error('Прямое обновление пользователей не поддерживается');
         break;
       case 'books':
         url = `${API_URL}/books/${params.id}`;
@@ -317,6 +326,9 @@ const dataProvider: DataProvider = {
     let url = '';
     
     switch (resource) {
+      case 'users':
+        url = `${API_URL}/users/admin/delete/${params.id}`;
+        break;
       case 'books':
         url = `${API_URL}/books/${params.id}`;
         break;
@@ -337,7 +349,20 @@ const dataProvider: DataProvider = {
       return { data: params.previousData || { id: params.id } as any };
     } catch (error: any) {
       console.error('Ошибка delete:', error);
-      throw new Error(error.response?.data?.message || 'Ошибка удаления записи');
+      
+      // Специальная обработка для категорий
+      if (resource === 'categories' && error.response?.status === 400) {
+        const errorMessage = error.response?.data?.error || 'Ошибка удаления категории';
+        throw new Error(errorMessage);
+      }
+      
+      // Если ресурс не найден (404), возвращаем более понятную ошибку
+      if (error.response?.status === 404) {
+        throw new Error(`${resource === 'users' ? 'Пользователь' : resource === 'books' ? 'Книга' : 'Категория'} не найден(а)`);
+      }
+      
+      // Для других ошибок возвращаем общее сообщение
+      throw new Error(error.response?.data?.message || error.response?.data?.error || 'Ошибка удаления записи');
     }
   },
 

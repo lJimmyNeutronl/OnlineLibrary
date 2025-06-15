@@ -75,6 +75,12 @@ const categoryService = {
       
       const response = await API.get('/categories/root');
       
+      // Проверяем, что response.data - это массив
+      if (!Array.isArray(response.data)) {
+        console.error('API /categories/root вернул не массив:', response.data);
+        throw new Error('Некорректный формат данных от сервера');
+      }
+      
       // Обновляем кэш и временную метку
       const { data, timestamp } = updateCache(response.data);
       rootCategoriesCache = data;
@@ -193,12 +199,18 @@ const categoryService = {
       
       const rootCategories = await this.getRootCategories();
       
+      // Добавляем проверку, что rootCategories - это массив
+      if (!Array.isArray(rootCategories)) {
+        console.error('getRootCategories вернул не массив:', rootCategories);
+        throw new Error('Некорректный формат данных от сервера');
+      }
+      
       const categoriesWithSubcategories = await Promise.all(
         rootCategories.map(async (rootCategory): Promise<CategoryWithSubcategories> => {
           const subcategories = await this.getSubcategories(rootCategory.id);
           return {
             ...rootCategory,
-            subcategories
+            subcategories: Array.isArray(subcategories) ? subcategories : []
           };
         })
       );
